@@ -48,7 +48,7 @@
  }
  const fieldLimits={speed:[3,60,16],pause:[0,1440,30],riderWeight:[25,250,70],bikeWeight:[3,60,22]};
  function sanitizeTrip(value){
-  if(!value||!coordinatesValid(value.points,30)||!coordinatesValid(value.track)||value.track.length===1||(value.track.length>1&&value.points.length<2))return null;
+  if(!value||!coordinatesValid(value.points,Infinity)||!coordinatesValid(value.track)||value.track.length===1||(value.track.length>1&&value.points.length<2))return null;
   const settings={...value.settings};
   for(const [key,[min,max,fallback]] of Object.entries(fieldLimits)){const n=Number(settings[key]);settings[key]=String(Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback)}
   settings.departure=typeof settings.departure==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(settings.departure)&&Number.isFinite(new Date(settings.departure).getTime())?settings.departure:'';
