@@ -1,0 +1,62 @@
+PLANER TRAS V2.5
+
+URUCHOMIENIE
+Rozpakuj caly ZIP razem z folderem assets. Uruchom URUCHOM.cmd.
+Przy zmianie wersji zatrzymaj stary serwer plikiem ZAMKNIJ.cmd.
+Program otwiera sie pod adresem http://127.0.0.1:8765/
+Okno CMD zamyka sie automatycznie. Serwer zatrzymasz plikiem ZAMKNIJ.cmd.
+
+GDZIE WYBIERA SIE PETLE?
+Kliknij zielony przycisk ZAPLANUJ PETLE w naglowku strony.
+1. Ustaw start S na mapie lub skorzystaj z GPS.
+2. Kliknij Zaplanuj petle, podaj cel 5-200 km i kierunek.
+3. Kliknij Znajdz do 3 propozycji petli.
+4. Porownaj dystans i podjazdy. Podglad pokazuje przerywana linie na mapie.
+5. Wybierz trase zatwierdza konkretny wariant.
+Aktualna trasa pozostaje podczas szukania. Zmienia sie dopiero po wyborze.
+Generator sprawdza kilka przebiegow i wykonuje do 6 zapytan.
+Jesli serwer lub siec sa niedostepne, propozycji moze byc mniej niz trzy.
+Przerwij szukanie zatrzymuje obliczenia. Cofnij przywraca trase sprzed wyboru.
+
+NAZWY PUNKTOW
+W Ustawieniach, na liscie punktow, sa nazwy miejsc zamiast glownych wspolrzednych.
+Nazwy sa pobierane stopniowo z Photon / OpenStreetMap. Przyciskiem z olowkiem
+zmienisz nazwe na wlasna albo przywrocisz nazwe z mapy.
+Adres jest przyblizony. Wspolrzedne widac po najechaniu na nazwe.
+Nazwy sa zachowywane w zapisanych wyprawach oraz w historii Cofnij/Ponow.
+Zwykly GPX zachowuje slad i nazwe wyprawy; wlasne nazwy przystankow przechowuje lokalny zapis.
+
+MOJE ZAPISANE WYPRAWY
+Na dole strony kazda wyprawa ma nazwe, dystans, podjazdy i date zapisu.
+Wczytaj przywraca wybrana trase. Zmien nazwe edytuje tytul.
+Usun usuwa wpis; przycisk Przywroc usunieta wyprawe odtwarza ostatnio usuniety wpis
+w tej samej sesji. Limit wynosi 20 zapisanych wypraw.
+Przycisk Zapisz trase pozostaje w naglowku.
+
+OBSLUGA MAPY NA TELEFONIE
+Dotkniecie mapy samo nie dodaje punktu. Wybierz Ustaw start S albo
+Dodaj przystanek / mete. Anuluj zamyka wybor.
+Przesuwanie mapy i ogladanie trasy nie wymaga dodawania punktow.
+
+EKSPORT OBRAZOW
+Nad wykresem: Profil PNG zapisuje aktualny zakres profilu do osobnego obrazu.
+Mapa + profil zapisuje widoczna mape i profil w jednym PNG.
+Przycisk Zapisz PNG w rogu mapy zapisuje sama mape z trasa i punktami.
+Profil wymaga danych wysokosci. Eksport mapy wymaga wczytanych kafelkow
+i warstwy pozwalajacej pobierac obrazy. Oznaczenia autorow map pozostaja w PNG.
+Wysokosci na wykresie sa wygladzone; GPX zachowuje oryginalne wysokosci.
+
+USTALENIA Z POPRZEDNIEJ WERSJI
+Kazde uruchomienie i odswiezenie zaczyna bez starej trasy. GPS moze ustawic nowy start S.
+Wyczysc trase usuwa punkty i przebieg. Parametry sa widoczne bez wewnetrznego suwaka.
+Kolory nachylenia sa na samym dole strony. Zapamietywane sa parametry i wyglad mapy.
+Trase zachowasz przyciskiem Zapisz trase lub przez eksport GPX.
+Zapisy zaleza od przegladarki i adresu/portu programu.
+
+SPRAWDZENIE
+Testy: walidacja nazw, trzy rozne warianty petli, anulowanie, wybor trasy,
+ochrona wlasnych nazw, akcje mapy po dotknieciu oraz zgodnosc plikow.
+W przegladarce: adresy Photon, wlasna nazwa, zapis/zmiana nazwy/usuniecie/przywrocenie,
+trzy propozycje petli, wybor, generowanie PNG profilu i mapy z profilem, widok 390 px.
+GPS w terenie nie byl testowany. Czas i kalorie sa szacunkami.
+Dokumentacja API nazw: https://github.com/komoot/photon/blob/master/docs/api-v1.md
