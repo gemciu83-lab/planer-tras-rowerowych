@@ -15,7 +15,7 @@ const readSaved={data:[{...trip,name:'Long route'}],PlannerCore:core.PlannerCore
 assert.equal(vm.runInNewContext('data.filter('+savedFilter+')',readSaved).length,1);
 console.log('PASS: add, validate and load 1000 waypoints');
 function context(){
- const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,setInterval:()=>0,Date,PlannerCore:core.PlannerCore,PlannerNetwork:{createClient:options=>network.PlannerNetwork.createClient({...options,minGapMs:0})},cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking'});return nodes.get(id)}};
+ const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,setInterval:()=>0,Date,PlannerCore:core.PlannerCore,PlannerNetwork:{createClient:options=>network.PlannerNetwork.createClient({...options,minGapMs:0})},cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking',checked:true});return nodes.get(id)}};
  const ctx=vm.createContext(env);
  vm.runInContext("const routeLegCache=new Map(),routeResultCache=new Map();let points=[],track=[],surfaceData=null,routeType='',previousRoute=null,mapDistancePending=false,revision=0,controller=null,autoRouteTimer=null,map=null;",ctx);
  vm.runInContext(app.slice(app.indexOf('let routeLastPerformance='),app.indexOf('let searchId=0')),ctx);
@@ -72,5 +72,11 @@ async function tests(){
  finishFirst();await pending;const latest=[...jobs.values()].find(j=>j.ms===1500);assert(latest);await latest.fn();
  assert.equal(editCalls,2);assert.equal(vm.runInContext('track.length',editing.ctx),40);
  console.log('PASS: edits during active routing keep one request alive and calculate only latest 40-point state next');
+ const manual=context(),manualCalls=[];mock(manual.env,manualCalls);manual.env.$('autoRouting').checked=false;
+ vm.runInContext(app.slice(app.indexOf('function invalidate('),app.indexOf('\nlet routeHitLayer')),manual.ctx);
+ manual.env.input=points.slice(0,100);vm.runInContext('for(const c of input){points.push(c);invalidate()}',manual.ctx);
+ assert.equal(manualCalls.length,0);assert.equal(vm.runInContext('mapDistancePending',manual.ctx),false);
+ assert.equal(typeof manual.env.$('mapCalculate').onclick,'function');await manual.env.$('mapCalculate').onclick();assert.equal(manualCalls.length,1);assert.equal(vm.runInContext('track.length',manual.ctx),100);assert(manual.env.km>0);
+ console.log('PASS: default manual mode adds 100 waypoints with zero requests; explicit calculate makes one request and updates distance');
 }
 tests().catch(e=>{console.error(e);process.exitCode=1});

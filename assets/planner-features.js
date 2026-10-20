@@ -136,8 +136,8 @@ function renderSavedCards(){
  saved.forEach(record=>{
   const snapshot=savedSnapshot(record);if(!snapshot)return;count++;
   const card=document.createElement('article');card.className='saved-trip-card';const title=document.createElement('h3');title.textContent=record.name;
-  const detail=document.createElement('p'),fullHeight=snapshot.track.every(c=>Number.isFinite(c[2])),date=new Date(record.createdAt);
-  detail.textContent=length(snapshot.track).toLocaleString('pl-PL',{minimumFractionDigits:1,maximumFractionDigits:1})+' km · '+(fullHeight?'↑ '+Math.round(PlannerCore.elevationModel(snapshot.track,distance).ascent)+' m':'bez wysokości')+' · '+(Number.isFinite(date.getTime())?date.toLocaleDateString('pl-PL'):'starszy zapis');
+  const detail=document.createElement('p'),fullHeight=snapshot.track.length>1&&snapshot.track.every(c=>Number.isFinite(c[2])),date=new Date(record.createdAt);
+  detail.textContent=snapshot.track.length<2?snapshot.points.length+' punktów · do wyznaczenia':length(snapshot.track).toLocaleString('pl-PL',{minimumFractionDigits:1,maximumFractionDigits:1})+' km · '+(fullHeight?'↑ '+Math.round(PlannerCore.elevationModel(snapshot.track,distance).ascent)+' m':'bez wysokości')+' · '+(Number.isFinite(date.getTime())?date.toLocaleDateString('pl-PL'):'starszy zapis');
   const actions=document.createElement('div');actions.className='tools';
   const load=document.createElement('button'),rename=document.createElement('button'),remove=document.createElement('button');load.type=rename.type=remove.type='button';load.textContent='Wczytaj';load.className='primary small';rename.textContent='Zmień nazwę';rename.className=remove.className='small';remove.textContent='Usuń';
   load.onclick=()=>{checkpoint();applyTrip(snapshot,true);status('Wczytano wyprawę: '+record.name)};
@@ -148,9 +148,9 @@ function renderSavedCards(){
  if(!count){const empty=document.createElement('p');empty.id='saved-empty';empty.textContent='Brak zapisanych wypraw. Użyj „Zapisz trasę” w nagłówku.';host.append(empty)}
 }
 function saveCurrentTrip(){
- if(track.length<2||mapDistancePending)return;if(saved.length>=20){status('Limit 20 wypraw. Usuń zbędną lub wyeksportuj GPX.',true);return}
- saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:routeType,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),bikeType:$('bikeType').value});
- if(persist()){showSaved();status('Wyprawa zapisana. Znajdziesz ją w „Moich zapisanych wyprawach”.')}else saved.pop();
+ if(!points.length)return;if(saved.length>=20){status('Limit 20 wypraw. Usuń zbędną lub wyeksportuj GPX.',true);return}
+ saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),bikeType:$('bikeType').value});
+ if(persist()){showSaved();status(track.length>1?'Wyprawa zapisana. Znajdziesz ją w „Moich zapisanych wyprawach”.':'Zapisano punkty wyprawy. Wczytasz je ręcznie z „Moich zapisanych wypraw”.')}else saved.pop();
 }
 
 function updateExportButtons(){

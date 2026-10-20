@@ -24,12 +24,16 @@ async function tests(){
  console.log('PASS: cancellation preserves current route');
  const limited=createContext();let forbiddenRequests=0;limited.environment.fetchRoutingFeature=async()=>{forbiddenRequests++;throw Object.assign(new Error('Przerwa serwera 60 s'),{rateLimited:true})};await vm.runInContext('generateLoopChoices()',limited.ctx);assert.equal(forbiddenRequests,1);assert(limited.node('loopResult').textContent.includes('Przerwa serwera'));
  console.log('PASS: loop generator stops after one rate-limit refusal');
+ const pointSave=createContext();pointSave.environment.showSaved=()=>{};
+ vm.runInContext('points=Array.from({length:100},(_,i)=>[19+i*.001,51]);track=[];mapDistancePending=true;saveCurrentTrip()',pointSave.ctx);
+ assert.equal(vm.runInContext('saved.length',pointSave.ctx),1);assert.equal(vm.runInContext('saved[0].points.length',pointSave.ctx),100);assert.equal(vm.runInContext('savedSnapshot(saved[0]).track.length',pointSave.ctx),0);
+ console.log('PASS: save and validate 100 unrouted points while routing is unavailable');
  const c=createContext();vm.runInContext("pointNames.set(PlannerCore.pointKey(points[0]),'Moja nazwa');updatePointName(PlannerCore.pointKey(points[0]),'Spóźniony adres')",c.ctx);assert.equal(vm.runInContext('pointNames.get(PlannerCore.pointKey(points[0]))',c.ctx),'Moja nazwa');
  vm.runInContext('handlePlannerMapClick({latlng:{lat:53,lng:21},originalEvent:{pointerType:"touch"}})',c.ctx);assert.equal(vm.runInContext('points[0][0]',c.ctx),19);c.environment.popupContent.children[1].onclick();assert.equal(vm.runInContext('points[0][0]',c.ctx),21);assert.equal(c.environment.checkpoints,1);
  console.log('PASS: manual name wins over late reverse geocode; a touch changes nothing until an action is chosen');
  const html=fs.readFileSync(root+'/index.html','utf8'),ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size);
  for(const file of html.matchAll(/(?:src|href)="(assets\/[^"]+)"/g))assert(fs.existsSync(root+'/'+file[1].split(/[?#]/)[0]));
- for(const file of ['app','planner-core','planner-features'])assert(html.includes('assets/'+file+'.js?v=2.5.4'));
+ for(const file of ['app','planner-core','planner-features'])assert(html.includes('assets/'+file+'.js?v=2.6.0'));
  for(const file of [app,source])for(const match of file.matchAll(/\$\('([^']+)'\)/g))assert(ids.includes(match[1])||['mapParameters','toggleMapParameters','profileCursor'].includes(match[1]),'Missing DOM '+match[1]);
  assert(app.includes('function initializeFreshTrip()'));assert(!app.includes("getItem('rowerem-draft-v2')"));
  console.log('PASS: assets and control references; empty-map startup retained');
