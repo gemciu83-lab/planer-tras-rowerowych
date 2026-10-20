@@ -1,0 +1,64 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const root=path.resolve(__dirname,'..'),app=fs.readFileSync(root+'/assets/app.js','utf8');
+const core={};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-core.js','utf8'),core);
+const many=Array.from({length:1000},(_,i)=>[19+i*.00001,51]);
+const trip=core.PlannerCore.sanitizeTrip({points:many,track:[[19,51],[20,51]],settings:{}});
+assert.equal(trip.points.length,1000);
+assert.equal(core.PlannerCore.sanitizeTrip({...trip,points:[[NaN,51]]}),null);
+const add=app.slice(app.indexOf('function add('),app.indexOf('\n',app.indexOf('function add(')));
+const additions={points:[],gpsSession:null,status(){throw Error('Unexpected limit')},checkpoint(){},pointNames:new Map(),PlannerCore:core.PlannerCore,invalidate(){},renderPoints(){}};
+vm.runInNewContext(add+';for(let i=0;i<1000;i++)add([19+i*.00001,51]);',additions);
+assert.equal(additions.points.length,1000);
+const savedFilter=app.match(/saved=data\.filter\(([^\n]+?)\)\}catch/)[1];
+const readSaved={data:[{...trip,name:'Long route'}],PlannerCore:core.PlannerCore,validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs)};
+assert.equal(vm.runInNewContext('data.filter('+savedFilter+')',readSaved).length,1);
+console.log('PASS: add, validate and load 1000 waypoints');
+function context(){
+ const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,Date,PlannerCore:core.PlannerCore,cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking'});return nodes.get(id)}};
+ const ctx=vm.createContext(env);
+ vm.runInContext("const routeLegCache=new Map(),routeResultCache=new Map();let points=[],track=[],surfaceData=null,routeType='',previousRoute=null,mapDistancePending=false,revision=0,controller=null,autoRouteTimer=null,map=null;",ctx);
+ vm.runInContext(app.slice(app.indexOf('let routeLastPerformance='),app.indexOf('let searchId=0')),ctx);
+ env.stats=()=>{env.km=vm.runInContext('track.reduce((km,c,i)=>km+(i?distance(track[i-1],c):0),0)',ctx)};
+ return {env,ctx};
+}
+function mock(env,calls,onCall){env.fetch=async url=>{
+ assert(url.length<=6000);
+ const params=new URL(url).searchParams,ps=params.get('lonlats').split('|').map(c=>c.split(',').map(Number));
+ calls.push({ps,profile:params.get('profile')});if(onCall)onCall(calls.length,ps);
+ return {ok:true,status:200,json:async()=>({features:[{geometry:{type:'LineString',coordinates:ps},properties:{}}]})};
+};}
+const points=Array.from({length:601},(_,i)=>[19+i*.001,51]);
+async function tests(){
+ const a=context(),calls=[];mock(a.env,calls);a.env.signal=new AbortController().signal;
+ let last=0;
+ for(const count of [29,30,31,35,40,101]){
+  a.env.input=points.slice(0,count);vm.runInContext('points=input',a.ctx);
+  await a.env.$('route').onclick(true);
+  assert(a.env.km>last,'Distance must grow after waypoint '+count);last=a.env.km;
+  assert.equal(vm.runInContext('track.length',a.ctx),count);
+  assert.match(a.env.message,/Trasa gotowa/);
+ }
+ assert.deepEqual(calls.map(c=>c.ps.length),[29,30,31,35,40,101]);
+ const before=calls.length;await a.env.$('route').onclick(true);assert.equal(calls.length,before);
+ console.log('PASS: distance updates at 29, 30, 31, 35, 40 and 101 points; no premature splitting');
+ a.env.input=points;const long=await vm.runInContext('fetchRoutingFeature(input,signal)',a.ctx);
+ assert.deepEqual(JSON.parse(JSON.stringify(long.geometry.coordinates)),points);
+ assert(calls.slice(before).length>1);
+ console.log('PASS: long request splits by encoded URL size, retaining all waypoints');
+ const snapped=context(),snapCalls=[];mock(snapped.env,snapCalls);const original=snapped.env.fetch;
+ snapped.env.fetch=async(url,opt)=>{const r=await original(url,opt),json=await r.json();json.features[0].geometry.coordinates.at(-1)[0]+=.003;return {...r,json:async()=>json}};
+ snapped.env.input=points;snapped.env.signal=a.env.signal;
+ const joined=await vm.runInContext('fetchRoutingFeature(input,signal)',snapped.ctx);
+ assert.equal(joined.geometry.coordinates.length,601);assert(snapCalls.length>2);
+ console.log('PASS: differently snapped boundary rerouted from actual road endpoint');
+ const rejected=context(),rejectCalls=[];mock(rejected.env,rejectCalls);const base=rejected.env.fetch;let first=true;
+ rejected.env.fetch=async(url,opt)=>{if(first){first=false;return {ok:false,status:414}}return base(url,opt)};
+ rejected.env.input=points.slice(0,31);rejected.env.signal=a.env.signal;
+ assert.equal((await vm.runInContext('fetchRoutingFeature(input,signal)',rejected.ctx)).geometry.coordinates.length,31);
+ const aborted=context(),abortCalls=[],controller=new AbortController();mock(aborted.env,abortCalls,()=>controller.abort());aborted.env.input=points;aborted.env.signal=controller.signal;
+ await assert.rejects(vm.runInContext('fetchRoutingFeature(input,signal)',aborted.ctx),e=>e.name==='AbortError');assert.equal(abortCalls.length,1);
+ const failed=context();failed.env.fetch=async()=>({ok:false,status:503,text:async()=> 'temporarily unavailable'});failed.env.input=points.slice(0,31);failed.env.signal=a.env.signal;
+ await assert.rejects(vm.runInContext('fetchRoutingFeature(input,signal)',failed.ctx),/HTTP 503/);
+ console.log('PASS: HTTP 414 fallback, cancellation and server failure');
+}
+tests().catch(e=>{console.error(e);process.exitCode=1});

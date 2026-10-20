@@ -159,28 +159,44 @@ let routeLastPerformance={requests:0,cachedLegs:0};
 function routingParameters(ps){if(typeof routingParams==='function')return routingParams(ps);return new URLSearchParams({lonlats:ps.map(c=>c.slice(0,2).join(',')).join('|'),profile:$('profile').value,alternativeidx:'0',format:'geojson'})}
 function cachedFeature(cache,key){const entry=cache.get(key);if(!entry)return null;if(Date.now()-entry.time>900000){cache.delete(key);return null}cache.delete(key);cache.set(key,entry);return entry.feature}
 function cacheFeature(cache,key,feature,limit){cache.delete(key);cache.set(key,{feature,time:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);let vertices=0;for(const value of cache.values())vertices+=value.feature.geometry.coordinates.length;while(vertices>180000&&cache.size>1){const first=cache.keys().next().value;vertices-=cache.get(first).feature.geometry.coordinates.length;cache.delete(first)}}
-// Batch service requests while retaining every user waypoint.
-const routingBatchSize=24;
+// Split only when the encoded request is too long, never at a waypoint count.
+const routingMaxURLLength=6000;
+function routingRequestError(message){const error=Error(message);error.routing=true;return error}
+async function splitRoutingFeature(ps,signal,profile){
+ const middle=Math.floor((ps.length-1)/2),first=ps.slice(0,middle+1),last=ps.slice(middle);
+ const left=await fetchRoutingFeature(first,signal,profile);
+ let right=await fetchRoutingFeature(last,signal,profile),joined=mergeRoutingLegs([left,right]);
+ if(!joined){
+  // BRouter can snap a waypoint differently when it is the start of a request.
+  // Anchor the second request to the actual end of the first road geometry.
+  const anchored=last.slice();anchored[0]=left.geometry.coordinates.at(-1).slice(0,2);
+  right=await fetchRoutingFeature(anchored,signal,profile);
+  joined=mergeRoutingLegs([left,right]);
+ }
+ if(signal.aborted)throw new DOMException('Anulowano','AbortError');
+ if(!joined)throw routingRequestError('Nie udało się połączyć fragmentów długiej trasy. Przesuń punkt na granicy odcinków i ponów.');
+ return joined;
+}
 async function fetchRoutingFeature(ps,signal,profile){
  if(signal.aborted)throw new DOMException('Anulowano','AbortError');
- if(ps.length>routingBatchSize){
-  const parts=[];
-  for(let i=0;i<ps.length-1;i+=routingBatchSize-1){
-   if(signal.aborted)throw new DOMException('Anulowano','AbortError');
-   const part=ps.slice(i,i+routingBatchSize),params=routingParameters(part);
-   if(profile)params.set('profile',profile);
-   const key=params.toString();
-   let feature=cachedFeature(routeLegCache,key);
-   if(feature)routeLastPerformance.cachedLegs+=part.length-1;
-   else {feature=await fetchRoutingFeature(part,signal,profile);cacheFeature(routeLegCache,key,feature,60)}
-   parts.push(feature);
+ const params=routingParameters(ps);if(profile)params.set('profile',profile);
+ const key=params.toString(),url='https://brouter.de/brouter?'+key,cached=cachedFeature(routeLegCache,key);
+ if(cached){routeLastPerformance.cachedLegs+=ps.length-1;return cached}
+ let feature;
+ if(url.length>routingMaxURLLength&&ps.length>2)feature=await splitRoutingFeature(ps,signal,profile);
+ else {
+  routeLastPerformance.requests++;
+  const r=await fetch(url,{signal});
+  if((r.status===413||r.status===414)&&ps.length>2)feature=await splitRoutingFeature(ps,signal,profile);
+  else {
+   if(!r.ok){let detail='';if(typeof r.text==='function')detail=(await r.text()).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,220);throw routingRequestError('Serwer tras (HTTP '+r.status+').'+(detail?' '+detail:''))}
+   const json=await r.json();feature=json.features?.find(f=>f.geometry?.type==='LineString');
   }
-  if(signal.aborted)throw new DOMException('Anulowano','AbortError');
-  const feature=mergeRoutingLegs(parts);
-  if(!feature){const error=Error('Nie udało się połączyć odcinków trasy. Przesuń punkt na granicy odcinków i ponów.');error.routing=true;throw error;}
-  return feature;
  }
- routeLastPerformance.requests++;const params=routingParameters(ps);if(profile)params.set('profile',profile);const r=await fetch('https://brouter.de/brouter?'+params,{signal});if(!r.ok){let detail='';if(typeof r.text==='function')detail=(await r.text()).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,220);const error=Error('Routing niedostępny (HTTP '+r.status+').'+(detail?' '+detail:''));error.routing=true;throw error;}const json=await r.json(),feature=json.features?.find(f=>f.geometry?.type==='LineString');if(!feature||!validCoordinates(feature.geometry.coordinates)||feature.geometry.coordinates.length<2)throw Error('Brak trasy');return feature}
+ if(signal.aborted)throw new DOMException('Anulowano','AbortError');
+ if(!feature||!validCoordinates(feature.geometry.coordinates)||feature.geometry.coordinates.length<2)throw routingRequestError('Serwer nie zwrócił poprawnego przebiegu trasy.');
+ cacheFeature(routeLegCache,key,feature,60);return feature;
+}
 function mergeRoutingLegs(legs){const coordinates=[],messages=[];let header=null,canMergeMessages=true;for(const f of legs){const cs=f.geometry.coordinates,previous=coordinates.at(-1),first=cs[0];if(previous&&distance(previous,first)>.001)return null;for(let i=previous?1:0;i<cs.length;i++)coordinates.push(cs[i]);const rows=f.properties?.messages;if(!Array.isArray(rows)||rows.length<2){canMergeMessages=false;continue}const h=Array.isArray(rows[0])?rows[0]:String(rows[0]).split('\t');if(!header){header=h;messages.push(h)}if(JSON.stringify(h)!==JSON.stringify(header)){canMergeMessages=false;continue}for(let i=1;i<rows.length;i++)messages.push(rows[i])}return {type:'Feature',geometry:{type:'LineString',coordinates},properties:canMergeMessages&&header?{messages}:{}}}
 async function fastRouteFeature(ps,signal){routeLastPerformance={requests:0,cachedLegs:0};const fullKey=routingParameters(ps).toString(),cached=cachedFeature(routeResultCache,fullKey);if(cached){routeLastPerformance.cachedLegs=ps.length-1;return cached}const legs=ps.slice(1).map((p,i)=>{const pair=[ps[i],p],key=routingParameters(pair).toString();return {pair,key,feature:cachedFeature(routeLegCache,key)}}),hits=legs.filter(l=>l.feature).length;let feature;if(ps.length===2){feature=legs[0].feature||await fetchRoutingFeature(ps,signal);cacheFeature(routeLegCache,fullKey,feature,60)}else if(hits>0&&legs.length-hits<=2){routeLastPerformance.cachedLegs=hits;await Promise.all(legs.map(async leg=>{if(!leg.feature){leg.feature=await fetchRoutingFeature(leg.pair,signal);cacheFeature(routeLegCache,leg.key,leg.feature,60)}}));feature=mergeRoutingLegs(legs.map(l=>l.feature));if(!feature)feature=await fetchRoutingFeature(ps,signal)}else feature=await fetchRoutingFeature(ps,signal);if(signal.aborted)throw new DOMException('Anulowano','AbortError');cacheFeature(routeResultCache,fullKey,feature,12);return feature}
 
@@ -190,7 +206,7 @@ $('route').onclick=async(auto=false)=>{
  if(track.length>1)previousRoute={track,routeType};track=[];surfaceData=null;routeType='';mapDistancePending=true;
  const startedRouting=performance.now(),snapshot=++revision;controller?.abort();const requestController=controller=new AbortController();
  draw();stats();status('Wyznaczam trasę…');let timedOut=false;
- const timeout=setTimeout(()=>{timedOut=true;requestController.abort()},60000*Math.max(1,Math.ceil((requestPoints.length-1)/(routingBatchSize-1))));
+ const timeout=setTimeout(()=>{timedOut=true;requestController.abort()},60000*Math.max(1,Math.ceil(routingParameters(requestPoints).toString().length/routingMaxURLLength)));
  try{
   let result,feature=null;if(profile==='direct')result=requestPoints;
   else {feature=await fastRouteFeature(requestPoints,requestController.signal);result=feature.geometry.coordinates;}
