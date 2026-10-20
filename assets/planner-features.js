@@ -87,7 +87,7 @@ async function generateLoopChoices(){
  const base=direction==='any'?Math.random()*360:Number(direction),bearings=direction==='any'?[base,base+120,base+240]:[base-45,base,base+45];
  const request=loopChoiceRequest=new AbortController();let timedOut=false;
  const timeout=setTimeout(()=>{timedOut=true;request.abort()},120000);loopGenerating=true;stats();$('cancelLoopChoices').disabled=false;
- const found=[],fingerprints=new Set();
+ const found=[],fingerprints=new Set();let routingFailure=null;
  try{
   for(let variant=0;variant<3;variant++){
    let radius=target/(4*Math.SQRT2*1.2)*(variant===0?.86:1),best=null;
@@ -95,7 +95,7 @@ async function generateLoopChoices(){
     if(request.signal.aborted||generation!==loopChoiceGeneration||routeRevision!==revision)return;
     $('loopResult').textContent='Szukam propozycji '+(variant+1)+'/3 · dopasowanie '+(attempt+1)+'/2…';
     const ps=PlannerCore.loopWaypoints(start,target,bearings[variant],radius);
-    let feature;try{feature=await fetchRoutingFeature(ps,request.signal,profile)}catch(error){if(request.signal.aborted)throw error;radius*=1.15;continue}
+    let feature;try{feature=await fetchRoutingFeature(ps,request.signal,profile)}catch(error){if(request.signal.aborted||error.rateLimited)throw error;radius*=1.15;continue}
     if(generation!==loopChoiceGeneration||routeRevision!==revision||request.signal.aborted)return;
     const km=length(feature.geometry.coordinates),error=Math.abs(km-target)/target;
     if(km>.5&&(!best||error<best.error))best={ps,feature,km,error,profile};
@@ -103,13 +103,13 @@ async function generateLoopChoices(){
    }
    if(best){const key=loopFingerprint(best.feature);if(!fingerprints.has(key)){fingerprints.add(key);best.ascent=best.feature.geometry.coordinates.every(c=>Number.isFinite(c[2]))?PlannerCore.elevationModel(best.feature.geometry.coordinates,distance).ascent:null;found.push(best)}}
   }
- }catch(error){if(!request.signal.aborted&&generation===loopChoiceGeneration)$('loopResult').textContent='Nie udało się pobrać wszystkich propozycji.'}
+ }catch(error){routingFailure=error;if(!request.signal.aborted&&generation===loopChoiceGeneration)$('loopResult').textContent=error.rateLimited?error.message:'Nie udało się pobrać wszystkich propozycji.'}
  finally{
   clearTimeout(timeout);
   if(generation===loopChoiceGeneration){
    loopGenerating=false;loopChoiceRequest=null;$('cancelLoopChoices').disabled=true;
    loopChoices=PlannerCore.chooseLoopVariants(found,target);renderLoopCards();stats();
-   $('loopResult').textContent=loopChoices.length?'Znaleziono '+loopChoices.length+' '+(loopChoices.length===1?'propozycję':'propozycje')+'. Porównaj i wybierz trasę.'+(timedOut?' Pokazuję wyniki uzyskane przed upływem limitu.':''):'Nie znaleziono pętli. Zmień kierunek lub dystans i spróbuj ponownie.';
+   $('loopResult').textContent=routingFailure?.rateLimited?routingFailure.message:loopChoices.length?'Znaleziono '+loopChoices.length+' '+(loopChoices.length===1?'propozycję':'propozycje')+'. Porównaj i wybierz trasę.'+(timedOut?' Pokazuję wyniki uzyskane przed upływem limitu.':''):'Nie znaleziono pętli. Zmień kierunek lub dystans i spróbuj ponownie.';
   }
  }
 }

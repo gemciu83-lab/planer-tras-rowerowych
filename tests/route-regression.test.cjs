@@ -1,6 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const root=path.resolve(__dirname,'..'),app=fs.readFileSync(root+'/assets/app.js','utf8');
 const core={};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-core.js','utf8'),core);
+const network={DOMException,setTimeout,clearTimeout};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-network.js','utf8'),network);
 const many=Array.from({length:1000},(_,i)=>[19+i*.00001,51]);
 const trip=core.PlannerCore.sanitizeTrip({points:many,track:[[19,51],[20,51]],settings:{}});
 assert.equal(trip.points.length,1000);
@@ -14,7 +15,7 @@ const readSaved={data:[{...trip,name:'Long route'}],PlannerCore:core.PlannerCore
 assert.equal(vm.runInNewContext('data.filter('+savedFilter+')',readSaved).length,1);
 console.log('PASS: add, validate and load 1000 waypoints');
 function context(){
- const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,Date,PlannerCore:core.PlannerCore,cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking'});return nodes.get(id)}};
+ const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,setInterval:()=>0,Date,PlannerCore:core.PlannerCore,PlannerNetwork:{createClient:options=>network.PlannerNetwork.createClient({...options,minGapMs:0})},cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking'});return nodes.get(id)}};
  const ctx=vm.createContext(env);
  vm.runInContext("const routeLegCache=new Map(),routeResultCache=new Map();let points=[],track=[],surfaceData=null,routeType='',previousRoute=null,mapDistancePending=false,revision=0,controller=null,autoRouteTimer=null,map=null;",ctx);
  vm.runInContext(app.slice(app.indexOf('let routeLastPerformance='),app.indexOf('let searchId=0')),ctx);
@@ -60,5 +61,16 @@ async function tests(){
  const failed=context();failed.env.fetch=async()=>({ok:false,status:503,text:async()=> 'temporarily unavailable'});failed.env.input=points.slice(0,31);failed.env.signal=a.env.signal;
  await assert.rejects(vm.runInContext('fetchRoutingFeature(input,signal)',failed.ctx),/HTTP 503/);
  console.log('PASS: HTTP 414 fallback, cancellation and server failure');
+ const editing=context(),jobs=new Map();let timerId=0,finishFirst,editCalls=0,firstSignal;
+ editing.env.setTimeout=(fn,ms)=>{const id=++timerId;jobs.set(id,{fn,ms});return id};editing.env.clearTimeout=id=>jobs.delete(id);
+ const answer=ps=>({ok:true,status:200,json:async()=>({features:[{geometry:{type:'LineString',coordinates:ps},properties:{}}]})});
+ editing.env.fetch=async(url,options)=>{editCalls++;const cs=new URL(url).searchParams.get('lonlats').split('|').map(c=>c.split(',').map(Number));if(editCalls===1){firstSignal=options.signal;return new Promise(resolve=>{finishFirst=()=>resolve(answer(cs))})}return answer(cs)};
+ editing.env.input=points.slice(0,30);vm.runInContext('points=input',editing.ctx);
+ const pending=editing.env.$('route').onclick(true);await Promise.resolve();await Promise.resolve();
+ editing.env.input=points.slice(0,40);vm.runInContext('points=input;revision++;routingRecalcRequested=true;',editing.ctx);
+ await editing.env.$('route').onclick(true);assert.equal(editCalls,1);assert(!firstSignal.aborted);
+ finishFirst();await pending;const latest=[...jobs.values()].find(j=>j.ms===1500);assert(latest);await latest.fn();
+ assert.equal(editCalls,2);assert.equal(vm.runInContext('track.length',editing.ctx),40);
+ console.log('PASS: edits during active routing keep one request alive and calculate only latest 40-point state next');
 }
 tests().catch(e=>{console.error(e);process.exitCode=1});

@@ -58,7 +58,7 @@ function status(text,error=false){$('status').textContent=text;setMapInfo(text,e
 function distance(a,b){const rad=Math.PI/180,dlat=(b[1]-a[1])*rad,dlon=(b[0]-a[0])*rad,t=Math.sin(dlat/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dlon/2)**2;return 6371*2*Math.atan2(Math.sqrt(t),Math.sqrt(Math.max(0,1-t)))}
 const distanceCache=new WeakMap();function length(cs){if(cs===points){let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i]);return total}if(distanceCache.has(cs))return distanceCache.get(cs);let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i]);distanceCache.set(cs,total);return total}
 function time(h){let m=Math.round(h*60);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
-function stats(){updatePlannerExtras();refreshRouteHover();const km=length(track);updateMapDistance(km);const speed=Math.min(60,Math.max(3,Number($('speed').value)||16)),pause=Math.min(1440,Math.max(0,Number($('pause').value)||0));$('distance').innerHTML=track.length>1?km.toLocaleString('pl-PL',{maximumFractionDigits:1})+' <small>km</small>':'— <small>km</small>';$('ride').textContent=track.length>1?time(km/speed):'—';$('total').textContent=track.length>1?time(km/speed+pause/60):'—';let elevation=track.length>1&&track.every(c=>Number.isFinite(c[2])),up=0;if(elevation)up=PlannerCore.elevationModel(track,distance).ascent;$('up').innerHTML=(elevation?Math.round(up):'—')+' <small>m</small>';$('gpx').disabled=track.length<2;$('save').disabled=track.length<2;$('route').disabled=points.length<2||mapDistancePending;$('route').textContent=mapDistancePending?'Wyznaczanie…':'Wyznacz trasę ↗';$('cancelRoute').disabled=!mapDistancePending&&!loopGenerating;$('saveMapPNG').disabled=pngExporting||mapDistancePending||!!previousRoute;updateExtraStats();$('mapRideValue').textContent=track.length>1?time(km/speed):'—';$('mapCaloriesValue').textContent=$('calories').textContent;for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight']]){if(document.activeElement!==$(quick))$(quick).value=$(source).value;}commitTrip();updateExportButtons();}
+function stats(){updatePlannerExtras();refreshRouteHover();const km=length(track);updateMapDistance(km);const speed=Math.min(60,Math.max(3,Number($('speed').value)||16)),pause=Math.min(1440,Math.max(0,Number($('pause').value)||0));$('distance').innerHTML=track.length>1?km.toLocaleString('pl-PL',{maximumFractionDigits:1})+' <small>km</small>':'— <small>km</small>';$('ride').textContent=track.length>1?time(km/speed):'—';$('total').textContent=track.length>1?time(km/speed+pause/60):'—';let elevation=track.length>1&&track.every(c=>Number.isFinite(c[2])),up=0;if(elevation)up=PlannerCore.elevationModel(track,distance).ascent;$('up').innerHTML=(elevation?Math.round(up):'—')+' <small>m</small>';$('gpx').disabled=track.length<2;$('save').disabled=track.length<2;$('route').disabled=points.length<2||mapDistancePending;$('route').textContent=mapDistancePending?'Wyznaczanie…':'Wyznacz trasę ↗';$('cancelRoute').disabled=!mapDistancePending&&!loopGenerating;$('saveMapPNG').disabled=pngExporting||mapDistancePending||!!previousRoute;updateExtraStats();$('mapRideValue').textContent=track.length>1?time(km/speed):'—';$('mapCaloriesValue').textContent=$('calories').textContent;for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight']]){if(document.activeElement!==$(quick))$(quick).value=$(source).value;}commitTrip();updateExportButtons();updateRoutingAvailability();}
 let routeLayer,draftLayer,autoRouteTimer=null,locationMarker=null,accuracyCircle=null;
 function draw(){
  if(!map)return;
@@ -73,11 +73,11 @@ function draw(){
 }
 function invalidate(auto=true){
  cancelLoopSearch();
- revision++;clearTimeout(autoRouteTimer);controller?.abort();
+ revision++;clearTimeout(autoRouteTimer);if(!auto){routingRecalcRequested=false;controller?.abort()}else routingRecalcRequested=true;
  if(auto&&points.length>1){if(track.length>1)previousRoute={track,routeType};}
  else previousRoute=null;
  track=[];surfaceData=null;routeType='';mapDistancePending=auto&&points.length>1;draw();stats();
- if(mapDistancePending){status('Punkty zmienione. Dopasowuję trasę do dróg…');autoRouteTimer=setTimeout(()=>$('route').onclick(true),240)}
+ if(mapDistancePending){if(routingAutoPaused&&$('profile').value!=='direct'){mapDistancePending=false;showRoutingPause()}else{status('Punkty zmienione. Obliczę trasę, gdy zakończysz dodawanie punktów…');autoRouteTimer=setTimeout(()=>$('route').onclick(true),1500)}}
  else status('Dodaj co najmniej dwa punkty.');
 }
 
@@ -156,6 +156,19 @@ $('locate').onclick=()=>locate(false);
 $('undo').onclick=undoTrip;$('clear').onclick=clearTrip;$('loop').onclick=()=>{if(points.length>1&&distance(points[0],points.at(-1))>.001)add([...points[0]])};$('profile').onchange=()=>{checkpoint();invalidate()};$('speed').oninput=stats;$('pause').oninput=stats;
 const routeResultCache=new Map(),routeLegCache=new Map();
 let routeLastPerformance={requests:0,cachedLegs:0};
+let routingRunActive=false,routingRecalcRequested=false,routingAutoPaused=false;
+let routingStorage;try{routingStorage=localStorage}catch{}
+const routingClient=PlannerNetwork.createClient({fetch:(...args)=>fetch(...args),storage:routingStorage,onPause:()=>{routingAutoPaused=true}});
+if(routingClient.remaining())routingAutoPaused=true;
+function showRoutingPause(){status(routingClient.pauseError().message,true);updateRoutingAvailability()}
+function updateRoutingAvailability(){
+ if(!routingAutoPaused||$('profile').value==='direct')return;
+ const left=Math.ceil(routingClient.remaining()/1000);
+ $('route').disabled=left>0||points.length<2||mapDistancePending;
+ $('route').textContent=left>0?'Przerwa serwera: '+left+' s':'Wyznacz trasę ↗';
+ $('mapDistanceStatus').textContent=left>0?'Serwer tras: przerwa '+left+' s':'Kliknij „Wyznacz trasę”, aby ponowić';
+}
+setInterval(()=>{if(routingAutoPaused)updateRoutingAvailability()},1000);
 function routingParameters(ps){if(typeof routingParams==='function')return routingParams(ps);return new URLSearchParams({lonlats:ps.map(c=>c.slice(0,2).join(',')).join('|'),profile:$('profile').value,alternativeidx:'0',format:'geojson'})}
 function cachedFeature(cache,key){const entry=cache.get(key);if(!entry)return null;if(Date.now()-entry.time>900000){cache.delete(key);return null}cache.delete(key);cache.set(key,entry);return entry.feature}
 function cacheFeature(cache,key,feature,limit){cache.delete(key);cache.set(key,{feature,time:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);let vertices=0;for(const value of cache.values())vertices+=value.feature.geometry.coordinates.length;while(vertices>180000&&cache.size>1){const first=cache.keys().next().value;vertices-=cache.get(first).feature.geometry.coordinates.length;cache.delete(first)}}
@@ -186,7 +199,7 @@ async function fetchRoutingFeature(ps,signal,profile){
  if(url.length>routingMaxURLLength&&ps.length>2)feature=await splitRoutingFeature(ps,signal,profile);
  else {
   routeLastPerformance.requests++;
-  const r=await fetch(url,{signal});
+  const r=await routingClient.fetch(url,{signal});
   if((r.status===413||r.status===414)&&ps.length>2)feature=await splitRoutingFeature(ps,signal,profile);
   else {
    if(!r.ok){let detail='';if(typeof r.text==='function')detail=(await r.text()).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,220);throw routingRequestError('Serwer tras (HTTP '+r.status+').'+(detail?' '+detail:''))}
@@ -202,6 +215,12 @@ async function fastRouteFeature(ps,signal){routeLastPerformance={requests:0,cach
 
 $('route').onclick=async(auto=false)=>{
  cancelLoopSearch();clearTimeout(autoRouteTimer);if(points.length<2)return;
+ if($('profile').value!=='direct'){
+  if(routingClient.remaining()||(auto===true&&routingAutoPaused)){mapDistancePending=false;showRoutingPause();return}
+ }
+ if(routingRunActive){routingRecalcRequested=true;return}
+ routingRunActive=true;routingRecalcRequested=false;
+ if(auto!==true)routingAutoPaused=false;
  const requestPoints=points.map(c=>[...c]),profile=$('profile').value;
  if(track.length>1)previousRoute={track,routeType};track=[];surfaceData=null;routeType='';mapDistancePending=true;
  const startedRouting=performance.now(),snapshot=++revision;controller?.abort();const requestController=controller=new AbortController();
@@ -216,7 +235,12 @@ $('route').onclick=async(auto=false)=>{
   if(map&&track.length&&auto!==true)map.fitBounds(routeLayer.getBounds(),{padding:[55,100]});
  }catch(e){
   if(snapshot===revision){mapDistancePending=false;draw();stats();status(timedOut?'Serwer tras przekroczył czas obliczeń. Spróbuj ponownie.':e.routing?e.message:e instanceof TypeError?'Nie udało się połączyć z serwerem tras. Sprawdź sieć lub blokowanie połączeń przez rozszerzenia przeglądarki.':'Nie udało się wyznaczyć nowej trasy. Poprzedni przebieg pozostaje przygaszony; sprawdź połączenie i ponów.',true)}
- }finally{clearTimeout(timeout);if(snapshot===revision){if(mapDistancePending){mapDistancePending=false;draw()}stats()}}
+  }finally{
+  clearTimeout(timeout);routingRunActive=false;
+  if(routingAutoPaused){routingRecalcRequested=false;mapDistancePending=false;draw();stats();showRoutingPause()}
+  else if(snapshot===revision){if(mapDistancePending){mapDistancePending=false;draw()}stats()}
+  else if(routingRecalcRequested&&points.length>1){clearTimeout(autoRouteTimer);autoRouteTimer=setTimeout(()=>$('route').onclick(true),1500)}
+ }
 };
 let searchId=0,searchController=null;$('searchform').onsubmit=async e=>{e.preventDefault();const query=$('search').value.trim();if(!query)return;const id=++searchId;searchController?.abort();searchController=new AbortController();const thisSearch=searchController;const searchTimeout=setTimeout(()=>thisSearch.abort(),15000);$('results').replaceChildren();status('Szukam miejscowości…');try{const r=await fetch('https://photon.komoot.io/api/?'+new URLSearchParams({q:query,limit:5,lat:map?.getCenter().lat||51.405,lon:map?.getCenter().lng||19.703}),{signal:thisSearch.signal});if(!r.ok)throw Error();const data=await r.json();if(id!==searchId)return;if(!data.features?.length){status('Brak wyników. Spróbuj wpisać pełniejszy adres.',true);return}data.features.filter(f=>f?.geometry?.type==='Point'&&validCoordinates([f.geometry.coordinates])).forEach(f=>{const p=f.properties,b=document.createElement('button');b.type='button';b.textContent=[p.name,p.street,p.city,p.country].filter(Boolean).join(', ')||'Punkt na mapie';b.onclick=()=>{map?.setView([f.geometry.coordinates[1],f.geometry.coordinates[0]],15);add(f.geometry.coordinates.slice(0,2),b.textContent);$('results').replaceChildren()};$('results').append(b)});status('Wybierz wynik, aby dodać punkt trasy.')}catch{if(id===searchId)status('Wyszukiwanie chwilowo niedostępne. Dodaj punkt kliknięciem na mapie.',true)}finally{clearTimeout(searchTimeout)}};
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -271,7 +295,7 @@ $('followGPS').onclick=()=>{
 window.addEventListener('pagehide',stopFollow);
 $('fitRoute').onclick=()=>{const cs=track.length>1?track:points;if(cs.length)map.fitBounds(L.latLngBounds(cs.map(c=>[c[1],c[0]])),{padding:[65,110],maxZoom:17});else status('Dodaj punkty, aby dopasować widok mapy.')};
 $('reverseRoute').onclick=()=>{if(points.length<2)return;checkpoint();points.reverse();invalidate();renderPoints()};
-$('cancelRoute').onclick=()=>{if(loopGenerating){cancelLoopSearch();stats();status('Szukanie propozycji pętli przerwane.');return}if(!mapDistancePending)return;if(loopGenerating)$('loopResult').textContent='Szukanie pętli przerwane.';revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;draw();stats();status('Wyznaczanie anulowane. Punkty i poprzedni przebieg zostały zachowane.')};
+$('cancelRoute').onclick=()=>{routingRecalcRequested=false;if(loopGenerating){cancelLoopSearch();stats();status('Szukanie propozycji pętli przerwane.');return}if(!mapDistancePending)return;if(loopGenerating)$('loopResult').textContent='Szukanie pętli przerwane.';revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;draw();stats();status('Wyznaczanie anulowane. Punkty i poprzedni przebieg zostały zachowane.')};
 $('mapFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('map').parentElement.requestFullscreen()}catch{status('Pełny ekran jest niedostępny w tej przeglądarce.',true)}};
 L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
 
@@ -340,7 +364,7 @@ function applyTrip(snapshot,fit=false){
  if(view&&Array.isArray(view.center)&&view.center.length===2&&view.center.every(Number.isFinite)&&Math.abs(view.center[0])<=90&&Math.abs(view.center[1])<=180&&Number.isFinite(view.zoom))map.setView(view.center,Math.max(2,Math.min(19,view.zoom)),{animate:false});
  else if(fit&&points.length)map.fitBounds(L.latLngBounds((track.length?track:points).map(c=>[c[1],c[0]])),{padding:[60,110],maxZoom:16});
  historyMuted=false;commitTrip();
- if(points.length>1&&track.length<2){mapDistancePending=true;draw();stats();autoRouteTimer=setTimeout(()=>$('route').onclick(true),240)}
+ if(points.length>1&&track.length<2){mapDistancePending=true;draw();stats();autoRouteTimer=setTimeout(()=>$('route').onclick(true),1500)}
 }
 function undoTrip(){if(!historyPast.length)return;const previous=historyPast.pop();historyFuture.push(captureTrip());applyTrip(previous);status('Cofnięto ostatnią zmianę.');updateHistoryButtons()}
 function redoTrip(){if(!historyFuture.length)return;historyPast.push(captureTrip());applyTrip(historyFuture.pop());status('Przywrócono zmianę.');updateHistoryButtons()}
