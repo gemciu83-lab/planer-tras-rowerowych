@@ -153,8 +153,8 @@ window.addEventListener('pagehide',()=>stopGPS());
 function updateClock(){const now=new Date(),dateFormat=new Intl.DateTimeFormat('pl-PL',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'Europe/Warsaw'}),parts=new Intl.DateTimeFormat('pl-PL',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Europe/Warsaw'}).formatToParts(now),value=type=>parts.find(p=>p.type===type)?.value||'00';$('currentDate').textContent=dateFormat.format(now);$('currentTime').textContent=value('hour')+':'+value('minute');$('currentSeconds').textContent=':'+value('second');$('liveDateTime').setAttribute('datetime',now.toISOString())}
 $('locate').onclick=()=>locate(false);
 
-$('undo').onclick=undoTrip;$('clear').onclick=clearTrip;$('loop').onclick=()=>{if(points.length>1&&distance(points[0],points.at(-1))>.001)add([...points[0]])};$('profile').onchange=()=>{checkpoint();invalidate()};try{$('autoRouting').checked=localStorage.getItem('rowerem-routing-auto-v1')==='true'}catch{}
-$('autoRouting').onchange=()=>{try{localStorage.setItem('rowerem-routing-auto-v1',String($('autoRouting').checked))}catch{}invalidate($('autoRouting').checked)};
+$('undo').onclick=undoTrip;$('clear').onclick=clearTrip;$('loop').onclick=()=>{if(points.length>1&&distance(points[0],points.at(-1))>.001)add([...points[0]])};$('profile').onchange=()=>{checkpoint();invalidate()};try{$('autoRouting').checked=localStorage.getItem('rowerem-routing-auto-v2')!=='false'}catch{}
+$('autoRouting').onchange=()=>{try{localStorage.setItem('rowerem-routing-auto-v2',String($('autoRouting').checked))}catch{}invalidate($('autoRouting').checked)};
 $('speed').oninput=stats;$('pause').oninput=stats;
 const routeResultCache=new Map(),routeLegCache=new Map();
 let routeLastPerformance={requests:0,cachedLegs:0};

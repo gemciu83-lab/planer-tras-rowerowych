@@ -30,6 +30,23 @@ function mock(env,calls,onCall){env.fetch=async url=>{
 };}
 const points=Array.from({length:601},(_,i)=>[19+i*.001,51]);
 async function tests(){
+ const html=fs.readFileSync(root+'/index.html','utf8');
+ assert.match(html,/id="autoRouting" type="checkbox" checked/);
+ const init=app.match(/try\{\$\('autoRouting'\)\.checked=localStorage\.getItem\('rowerem-routing-auto-v2'\)!=='false'\}catch\{\}/)?.[0];
+ assert(init,'Default auto-routing initialization missing');
+ for(const [preferences,expected] of [[{},true],[{'rowerem-routing-auto-v1':'false'},true],[{'rowerem-routing-auto-v2':'false'},false],[{'rowerem-routing-auto-v2':'true'},true]]){
+  const checkbox={checked:true};vm.runInNewContext(init,{$:()=>checkbox,localStorage:{getItem:key=>preferences[key]??null}});assert.equal(checkbox.checked,expected);
+ }
+ const privateCheckbox={checked:true};vm.runInNewContext(init,{$:()=>privateCheckbox,localStorage:{getItem(){throw Error('Storage unavailable')}}});assert(privateCheckbox.checked);
+ console.log('PASS: automatic routing defaults on, migrates old manual preference, preserves an explicit new choice and works without storage');
+ const automatic=context(),autoCalls=[],autoJobs=new Map();let autoId=0;
+ mock(automatic.env,autoCalls);automatic.env.setTimeout=(fn,ms)=>{const id=++autoId;autoJobs.set(id,{fn,ms});return id};automatic.env.clearTimeout=id=>autoJobs.delete(id);
+ vm.runInContext(app.slice(app.indexOf('function invalidate('),app.indexOf('\nlet routeHitLayer')),automatic.ctx);
+ automatic.env.input=points.slice(0,100);vm.runInContext('for(const c of input){points.push(c);invalidate()}',automatic.ctx);
+ assert.equal(autoCalls.length,0);assert.equal(autoJobs.size,1);assert.equal(vm.runInContext('mapDistancePending',automatic.ctx),true);
+ const autoJob=[...autoJobs.values()][0];assert.equal(autoJob.ms,1500);await autoJob.fn();
+ assert.equal(autoCalls.length,1);assert.equal(vm.runInContext('track.length',automatic.ctx),100);assert(automatic.env.km>0);
+ console.log('PASS: 100 rapid point additions automatically calculate the latest route once, without pressing calculate');
  const a=context(),calls=[];mock(a.env,calls);a.env.signal=new AbortController().signal;
  let last=0;
  for(const count of [29,30,31,35,40,101]){
@@ -77,6 +94,6 @@ async function tests(){
  manual.env.input=points.slice(0,100);vm.runInContext('for(const c of input){points.push(c);invalidate()}',manual.ctx);
  assert.equal(manualCalls.length,0);assert.equal(vm.runInContext('mapDistancePending',manual.ctx),false);
  assert.equal(typeof manual.env.$('mapCalculate').onclick,'function');await manual.env.$('mapCalculate').onclick();assert.equal(manualCalls.length,1);assert.equal(vm.runInContext('track.length',manual.ctx),100);assert(manual.env.km>0);
- console.log('PASS: default manual mode adds 100 waypoints with zero requests; explicit calculate makes one request and updates distance');
+ console.log('PASS: explicitly selected manual mode adds 100 waypoints with zero requests; explicit calculate makes one request and updates distance');
 }
 tests().catch(e=>{console.error(e);process.exitCode=1});
