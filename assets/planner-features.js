@@ -6,6 +6,7 @@ let loopChoiceRequest=null,loopChoiceGeneration=0,loopChoices=[],loopPreviewLaye
 
 function getPointLabels(){return PlannerCore.sanitizePointLabels(points,Object.fromEntries(pointNames))}
 function restorePointLabels(labels){pointNames.clear();for(const [key,value] of Object.entries(PlannerCore.sanitizePointLabels(points,labels)))pointNames.set(key,value)}
+function pointTooltip(text){const span=document.createElement('span');span.textContent=String(text);return span}
 function pointRole(c,i){return c[2]==='via'?'Kształt trasy':i===0?'Start S':i===points.length-1?(points.length>2&&distance(c,points[0])<.001?'Powrót do startu':'Meta'):'Przystanek'}
 function decoratePointLabel(element,c,i){
  const role=document.createElement('small'),name=document.createElement('strong');role.textContent=pointRole(c,i);name.dataset.pointKey=PlannerCore.pointKey(c);name.textContent=pointNames.get(name.dataset.pointKey)||(c[2]==='via'?'Punkt kształtujący':'Ustalam nazwę…');element.append(role,name);element.title=c[1].toFixed(6)+', '+c[0].toFixed(6);
@@ -19,7 +20,7 @@ function updatePointName(key,label){
  if(!points.some(c=>PlannerCore.pointKey(c)===key)||pointNames.has(key))return;
  if(label)pointNames.set(key,label);
  for(const el of document.querySelectorAll('[data-point-key]'))if(el.dataset.pointKey===key)el.textContent=label||'Punkt na mapie';
- for(const marker of markers)if(marker.pointNameKey===key)marker.setTooltipContent(label||'Punkt na mapie');
+ for(const marker of markers)if(marker.pointNameKey===key)marker.setTooltipContent(pointTooltip(label||'Punkt na mapie'));
  commitTrip();
 }
 function queuePointName(c){
@@ -130,7 +131,7 @@ function renderLoopCards(){
  });
 }
 
-function savedSnapshot(record){if(!record)return null;return PlannerCore.sanitizeTrip({points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,surfaceData:record.surfaceData,settings:{name:record.name,profile:record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,bikeType:record.bikeType,departure:record.departure}})}
+function savedSnapshot(record){if(!record)return null;return PlannerCore.sanitizeTrip({points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,surfaceData:record.surfaceData,settings:{name:record.name,profile:record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,bikeType:record.bikeType,departure:record.departure}})}
 function renderSavedCards(){
  const host=$('saved');host.replaceChildren();let count=0;
  saved.forEach(record=>{
@@ -149,7 +150,7 @@ function renderSavedCards(){
 }
 function saveCurrentTrip(){
  if(!points.length)return;if(saved.length>=20){status('Limit 20 wypraw. Usuń zbędną lub wyeksportuj GPX.',true);return}
- saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),bikeType:$('bikeType').value});
+ saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),bikeType:$('bikeType').value});
  if(persist()){showSaved();status(track.length>1?'Wyprawa zapisana. Znajdziesz ją w „Moich zapisanych wyprawach”.':'Zapisano punkty wyprawy. Wczytasz je ręcznie z „Moich zapisanych wypraw”.')}else saved.pop();
 }
 

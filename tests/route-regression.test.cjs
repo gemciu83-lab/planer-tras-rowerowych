@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const root=path.resolve(__dirname,'..'),app=fs.readFileSync(root+'/assets/app.js','utf8');
-const core={};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-core.js','utf8'),core);
+const core={};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-trip.js','utf8'),core);vm.runInNewContext(fs.readFileSync(root+'/assets/planner-core.js','utf8'),core);
 const network={DOMException,setTimeout,clearTimeout};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-network.js','utf8'),network);
 const many=Array.from({length:1000},(_,i)=>[19+i*.00001,51]);
 const trip=core.PlannerCore.sanitizeTrip({points:many,track:[[19,51],[20,51]],settings:{}});
@@ -15,7 +15,7 @@ const readSaved={data:[{...trip,name:'Long route'}],PlannerCore:core.PlannerCore
 assert.equal(vm.runInNewContext('data.filter('+savedFilter+')',readSaved).length,1);
 console.log('PASS: add, validate and load 1000 waypoints');
 function context(){
- const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,setInterval:()=>0,Date,PlannerCore:core.PlannerCore,PlannerNetwork:{createClient:options=>network.PlannerNetwork.createClient({...options,minGapMs:0})},cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking',checked:true});return nodes.get(id)}};
+ const nodes=new Map(),env={console,URLSearchParams,DOMException,AbortController,performance,setTimeout,clearTimeout,setInterval:()=>0,Date,PlannerCore:core.PlannerCore,PlannerTrip:core.PlannerTrip,getRoutingPreferences:()=>({}),PlannerNetwork:{createClient:options=>network.PlannerNetwork.createClient({...options,minGapMs:0})},cancelLoopSearch(){},draw(){},status(message){env.message=message},distance:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),validCoordinates:cs=>core.PlannerCore.coordinatesValid(cs),$:id=>{if(!nodes.has(id))nodes.set(id,{value:'trekking',checked:true});return nodes.get(id)}};
  const ctx=vm.createContext(env);
  vm.runInContext("const routeLegCache=new Map(),routeResultCache=new Map();let points=[],track=[],surfaceData=null,routeType='',previousRoute=null,mapDistancePending=false,revision=0,controller=null,autoRouteTimer=null,map=null;",ctx);
  vm.runInContext(app.slice(app.indexOf('let routeLastPerformance='),app.indexOf('let searchId=0')),ctx);
