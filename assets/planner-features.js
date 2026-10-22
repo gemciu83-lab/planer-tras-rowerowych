@@ -124,14 +124,14 @@ function renderLoopCards(){
   preview.onclick=()=>{loopPreviewLayer?.remove();loopPreviewLayer=L.polyline(choice.feature.geometry.coordinates.map(c=>[c[1],c[0]]),{color:'#68bce9',weight:6,opacity:.9,dashArray:'8 7',interactive:false}).addTo(map);map.fitBounds(loopPreviewLayer.getBounds(),{padding:[70,130]});$('loopDialog').close();status('Podgląd propozycji '+(index+1)+'. „Zaplanuj pętlę” otwiera wybór; aktualna trasa nie została zmieniona.')};
   select.onclick=()=>{
    const selected=choice;checkpoint();cancelLoopSearch();stopGPS();revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;previousRoute=null;
-   points=selected.ps.map(c=>c.slice());track=selected.feature.geometry.coordinates;surfaceData=PlannerCore.surfaceModel(track,selected.feature.properties?.messages,distance);routeType=selected.profile;
+   clearRouteBreaks();points=selected.ps.map(c=>c.slice());track=selected.feature.geometry.coordinates;surfaceData=PlannerCore.surfaceModel(track,selected.feature.properties?.messages,distance);routeType=selected.profile;
    $('profile').value=selected.profile;renderPoints();map.fitBounds(routeLayer.getBounds(),{padding:[65,120]});$('loopDialog').close();status('Wybrano pętlę '+selected.km.toFixed(1)+' km. Możesz ją edytować lub zapisać.');
   };
   actions.append(preview,select);card.append(title,km,detail,actions);container.append(card);
  });
 }
 
-function savedSnapshot(record){if(!record)return null;return PlannerCore.sanitizeTrip({points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,surfaceData:record.surfaceData,settings:{name:record.name,profile:record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,bikeType:record.bikeType,departure:record.departure}})}
+function savedSnapshot(record){if(!record)return null;return PlannerCore.sanitizeTrip({points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,routeBreaks:record.routeBreaks,restSettings:record.restSettings,surfaceData:record.surfaceData,settings:{name:record.name,profile:record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,bikeType:record.bikeType,departure:record.departure}})}
 function renderSavedCards(){
  const host=$('saved');host.replaceChildren();let count=0;
  saved.forEach(record=>{
@@ -150,7 +150,7 @@ function renderSavedCards(){
 }
 function saveCurrentTrip(){
  if(!points.length)return;if(saved.length>=20){status('Limit 20 wypraw. Usuń zbędną lub wyeksportuj GPX.',true);return}
- saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),bikeType:$('bikeType').value});
+ saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),routeBreaks:getRouteBreaks(),restSettings:getRestSettings(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),bikeType:$('bikeType').value});
  if(persist()){showSaved();status(track.length>1?'Wyprawa zapisana. Znajdziesz ją w „Moich zapisanych wyprawach”.':'Zapisano punkty wyprawy. Wczytasz je ręcznie z „Moich zapisanych wypraw”.')}else saved.pop();
 }
 
@@ -207,6 +207,7 @@ async function renderMapCanvas(){
   if(!tiles.length||tiles.some(t=>!t.loaded||t.src.startsWith('data:')))throw Error('Poczekaj, aż wszystkie widoczne fragmenty mapy się wczytają.');
   const project=c=>map.latLngToContainerPoint([c[1],c[0]]);
   const line=track.map(project),pins=points.map((c,i)=>({p:project(c),label:i===0?'S':c[2]==='via'?'':String(points.slice(1,i+1).filter(v=>v[2]!=='via').length),via:c[2]==='via',first:i===0,last:i===points.length-1,closing:i===points.length-1&&points.length>2&&distance(c,points[0])<.001})).filter(pin=>!pin.closing);
+  const restPins=restMarkerItems().map(item=>({...item,p:project(PlannerTrip.pointAt(ensureTripPlan(),item.meters))}));
   const pngGradeModel=routeTerrain(),pngGradeRuns=terrainVisible?pngGradeModel.runs.map(run=>({color:run.color,line:pngGradeModel.coordinates.slice(run.start,run.end+1).map(project)})):null;
   const direct=routeType==='direct',attribution=document.querySelector('.leaflet-control-attribution')?.textContent||'© OpenStreetMap contributors';
   const gps=locationMarker?map.latLngToContainerPoint(locationMarker.getLatLng()):null;
@@ -220,6 +221,7 @@ async function renderMapCanvas(){
   if(line.length>1){for(const part of pngGradeRuns||[{color:'#247454',line}]){ctx.beginPath();part.line.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=part.color;ctx.lineWidth=5;ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash(direct?[8,8]:[]);ctx.stroke()}ctx.setLineDash([])}
   if(gps){ctx.beginPath();ctx.arc(gps.x,gps.y,8,0,Math.PI*2);ctx.fillStyle='#198ce0';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=3;ctx.stroke()}
   for(const pin of pins){ctx.beginPath();ctx.arc(pin.p.x,pin.p.y,pin.via?8:17,0,Math.PI*2);ctx.fillStyle=pin.via?'#f3a329':pin.first?'#087044':pin.last?'#bf2639':'#184384';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=3;ctx.stroke();if(pin.label){ctx.fillStyle='white';ctx.font='bold 15px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(pin.label,pin.p.x,pin.p.y)}}
+  drawRestImage(ctx,restPins);
   ctx.restore();ctx.fillStyle='#14252a';ctx.fillRect(0,rect.height,rect.width,32);ctx.fillStyle='#e4ebe5';ctx.font='11px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('Planer tras · '+attribution,10,rect.height+16,Math.max(1,rect.width-20));
 
 return canvas;

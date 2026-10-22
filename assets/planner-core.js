@@ -56,7 +56,7 @@
   if(!['trekking','fastbike','mtb','direct'].includes(settings.profile))settings.profile='trekking';
   if(!['trekking','gravel','road','mtb'].includes(settings.bikeType))settings.bikeType='trekking';
   const routeType=['trekking','fastbike','mtb','direct','import'].includes(value.routeType)?value.routeType:'';
-  return {points:value.points.map(c=>c[2]==='via'?[c[0],c[1],'via']:[c[0],c[1]]),track:value.track.map(c=>Number.isFinite(c[2])?[c[0],c[1],c[2]]:[c[0],c[1]]),routeType,settings,pointStops:root.PlannerTrip?.stops(value.points,value.pointStops)||[],routingPreferences:root.PlannerTrip?.preferences(value.routingPreferences)||{},pointLabels:sanitizePointLabels(value.points,value.pointLabels),surfaceData:sanitizeSurfaces(value.surfaceData),view:value.view};
+  return {points:value.points.map(c=>c[2]==='via'?[c[0],c[1],'via']:[c[0],c[1]]),track:value.track.map(c=>Number.isFinite(c[2])?[c[0],c[1],c[2]]:[c[0],c[1]]),routeType,settings,pointStops:root.PlannerTrip?.stops(value.points,value.pointStops)||[],routingPreferences:root.PlannerTrip?.preferences(value.routingPreferences)||{},routeBreaks:root.PlannerTrip?.routeBreaks(value.routeBreaks)||[],restSettings:root.PlannerTrip?.restSettings(value.restSettings)||{},pointLabels:sanitizePointLabels(value.points,value.pointLabels),surfaceData:sanitizeSurfaces(value.surfaceData),view:value.view};
  }
  const terrainCache=new WeakMap();
  function gradeColor(grade){return !Number.isFinite(grade)?'#7b8794':grade<=-8?'#1556bf':grade<=-3?'#1689d5':grade< -1?'#17a3a5':grade<=1?'#596879':grade<3?'#d4a109':grade<6?'#ef7b21':grade<10?'#df3d36':'#9d2054'}

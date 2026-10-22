@@ -11,13 +11,13 @@ function replaceTripPoint(index,c){pointStopTimes.set(c,pointStopTimes.get(point
 function getRoutingPreferences(){return PlannerTrip.preferences({surface:$('preferredSurface').value,avoidRegional:$('avoidRegional').checked,cycleRoutes:$('preferCycleRoutes').checked,localRoads:$('preferLocalRoads').checked})}
 function restoreRoutingPreferences(value){const p=PlannerTrip.preferences(value);$('preferredSurface').value=p.surface;$('avoidRegional').checked=p.avoidRegional;$('preferCycleRoutes').checked=p.cycleRoutes;$('preferLocalRoads').checked=p.localRoads;updatePreferencesState()}
 function updatePreferencesState(){const active=$('profile').value==='trekking';for(const id of ['preferredSurface','avoidRegional','preferCycleRoutes','preferLocalRoads'])$(id).disabled=!active;$('preferencesMode').textContent=active?'Preferencje są aktywne i zostaną uwzględnione przy przeliczeniu trasy.':'Aby użyć dodatkowych preferencji, wybierz profil „Turystyczny / trekking”. Szosa i MTB zachowują własne zasady.'}
-function plannedStopsMinutes(){return getPointStops().reduce((n,m)=>n+m,0)}
+function plannedStopsMinutes(){return getPointStops().reduce((n,m)=>n+m,0)+restBreakMinutes()}
 function ensureTripPlan(){
  const key=points.map(c=>c.slice(0,2).join(',')).join('|');
  if(tripPlanTrack!==track||tripPlanPoints!==key){tripPlanTrack=track;tripPlanPoints=key;tripPlanIndex=track.length>1?PlannerTrip.routeIndex(track):null;tripPlanPositions=tripPlanIndex?PlannerTrip.waypointMeters(tripPlanIndex,points):[]}
  return tripPlanIndex;
 }
-function plannedPauseBefore(meters){ensureTripPlan();return PlannerTrip.pauseBefore(meters,tripPlanPositions,getPointStops())}
+function plannedPauseBefore(meters){ensureTripPlan();return PlannerTrip.pauseBefore(meters,tripPlanPositions,getPointStops())+restPauseBefore(meters)}
 function pointStopEditor(li,c,i){
  if(!i||c[2]==='via')return;
  const label=document.createElement('label'),input=document.createElement('input');label.className='point-stop';label.textContent='Postój · min';input.type='number';input.min='0';input.max='1440';input.step='1';input.value=String(pointStopTimes.get(c)||0);input.setAttribute('aria-label','Postój w punkcie '+i+' w minutach');
@@ -28,12 +28,12 @@ function pointStopEditor(li,c,i){
 }
 function updateTripPlan(){
  if(!$('stopSummary'))return;ensureTripPlan();
- const mins=getPointStops(),planned=mins.reduce((s,n)=>s+n,0),extra=Math.max(0,Number($('pause').value)||0);
- $('stopSummary').textContent='Postoje przy punktach: '+planned+' min · dodatkowy zapas: '+extra+' min · razem: '+(planned+extra)+' min. Postój w punkcie zaczyna się po przyjeździe.';
+ const mins=getPointStops(),planned=plannedStopsMinutes(),extra=Math.max(0,Number($('pause').value)||0);
+ $('stopSummary').textContent='Zaplanowane postoje: '+planned+' min · dodatkowy zapas: '+extra+' min · razem: '+(planned+extra)+' min. Postój w punkcie zaczyna się po przyjeździe.';
  const host=$('stopItinerary');host.replaceChildren();
- if(tripPlanIndex){let before=0;points.forEach((c,i)=>{if(c[2]==='via')return;const row=document.createElement('div'),name=document.createElement('span'),value=document.createElement('strong');name.textContent=(i?'Punkt '+points.slice(1,i+1).filter(p=>p[2]!=='via').length:'Start S')+(mins[i]?' · postój '+mins[i]+' min':'');const date=PlannerCore.arrivalTime($('departure').value,tripPlanPositions[i],$('speed').value);if(date)date.setMinutes(date.getMinutes()+before);value.textContent=date?date.toLocaleString('pl-PL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Ustaw wyjazd';row.append(name,value);host.append(row);before+=mins[i]})}
+ if(tripPlanIndex)renderRestSchedule(host);
  if(placesTrack!==track){placesTrack=track;placesGeneration++;placesRequest?.abort();placesRequest=null;placesResults=[];placesLayer?.clearLayers();$('placesResults').replaceChildren();$('placesStatus').textContent=track.length>1?'Wyszukaj sklepy, wodę pitną i miejsca odpoczynku do 500 m od trasy.':'Najpierw wyznacz trasę.'}
- $('findPlaces').disabled=track.length<2||mapDistancePending||!!previousRoute||!!placesRequest;
+ $('findPlaces').disabled=track.length<2||mapDistancePending||!!previousRoute||!!placesRequest;updateRestMarkers();
 }
 function insertPlaceStop(item){
  if(placesTrack!==track||track.length<2||mapDistancePending||previousRoute)return;

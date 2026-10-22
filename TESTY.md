@@ -1,9 +1,22 @@
-# Weryfikacja wersji 2.7 — 21.10.2026
+# Weryfikacja wersji 2.8 — 22.10.2026
 
-- Pełny zestaw `node tests/planner.test.cjs` obejmuje trasowanie, odmowy HTTP 403/429, wiele punktów oraz nowe funkcje planowania.
-- Prawdziwy BRouter zwrócił HTTP 200 dla trasy z kompletem nowych preferencji; testowana trasa w Piotrkowie miała około 4,5 km. Format przełączników API sprawdzony na serwerze (wartości liczbowe 1/0).
-- W przeglądarce: zapis wycieczki z postojem 20 min, ponowne uruchomienie z pustą mapą i ręczne wczytanie zachowały postój i preferencje. Sama jazda 17 min, z postojem 37 min; godziny przyjazdu uwzględniają wcześniejsze postoje.
-- W przeglądarce, na jawnie testowych odpowiedziach: trzy kategorie miejsc pojawiają się na mapie i liście. Dodanie sklepu wstawia punkt do kolejności, zachowuje poprzedni postój 20 min, dodaje nowy postój 10 min i uruchamia przeliczenie.
-- Testy obejmują przesuwanie, odwracanie i usuwanie punktów, zgodność starszych zapisów, projekcję na ślad z 10 000 wierzchołków oraz bezpieczne wyświetlanie nazw z zewnętrznych danych.
-- **Nie udało się potwierdzić wyszukiwania miejsc na żywo.** Publiczne usługi Overpass podczas testów odmawiały odpowiedzi lub przekraczały limit czasu. Logika interfejsu i przetwarzania danych została sprawdzona oddzielnie na odpowiedziach testowych. Nie jest to potwierdzenie bieżącej dostępności publicznego serwera. Wersja nie zawiera przykładowych miejsc ani testowego serwera.
-- Nowa wersja jest przygotowana lokalnie. Nie została opublikowana w repozytorium ani na GitHub Pages przez asystenta.
+Pełny zestaw `node tests/planner.test.cjs` przechodzi, łącznie z testami trasowania i nowymi testami przerw.
+
+Sprawdzone w przeglądarce na syntetycznej trasie GPX długości 108 km:
+
+- Propozycje odpoczynku na 25, 50, 75 i 100 km.
+- Kliknięcie propozycji i zaplanowanie przerwy 10 min: czas zmienia się z 6 h 45 min na 6 h 55 min.
+- Postój 15 min przypisany do punktu: całość 7 h 10 min. Cofnięcie wraca do 6 h 55 min, ponowienie do 7 h 10 min.
+- Zapis, ponowne uruchomienie z pustą mapą i ręczne wczytanie zachowują oba postoje oraz ustawienia przerw.
+- Zmiana odstępu na 20 km i domyślnego czasu na 15 min, chowanie/pokazywanie propozycji i kliknięcie podpisu na mapie.
+- Rozmieszczenie pobliskich podpisów poprawione, aby kliknięcie propozycji 20 km nie otwierało sąsiedniego postoju 25 km.
+- Lokalny serwer testowy zliczał żądania trasowania: 0, mimo edycji przerw i ponownego wczytania wycieczki.
+- Konsola przeglądarki nie zgłosiła błędów JavaScript podczas tych testów.
+
+Testy obliczeń obejmują też granice przed metą, unikanie propozycji obok zaplanowanych postojów, pozycjonowanie na segmentach śladu, starsze zapisy, wyłączanie postojów poza skróconą trasą oraz czyszczenie planu.
+
+Renderer PNG ma dodane znaczniki przerw; test rysowania sprawdza podpisy planowanych i proponowanych przerw. Test pobrania PNG w przeglądarce nie został zakończony: połączenie automatyzacji z przeglądarką przekroczyło czas i zostało przerwane. Nie traktujemy eksportu jako w pełni sprawdzonego ręcznie.
+
+Wyszukiwanie sklepów/wody/odpoczynku przez Overpass nie było zmieniane ani ponownie potwierdzane na żywo. Zachowuje ograniczenia dostępności zewnętrznego serwera opisane w README.
+
+Paczka nie zawiera trasy syntetycznej, testowego serwera ani zapisanych wycieczek. Asystent nie opublikował wersji 2.8 na GitHubie ani GitHub Pages.

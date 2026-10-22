@@ -248,7 +248,7 @@ $('mapCalculate').onclick=()=>$('route').onclick(false);
 let searchId=0,searchController=null;$('searchform').onsubmit=async e=>{e.preventDefault();const query=$('search').value.trim();if(!query)return;const id=++searchId;searchController?.abort();searchController=new AbortController();const thisSearch=searchController;const searchTimeout=setTimeout(()=>thisSearch.abort(),15000);$('results').replaceChildren();status('Szukam miejscowości…');try{const r=await fetch('https://photon.komoot.io/api/?'+new URLSearchParams({q:query,limit:5,lat:map?.getCenter().lat||51.405,lon:map?.getCenter().lng||19.703}),{signal:thisSearch.signal});if(!r.ok)throw Error();const data=await r.json();if(id!==searchId)return;if(!data.features?.length){status('Brak wyników. Spróbuj wpisać pełniejszy adres.',true);return}data.features.filter(f=>f?.geometry?.type==='Point'&&validCoordinates([f.geometry.coordinates])).forEach(f=>{const p=f.properties,b=document.createElement('button');b.type='button';b.textContent=[p.name,p.street,p.city,p.country].filter(Boolean).join(', ')||'Punkt na mapie';b.onclick=()=>{map?.setView([f.geometry.coordinates[1],f.geometry.coordinates[0]],15);add(f.geometry.coordinates.slice(0,2),b.textContent);$('results').replaceChildren()};$('results').append(b)});status('Wybierz wynik, aby dodać punkt trasy.')}catch{if(id===searchId)status('Wyszukiwanie chwilowo niedostępne. Dodaj punkt kliknięciem na mapie.',true)}finally{clearTimeout(searchTimeout)}};
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('gpx').onclick=()=>{if(track.length<2)return;const name=$('name').value.trim()||'Moja trasa';const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rowerem" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>'+esc(name)+'</name></metadata><trk><name>'+esc(name)+'</name><trkseg>'+track.map(c=>'<trkpt lat="'+c[1]+'" lon="'+c[0]+'">'+(Number.isFinite(c[2])?'<ele>'+c[2]+'</ele>':'')+'</trkpt>').join('')+'</trkseg></trk></gpx>';download(xml,'trasa-rowerowa.gpx','application/gpx+xml')};
-$('import').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>10000000)throw Error();const doc=new DOMParser().parseFromString(await f.text(),'application/xml');if(doc.querySelector('parsererror'))throw Error();const segments=[...doc.getElementsByTagNameNS('*','trkseg')];if(segments.length>1)throw Error('segments');let nodes=[...doc.getElementsByTagNameNS('*','trkpt')];if(!nodes.length)nodes=[...doc.getElementsByTagNameNS('*','rtept')];const cs=nodes.map(n=>{const lat=Number(n.getAttribute('lat')),lon=Number(n.getAttribute('lon')),ele=n.getElementsByTagNameNS('*','ele')[0];if(!n.hasAttribute('lat')||!n.hasAttribute('lon')||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw Error();return ele&&ele.textContent.trim()&&Number.isFinite(Number(ele.textContent))?[lon,lat,Number(ele.textContent)]:[lon,lat]});if(cs.length<2||!validCoordinates(cs))throw Error();checkpoint();invalidate(false);points=[cs[0].slice(0,2),cs.at(-1).slice(0,2)];track=cs;surfaceData=null;routeType='import';$('name').value=doc.getElementsByTagNameNS('*','name')[0]?.textContent?.slice(0,100)||f.name;renderPoints();map?.fitBounds(routeLayer.getBounds(),{padding:[55,100]});status('Wczytano ślad GPX. Zmiana punktów usuwa ślad i pozwala wyznaczyć nową trasę.')}catch(e){status(e.message==='segments'?'Plik zawiera kilka odcinków. Wczytaj jeden ciągły ślad GPX.':'Nieprawidłowy GPX, brak śladu lub plik większy niż 10 MB.',true)}finally{$('file').value=''}};
+$('import').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>10000000)throw Error();const doc=new DOMParser().parseFromString(await f.text(),'application/xml');if(doc.querySelector('parsererror'))throw Error();const segments=[...doc.getElementsByTagNameNS('*','trkseg')];if(segments.length>1)throw Error('segments');let nodes=[...doc.getElementsByTagNameNS('*','trkpt')];if(!nodes.length)nodes=[...doc.getElementsByTagNameNS('*','rtept')];const cs=nodes.map(n=>{const lat=Number(n.getAttribute('lat')),lon=Number(n.getAttribute('lon')),ele=n.getElementsByTagNameNS('*','ele')[0];if(!n.hasAttribute('lat')||!n.hasAttribute('lon')||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw Error();return ele&&ele.textContent.trim()&&Number.isFinite(Number(ele.textContent))?[lon,lat,Number(ele.textContent)]:[lon,lat]});if(cs.length<2||!validCoordinates(cs))throw Error();checkpoint();clearRouteBreaks();invalidate(false);points=[cs[0].slice(0,2),cs.at(-1).slice(0,2)];track=cs;surfaceData=null;routeType='import';$('name').value=doc.getElementsByTagNameNS('*','name')[0]?.textContent?.slice(0,100)||f.name;renderPoints();map?.fitBounds(routeLayer.getBounds(),{padding:[55,100]});status('Wczytano ślad GPX. Zmiana punktów usuwa ślad i pozwala wyznaczyć nową trasę.')}catch(e){status(e.message==='segments'?'Plik zawiera kilka odcinków. Wczytaj jeden ciągły ślad GPX.':'Nieprawidłowy GPX, brak śladu lub plik większy niż 10 MB.',true)}finally{$('file').value=''}};
 function validCoordinates(cs){return Array.isArray(cs)&&cs.length<=150000&&cs.every(c=>Array.isArray(c)&&Number.isFinite(c[0])&&Number.isFinite(c[1])&&Math.abs(c[0])<=180&&Math.abs(c[1])<=90)}
 try{const data=JSON.parse(localStorage.getItem('rowerem-routes-v1')||'[]');if(Array.isArray(data))saved=data.filter(s=>s&&typeof s.name==='string'&&PlannerCore.coordinatesValid(s.points,Infinity)&&validCoordinates(s.track)&&(s.track.length===0||s.track.length>1))}catch{}
 function persist(){try{localStorage.setItem('rowerem-routes-v1',JSON.stringify(saved));return true}catch{status('Brak miejsca lub zapisy są zablokowane. Wyeksportuj GPX.',true);return false}}
@@ -330,16 +330,16 @@ for(const id of ['hideMapReadings','mapDistanceBadge','mapCaloriesTile','mapSpee
 $('hideMapReadings').onclick=()=>{mapReadings.hidden=true;$('showMapReadings').hidden=false;$('showMapReadings').focus()};
 $('showMapReadings').onclick=()=>{mapReadings.hidden=false;$('showMapReadings').hidden=true;$('hideMapReadings').focus()};
 $('mapBottomActions').prepend($('mapFullscreen'));
-function positionMapActions(){ $('mapBottomActions').style.top=Math.max(0,$('map').offsetHeight-65)+'px';$('mapHelp').style.top=Math.max(0,$('map').offsetHeight-60)+'px'; }
+function positionMapActions(){ $('mapBottomActions').style.top=Math.max(0,$('map').offsetHeight-Math.max(65,$('mapBottomActions').offsetHeight+28))+'px';$('mapHelp').style.top=Math.max(0,$('map').offsetHeight-60)+'px'; }
 new ResizeObserver(positionMapActions).observe($('map'));positionMapActions();
 L.DomEvent.disableClickPropagation($('mapBottomActions'));
 $('saveMapPNG').onclick=()=>exportTripImage('map');
 
 // Trip history and local recovery. A routed track is immutable and can be shared by snapshots.
 function captureTrip(){
- return {points:points.map(c=>[...c]),track,routeType,surfaceData,pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),settings:Object.fromEntries(tripFields.map(id=>[id,$(id).value])),view:map?{center:[map.getCenter().lat,map.getCenter().lng],zoom:map.getZoom()}:null};
+ return {points:points.map(c=>[...c]),track,routeType,surfaceData,pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),routeBreaks:getRouteBreaks(),restSettings:getRestSettings(),settings:Object.fromEntries(tripFields.map(id=>[id,$(id).value])),view:map?{center:[map.getCenter().lat,map.getCenter().lng],zoom:map.getZoom()}:null};
 }
-function sameTrip(a,b){return a&&b&&a.track===b.track&&a.routeType===b.routeType&&a.surfaceData===b.surfaceData&&JSON.stringify(a.pointLabels)===JSON.stringify(b.pointLabels)&&JSON.stringify(a.pointStops)===JSON.stringify(b.pointStops)&&JSON.stringify(a.routingPreferences)===JSON.stringify(b.routingPreferences)&&JSON.stringify(a.points)===JSON.stringify(b.points)&&JSON.stringify(a.settings)===JSON.stringify(b.settings)}
+function sameTrip(a,b){return a&&b&&a.track===b.track&&a.routeType===b.routeType&&a.surfaceData===b.surfaceData&&JSON.stringify(a.pointLabels)===JSON.stringify(b.pointLabels)&&JSON.stringify(a.pointStops)===JSON.stringify(b.pointStops)&&JSON.stringify(a.routingPreferences)===JSON.stringify(b.routingPreferences)&&JSON.stringify(a.routeBreaks)===JSON.stringify(b.routeBreaks)&&JSON.stringify(a.restSettings)===JSON.stringify(b.restSettings)&&JSON.stringify(a.points)===JSON.stringify(b.points)&&JSON.stringify(a.settings)===JSON.stringify(b.settings)}
 function updateHistoryButtons(){if($('undo'))$('undo').disabled=!historyPast.length;if($('redo'))$('redo').disabled=!historyFuture.length}
 function checkpoint(){
  if(!tripReady||historyMuted||!historyCurrent)return;
@@ -360,7 +360,7 @@ function saveDraft(){
 }
 function applyTrip(snapshot,fit=false){
  historyMuted=true;cancelLoopSearch();stopGPS();stopFollow();revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;previousRoute=null;
- points=snapshot.points.map(c=>[...c]);restorePointLabels(snapshot.pointLabels);restorePointStops(snapshot.pointStops);restoreRoutingPreferences(snapshot.routingPreferences);track=snapshot.track;surfaceData=snapshot.surfaceData||null;routeType=snapshot.routeType;
+ points=snapshot.points.map(c=>[...c]);restorePointLabels(snapshot.pointLabels);restorePointStops(snapshot.pointStops);restoreRoutingPreferences(snapshot.routingPreferences);restoreRouteBreaks(snapshot.routeBreaks);restoreRestSettings(snapshot.restSettings);track=snapshot.track;surfaceData=snapshot.surfaceData||null;routeType=snapshot.routeType;
  for(const id of tripFields)if(snapshot.settings[id]!==undefined)$(id).value=id==='departure'&&!snapshot.settings[id]?departureNow():snapshot.settings[id];
  renderPoints();
  const view=snapshot.view;
@@ -403,7 +403,7 @@ L.DomEvent.disableClickPropagation(mapReadings);L.DomEvent.disableScrollPropagat
 
 // Start every session with a clean map. Only rider/bike preferences are restored.
 function clearTrip(){
- checkpoint();stopGPS();stopFollow();points=[];invalidate(false);renderPoints();
+ checkpoint();stopGPS();stopFollow();clearRouteBreaks();points=[];invalidate(false);renderPoints();
  $('loopResult').textContent='Ustaw start S, aby zaplanować nową pętlę.';
  status('Trasa wyczyszczona. Ustaw start na mapie lub użyj „Moja lokalizacja”.');
 }
@@ -413,7 +413,7 @@ function initializeFreshTrip(){
   const settings=JSON.parse(localStorage.getItem('rowerem-settings-v1')||'null');
   if(settings){const clean=PlannerCore.sanitizeTrip({points:[],track:[],settings});if(clean)for(const id of ['profile','speed','pause','riderWeight','bikeWeight','bikeType'])$(id).value=clean.settings[id];restoreRoutingPreferences(settings.routingPreferences)}
  }catch{}
- points=[];track=[];routeType='';surfaceData=null;previousRoute=null;mapDistancePending=false;
+ clearRouteBreaks();points=[];track=[];routeType='';surfaceData=null;previousRoute=null;mapDistancePending=false;
  historyPast=[];historyFuture=[];tripReady=true;renderPoints();historyCurrent=captureTrip();updateHistoryButtons();
  $('draftInfo').textContent='Nowa wyprawa — trasy wczytujesz samodzielnie z GPX lub zapisanych wypraw.';
 }
@@ -437,5 +437,5 @@ try{
 for(const id of ['mapStyle','slopeColors','slopeLabels'])$(id).addEventListener('change',saveViewPreferences);
 for(const id of ['hideMapReadings','showMapReadings','toggleMapParameters'])$(id).addEventListener('click',()=>queueMicrotask(saveViewPreferences));
 
-initPlannerFeatures();initTripPlanning();
+initPlannerFeatures();initTripPlanning();initRestPlanning();
 

@@ -51,6 +51,32 @@
   if(!kind)return null;const hit=nearest(index,c);if(!hit||hit.offset>500)return null;
   return {id:element.type+'/'+element.id,kind,c,name:String(t.name||t.brand||({water:'Woda pitna',shop:'Sklep',rest:'Miejsce odpoczynku'})[kind]).slice(0,160),hours:String(t.opening_hours||'').slice(0,160),...hit};
  }
- root.PlannerTrip={preferences,routingOptions,stops,haversine,routeIndex,nearest,waypointMeters,pauseBefore,corridor,placesQuery,place};
+ function restSettings(value){
+  const p=value&&typeof value==='object'?value:{},km=Number(p.intervalKm),minutes=Number(p.minutes);
+  return {showSuggestions:p.showSuggestions!==false,intervalKm:Number.isFinite(km)&&km>=5&&km<=250?Math.round(km):25,minutes:Number.isFinite(minutes)&&minutes>=1&&minutes<=1440?Math.round(minutes):10};
+ }
+ function routeBreaks(value){
+  if(!Array.isArray(value))return [];const byMeter=new Map();
+  for(const p of value){if(!p||!Number.isFinite(p.meters)||p.meters<=0||p.meters>100000000||!Number.isFinite(p.minutes)||p.minutes<1||p.minutes>1440)continue;byMeter.set(Math.round(p.meters),{meters:Math.round(p.meters),minutes:Math.round(p.minutes)})}
+  return [...byMeter.values()].sort((a,b)=>a.meters-b.meters);
+ }
+ function pointAt(index,meters){
+  if(!index||index.cs.length<2||!Number.isFinite(meters))return null;
+  const target=Math.max(0,Math.min(index.total,meters));let lo=1,hi=index.meters.length-1;
+  while(lo<hi){const mid=(lo+hi)>>1;if(index.meters[mid]<target)lo=mid+1;else hi=mid}
+  const a=index.cs[lo-1],b=index.cs[lo],span=index.meters[lo]-index.meters[lo-1],t=span?(target-index.meters[lo-1])/span:0;
+  return [a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])];
+ }
+ function suggestedBreaks(index,settings,occupied=[]){
+  const p=restSettings(settings);if(!index||!p.showSuggestions)return [];
+  const existing=occupied.filter(Number.isFinite).sort((a,b)=>a-b),out=[];let i=0;
+  for(let m=p.intervalKm*1000;m<index.total-500;m+=p.intervalKm*1000){
+   while(i<existing.length&&existing[i]<m-500)i++;
+   if(i<existing.length&&Math.abs(existing[i]-m)<=500)continue;
+   out.push({meters:m,minutes:p.minutes});
+  }
+  return out;
+ }
+ root.PlannerTrip={preferences,routingOptions,stops,haversine,routeIndex,nearest,waypointMeters,pauseBefore,corridor,placesQuery,place,restSettings,routeBreaks,pointAt,suggestedBreaks};
 })(typeof globalThis!=='undefined'?globalThis:this);
 

@@ -1,6 +1,16 @@
-# Planer tras rowerowych 2.7
+# Planer tras rowerowych 2.8
 
-Nowa wersja strony: preferencje dróg i nawierzchni, miejsca przy trasie i postoje przy punktach.
+Nowa wersja strony: widoczne postoje i propozycje odpoczynku na linii trasy. Pozostają preferencje dróg, wyszukiwanie miejsc i postoje przy punktach z wersji 2.7.
+
+## Nowość: przerwy na mapie
+
+- Po wyznaczeniu lub wczytaniu trasy pojawiają się żółte znaczniki **„Odpoczynek?”**, domyślnie co 25 km. To propozycje pozycji na śladzie, a nie potwierdzone sklepy, ławki czy miejsca odpoczynku w terenie.
+- Kliknij ikonę lub jej podpis, ustaw czas i wybierz **„Zaplanuj ten postój”**. Znacznik zmieni się na zielony **„Postój 10 min”**. Dopiero zaakceptowany postój wpływa na czas wyprawy i kolejne godziny przyjazdu.
+- W prawym dolnym rogu mapy, obok pełnego ekranu i zapisu PNG, jest przycisk **„Ⅱ Postoje”**. Zmienisz tam odstęp (domyślnie 25 km), domyślny czas przerwy (10 min), schowasz propozycje i usuniesz zaplanowane przerwy. Zmiana domyślnego czasu dotyczy kolejnych propozycji; nie nadpisuje już zaplanowanych przerw.
+- Postoje wpisane przy punktach wycieczki także mają zielony znacznik na mapie. Kliknij go, aby zmienić czas lub usunąć przerwę.
+- Przerwy na kilometrze nie są nowymi punktami trasowania: ich edycja nie zmienia kilometrażu ani nie wysyła zapytań do serwera tras. Nie proponujemy kolejnej przerwy do 500 m od już zaplanowanej ani w ostatnich 500 m przed metą.
+- Przerwy zapisują się z wycieczką i działają z cofaniem/ponawianiem zmian. Po zmianie przebiegu wycieczki przerwa „25 km” pozostaje na 25. kilometrze od startu nowego przebiegu. Jeśli skrócisz trasę przed ten kilometr, nie doliczamy takiej przerwy; jej wpis pozostaje do usunięcia lub ponownego wykorzystania po wydłużeniu trasy.
+- Przy uruchomieniu mapa nadal pozostaje pusta. Wczytaj zapisaną wycieczkę ręcznie.
 
 ## Obsługa
 
@@ -27,8 +37,9 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 2.7.0”.
+Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 2.8.0”.
 
 ## Weryfikacja
 
 Testy lokalne (Node.js): `node tests/planner.test.cjs`. Obejmują dotychczasowe zachowanie trasowania i nowe preferencje, walidację postojów, kolejność godzin przyjazdu, zgodność starszych zapisów, projekcję miejsc na trasę, dodawanie przystanków oraz zachowanie czasów podczas przesuwania, odwracania i usuwania punktów. Zewnętrzne serwery mogą okresowo odmawiać lub opóźniać odpowiedzi; testy lokalne nie gwarantują ich dostępności.
+
