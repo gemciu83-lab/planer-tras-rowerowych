@@ -77,7 +77,7 @@ function invalidate(auto=true){
  if(auto&&points.length>1){if(track.length>1)previousRoute={track,routeType};}
  else previousRoute=null;
  track=[];surfaceData=null;routeType='';mapDistancePending=auto&&points.length>1&&$('autoRouting').checked;draw();stats();
- if(mapDistancePending){if(routingAutoPaused&&$('profile').value!=='direct'){mapDistancePending=false;showRoutingPause()}else{status('Punkty zmienione. Obliczę trasę, gdy zakończysz dodawanie punktów…');autoRouteTimer=setTimeout(()=>$('route').onclick(true),1500)}}
+ if(mapDistancePending){if(routingAutoPaused&&$('profile').value!=='direct'){mapDistancePending=false;showRoutingPause()}else{status('Punkty zmienione. Obliczę trasę, gdy zakończysz dodawanie punktów…');autoRouteTimer=setTimeout(()=>$('route').onclick(true),600)}}
  else status(points.length>1?'Punkty gotowe. Kliknij „Wyznacz trasę”, aby obliczyć kilometry po drogach.':'Dodaj co najmniej dwa punkty.');
 }
 
@@ -134,7 +134,7 @@ new ResizeObserver(()=>map.invalidateSize({pan:false})).observe($('map'));
 routeLayer=L.polyline([],{color:'#247454',weight:5}).addTo(map);draftLayer=L.polyline([],{color:'#7a8a75',weight:3,dashArray:'5 9'}).addTo(map);routeHitLayer=L.polyline([],{color:'#247454',weight:24,opacity:0,bubblingMouseEvents:false,className:'route-drag-line'}).addTo(map);initRouteTerrain();routeHitLayer.on('mousedown',beginLineDrag);routeHitLayer.on('click',e=>{if(e.originalEvent)L.DomEvent.stop(e.originalEvent);if(isTouchMap(e))handlePlannerMapClick(e)});map.on('click',e=>{if(!routeDrag&&Date.now()-lastLineDrag>400)handlePlannerMapClick(e)});
 
 let gpsSession=null;
-function stopGPS(session=gpsSession){if(!session)return;session.cancelled=true;if(session.watchId!==null)navigator.geolocation.clearWatch?.(session.watchId);clearTimeout(session.deadline);clearTimeout(session.settle);if(gpsSession===session)gpsSession=null;$('locate').classList.remove('is-locating');$('locate').setAttribute('aria-busy','false')}
+function stopGPS(session=gpsSession){if(!session)return;session.cancelled=true;if(session.watchId!==null)navigator.geolocation.clearWatch?.(session.watchId);clearTimeout(session.deadline);if(gpsSession===session)gpsSession=null;$('locate').classList.remove('is-locating');$('locate').setAttribute('aria-busy','false')}
 function drawGPSPosition(p){
  showGPSQuality(p);const c=p.coords,pos=[c.latitude,c.longitude],accuracy=Math.round(c.accuracy);
  if(accuracyCircle)accuracyCircle.setLatLng(pos).setRadius(c.accuracy);
@@ -143,11 +143,54 @@ function drawGPSPosition(p){
  if(locationMarker)locationMarker.setLatLng(pos).setTooltipContent(tooltip);
  else{locationMarker=L.circleMarker(pos,{radius:8,color:'white',weight:3,fillColor:'#198ce0',fillOpacity:1}).addTo(map).bindTooltip(tooltip);locationMarker.on('click',e=>{if(e.originalEvent)L.DomEvent.stop(e.originalEvent);const current=locationMarker.getLatLng();setGPSStart(current.lng,current.lat);status('Aktualna lokalizacja jest punktem startowym S.')})}
 }
-function finishGPS(session){if(session!==gpsSession||session.cancelled)return;const best=session.best;if(!best){stopGPS(session);$('locationInfo').textContent='Nie udało się uzyskać aktualnej lokalizacji. Spróbuj ponownie lub ustaw start ręcznie.';status($('locationInfo').textContent,true);return}const c=best.coords,accuracy=Math.round(c.accuracy),useAsStart=(!session.auto||!points.length)&&session.pointsKey===JSON.stringify(points);drawGPSPosition(best);stopGPS(session);if(map&&useAsStart)map.setView([c.latitude,c.longitude],accuracy<=30?17:accuracy<=150?15:13);if(useAsStart)setGPSStart(c.longitude,c.latitude);$('locationInfo').textContent='Dokładność około '+accuracy+' m · '+c.latitude.toFixed(6)+', '+c.longitude.toFixed(6);status((useAsStart?'Twoja lokalizacja jest startem trasy. ':'Zachowano start istniejącej trasy. ')+'Dokładność około '+accuracy+' m.'+(accuracy>100?' Pozycja jest przybliżona; możesz skorygować start przeciągając punkt S.':''),accuracy>100);}
-function locate(auto=false){stopFollow();if(!window.isSecureContext){status('Lokalizacja wymaga HTTPS lub uruchomienia przez URUCHOM.cmd (localhost).',true);return}if(!navigator.geolocation){status('Ta przeglądarka nie udostępnia lokalizacji.',true);return}stopGPS();const session={auto,best:null,watchId:null,deadline:null,settle:null,cancelled:false,started:Date.now(),fixes:0,pointsKey:JSON.stringify(points)};gpsSession=session;$('locate').classList.add('is-locating');$('locate').setAttribute('aria-busy','true');$('locationInfo').textContent='Szukam świeżej, dokładniejszej pozycji…';status('Ustalam lokalizację. Czekam na dokładniejsze pomiary, maksymalnie 30 sekund.');session.deadline=setTimeout(()=>finishGPS(session),30000);
- const success=p=>{if(session!==gpsSession||session.cancelled)return;const c=p.coords;if(!c||!Number.isFinite(c.latitude)||!Number.isFinite(c.longitude)||!Number.isFinite(c.accuracy)||c.accuracy<0||Math.abs(c.latitude)>90||Math.abs(c.longitude)>180)return;if(Number.isFinite(p.timestamp)&&p.timestamp<session.started-2000)return;session.fixes++;if(!session.best||c.accuracy<session.best.coords.accuracy){session.best=p;drawGPSPosition(p);$('locationInfo').textContent='Doprecyzowuję lokalizację · najlepsza dokładność około '+Math.round(c.accuracy)+' m';if(session.settle===null)session.settle=setTimeout(()=>finishGPS(session),c.accuracy<=30?1200:8000);if(session.fixes===1&&(!session.auto||!points.length))map.setView([c.latitude,c.longitude],c.accuracy<=150?15:12)}if(session.best.coords.accuracy<=10)finishGPS(session)};
- const failure=e=>{if(session!==gpsSession||session.cancelled)return;if(e.code===1){stopGPS(session);$('locationInfo').textContent='Dostęp do lokalizacji został zablokowany. Zezwól na lokalizację w przeglądarce.';status($('locationInfo').textContent,true)}else if(session.best)finishGPS(session);else if(!navigator.geolocation.watchPosition){stopGPS(session);status('Lokalizacja niedostępna. Spróbuj ponownie lub ustaw start na mapie.',true)}};
- try{const options={enableHighAccuracy:true,maximumAge:0,timeout:20000};if(navigator.geolocation.watchPosition){session.watchId=navigator.geolocation.watchPosition(success,failure,options);if(session.cancelled)navigator.geolocation.clearWatch(session.watchId)}else navigator.geolocation.getCurrentPosition(success,failure,options)}catch{failure({code:1})}
+// Publish the first valid fix immediately; refinement must never move an edited route.
+function finishGPS(session){
+ if(session!==gpsSession||session.cancelled)return;
+ const missing=!session.best;stopGPS(session);
+ if(missing){$('locationInfo').textContent='Nie udało się uzyskać lokalizacji. Ustaw start na mapie lub ponów „Moja lokalizacja”.';status($('locationInfo').textContent,true)}
+}
+function locate(auto=false){
+ stopFollow();
+ if(!window.isSecureContext){status('Lokalizacja wymaga HTTPS lub uruchomienia przez URUCHOM.cmd (localhost).',true);return}
+ if(!navigator.geolocation){status('Ta przeglądarka nie udostępnia lokalizacji.',true);return}
+ stopGPS();
+ const session={auto,best:null,bestFresh:false,watchId:null,deadline:null,cancelled:false,started:Date.now(),pointsKey:JSON.stringify(points),revision,ownedStart:null,ownedRevision:null,firstPublished:false};
+ gpsSession=session;$('locate').classList.add('is-locating');$('locate').setAttribute('aria-busy','true');
+ $('locationInfo').textContent='Ustalam lokalizację…';status('Ustalam lokalizację. Po pierwszym pomiarze od razu ustawimy start S.');
+ session.deadline=setTimeout(()=>finishGPS(session),15000);
+ const success=(p,quick=false)=>{
+  if(session!==gpsSession||session.cancelled)return;
+  const c=p?.coords,age=Date.now()-p?.timestamp;
+  if(!c||!Number.isFinite(c.latitude)||!Number.isFinite(c.longitude)||!Number.isFinite(c.accuracy)||c.accuracy<0||Math.abs(c.latitude)>90||Math.abs(c.longitude)>180||!Number.isFinite(age)||age < -5000||age>(quick?60000:15000))return;
+  const fresh=age<=2000;
+  if(session.best&&((session.bestFresh&&!fresh)||(session.bestFresh===fresh&&c.accuracy>=session.best.coords.accuracy)))return;
+  const first=!session.firstPublished;
+  session.best=p;session.bestFresh=fresh;session.firstPublished=true;
+  const initialAllowed=first&&session.revision===revision&&session.pointsKey===JSON.stringify(points)&&(!auto||!points.length);
+  const refineAllowed=!first&&session.ownedStart&&points.length===1&&points[0]===session.ownedStart&&revision===session.ownedRevision;
+  if(initialAllowed||refineAllowed){
+   setGPSStart(c.longitude,c.latitude);session.ownedStart=points.length===1?points[0]:null;session.ownedRevision=revision;
+   if(map)map.setView([c.latitude,c.longitude],c.accuracy<=30?17:c.accuracy<=150?15:13);
+  }
+  drawGPSPosition(p);$('locate').classList.remove('is-locating');$('locate').setAttribute('aria-busy','false');
+  const accuracy=Math.round(c.accuracy),cached=!fresh?' · pomiar sprzed '+Math.max(0,Math.round(age/1000))+' s':'';
+  $('locationInfo').textContent='Dokładność około '+accuracy+' m'+cached+' · '+c.latitude.toFixed(6)+', '+c.longitude.toFixed(6);
+  if(!fresh){$('gpsQuality').textContent+=' · ostatni pomiar';$('gpsQuality').classList.add('approximate')}
+  if(first)status((initialAllowed?'Start S ustawiony. Kliknij mapę, aby dodać punkt 1. ':'Zachowano start istniejącej trasy. ')+(fresh?'':'Użyto ostatniego pomiaru; doprecyzowuję w tle. ')+(accuracy>100?'Pozycja przybliżona — możesz przesunąć S.':''),accuracy>100);
+  if(fresh&&c.accuracy<=10)finishGPS(session);
+ };
+ const failure=(e,quick=false)=>{
+  if(session!==gpsSession||session.cancelled)return;
+  if(e?.code===1){stopGPS(session);$('locationInfo').textContent='Dostęp do lokalizacji zablokowany. Zezwól na lokalizację lub ustaw start ręcznie.';status($('locationInfo').textContent,true)}
+  else if(!quick&&session.best)finishGPS(session);
+ };
+ try{
+  // The browser may return a recent fix without waiting for a new high-accuracy sample.
+  if(navigator.geolocation.getCurrentPosition)navigator.geolocation.getCurrentPosition(p=>success(p,true),e=>failure(e,true),{enableHighAccuracy:false,maximumAge:60000,timeout:5000});
+  if(session.cancelled)return;
+  if(navigator.geolocation.watchPosition){session.watchId=navigator.geolocation.watchPosition(p=>success(p),e=>failure(e),{enableHighAccuracy:true,maximumAge:0,timeout:15000});if(session.cancelled)navigator.geolocation.clearWatch?.(session.watchId)}
+  else if(navigator.geolocation.getCurrentPosition)navigator.geolocation.getCurrentPosition(p=>success(p),e=>failure(e),{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+ }catch{failure({code:2})}
 }
 window.addEventListener('pagehide',()=>stopGPS());
 function updateClock(){const now=new Date(),dateFormat=new Intl.DateTimeFormat('pl-PL',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'Europe/Warsaw'}),parts=new Intl.DateTimeFormat('pl-PL',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Europe/Warsaw'}).formatToParts(now),value=type=>parts.find(p=>p.type===type)?.value||'00';$('currentDate').textContent=dateFormat.format(now);$('currentTime').textContent=value('hour')+':'+value('minute');$('currentSeconds').textContent=':'+value('second');$('liveDateTime').setAttribute('datetime',now.toISOString())}
@@ -212,7 +255,31 @@ async function fetchRoutingFeature(ps,signal,profile){
  cacheFeature(routeLegCache,key,feature,60);return feature;
 }
 function mergeRoutingLegs(legs){const coordinates=[],messages=[];let header=null,canMergeMessages=true;for(const f of legs){const cs=f.geometry.coordinates,previous=coordinates.at(-1),first=cs[0];if(previous&&distance(previous,first)>.001)return null;for(let i=previous?1:0;i<cs.length;i++)coordinates.push(cs[i]);const rows=f.properties?.messages;if(!Array.isArray(rows)||rows.length<2){canMergeMessages=false;continue}const h=Array.isArray(rows[0])?rows[0]:String(rows[0]).split('\t');if(!header){header=h;messages.push(h)}if(JSON.stringify(h)!==JSON.stringify(header)){canMergeMessages=false;continue}for(let i=1;i<rows.length;i++)messages.push(rows[i])}return {type:'Feature',geometry:{type:'LineString',coordinates},properties:canMergeMessages&&header?{messages}:{}}}
-async function fastRouteFeature(ps,signal){routeLastPerformance={requests:0,cachedLegs:0};const fullKey=routingParameters(ps).toString(),cached=cachedFeature(routeResultCache,fullKey);if(cached){routeLastPerformance.cachedLegs=ps.length-1;return cached}const legs=ps.slice(1).map((p,i)=>{const pair=[ps[i],p],key=routingParameters(pair).toString();return {pair,key,feature:cachedFeature(routeLegCache,key)}}),hits=legs.filter(l=>l.feature).length;let feature;if(ps.length===2){feature=legs[0].feature||await fetchRoutingFeature(ps,signal);cacheFeature(routeLegCache,fullKey,feature,60)}else if(hits>0&&legs.length-hits<=2){routeLastPerformance.cachedLegs=hits;await Promise.all(legs.map(async leg=>{if(!leg.feature){leg.feature=await fetchRoutingFeature(leg.pair,signal);cacheFeature(routeLegCache,leg.key,leg.feature,60)}}));feature=mergeRoutingLegs(legs.map(l=>l.feature));if(!feature)feature=await fetchRoutingFeature(ps,signal)}else feature=await fetchRoutingFeature(ps,signal);if(signal.aborted)throw new DOMException('Anulowano','AbortError');cacheFeature(routeResultCache,fullKey,feature,12);return feature}
+async function fastRouteFeature(ps,signal){
+ routeLastPerformance={requests:0,cachedLegs:0};
+ const fullKey=routingParameters(ps).toString(),cached=cachedFeature(routeResultCache,fullKey);
+ if(cached){if(signal.aborted)throw new DOMException('Anulowano','AbortError');routeLastPerformance.cachedLegs=ps.length-1;return cached}
+ const legs=ps.slice(1).map((p,i)=>{const pair=[ps[i],p],key=routingParameters(pair).toString();return {pair,key,feature:cachedFeature(routeLegCache,key)}}),hits=legs.filter(l=>l.feature).length;
+ let feature;
+ if(ps.length===2){feature=legs[0].feature||await fetchRoutingFeature(ps,signal);cacheFeature(routeLegCache,fullKey,feature,60)}
+ else {
+  const prefixKey=routingParameters(ps.slice(0,-1)).toString(),prefix=cachedFeature(routeResultCache,prefixKey)||cachedFeature(routeLegCache,prefixKey);
+  if(prefix&&hits!==legs.length){
+   // Extend the already routed road geometry, requesting only the new final section.
+   const tail=[prefix.geometry.coordinates.at(-1).slice(0,2),ps.at(-1)];
+   const last=await fetchRoutingFeature(tail,signal);feature=mergeRoutingLegs([prefix,last]);routeLastPerformance.cachedLegs=ps.length-2;
+  }else if(hits>0&&legs.length-hits<=1){
+   routeLastPerformance.cachedLegs=hits;
+   for(const leg of legs)if(!leg.feature){leg.feature=await fetchRoutingFeature(leg.pair,signal);cacheFeature(routeLegCache,leg.key,leg.feature,60)}
+   feature=mergeRoutingLegs(legs.map(l=>l.feature));
+  }
+  // Two missing sections cost two serialized requests; one complete request is faster.
+  if(!feature)feature=await fetchRoutingFeature(ps,signal);
+ }
+ if(signal.aborted)throw new DOMException('Anulowano','AbortError');
+ cacheFeature(routeResultCache,fullKey,feature,12);return feature;
+}
+
 
 $('route').onclick=async(auto=false)=>{
  cancelLoopSearch();clearTimeout(autoRouteTimer);if(points.length<2)return;
@@ -241,7 +308,7 @@ $('route').onclick=async(auto=false)=>{
   clearTimeout(timeout);routingRunActive=false;
   if(routingAutoPaused){routingRecalcRequested=false;mapDistancePending=false;draw();stats();showRoutingPause()}
   else if(snapshot===revision){if(mapDistancePending){mapDistancePending=false;draw()}stats()}
-  else if(routingRecalcRequested&&points.length>1){clearTimeout(autoRouteTimer);autoRouteTimer=setTimeout(()=>$('route').onclick(true),1500)}
+  else if(routingRecalcRequested&&points.length>1){clearTimeout(autoRouteTimer);autoRouteTimer=setTimeout(()=>$('route').onclick(true),600)}
  }
 };
 $('mapCalculate').onclick=()=>$('route').onclick(false);
@@ -367,7 +434,7 @@ function applyTrip(snapshot,fit=false){
  if(view&&Array.isArray(view.center)&&view.center.length===2&&view.center.every(Number.isFinite)&&Math.abs(view.center[0])<=90&&Math.abs(view.center[1])<=180&&Number.isFinite(view.zoom))map.setView(view.center,Math.max(2,Math.min(19,view.zoom)),{animate:false});
  else if(fit&&points.length)map.fitBounds(L.latLngBounds((track.length?track:points).map(c=>[c[1],c[0]])),{padding:[60,110],maxZoom:16});
  updatePreferencesState();historyMuted=false;commitTrip();
- if(points.length>1&&track.length<2&&$('autoRouting').checked){mapDistancePending=true;draw();stats();autoRouteTimer=setTimeout(()=>$('route').onclick(true),1500)}
+ if(points.length>1&&track.length<2&&$('autoRouting').checked){mapDistancePending=true;draw();stats();autoRouteTimer=setTimeout(()=>$('route').onclick(true),600)}
 }
 function undoTrip(){if(!historyPast.length)return;const previous=historyPast.pop();historyFuture.push(captureTrip());applyTrip(previous);status('Cofnięto ostatnią zmianę.');updateHistoryButtons()}
 function redoTrip(){if(!historyFuture.length)return;historyPast.push(captureTrip());applyTrip(historyFuture.pop());status('Przywrócono zmianę.');updateHistoryButtons()}

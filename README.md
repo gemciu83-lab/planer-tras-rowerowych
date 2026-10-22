@@ -1,6 +1,21 @@
-# Planer tras rowerowych 2.8
+# Planer tras rowerowych 2.9
 
-Nowa wersja strony: widoczne postoje i propozycje odpoczynku na linii trasy. Pozostają preferencje dróg, wyszukiwanie miejsc i postoje przy punktach z wersji 2.7.
+Nowa wersja: szybsze ustawienie startu GPS i krótsza reakcja automatycznego wyznaczania trasy. Zachowuje postoje na mapie z wersji 2.8.
+
+## Szybszy start i obliczenia
+
+- Lokalizacja uruchamia się automatycznie. Pierwszy poprawny pomiar od razu ustawia **S** i pozwala kliknąć punkt **1**. Usunięto dodatkowe oczekiwanie 1,2–8 sekund na dokładniejszy pomiar.
+- Jeśli przeglądarka udostępnia pomiar z ostatniej minuty, planer może użyć go od razu. Starszy pomiar jest opisany jako „ostatni pomiar” wraz z jego wiekiem w ustawieniach lokalizacji. Równolegle pobierana jest świeża pozycja. Nie zapisujemy współrzędnych GPS w nowym trwałym magazynie.
+- GPS doprecyzowuje samotny, nietknięty start w tle przez maksymalnie 15 sekund. Po dodaniu punktu 1 albo ręcznej zmianie startu nie przesuwa już trasy. „Moja lokalizacja” pozwala świadomie ponownie ustawić S. Automatyczny pomiar nie nadpisuje wczytanej wycieczki.
+- Pierwsza wizyta wymaga zgody na lokalizację. Bez dostępnego niedawnego pomiaru trzeba poczekać na urządzenie. Brak zgody lub pomiaru pozwala ustawić start ręcznie; rzeczywistego GPS nie można zagwarantować natychmiast.
+- Automat czeka **0,6 s** od ostatniej zmiany punktów, wcześniej 1,5 s. Seria szybkich kliknięć nadal tworzy jedno zapytanie dla najnowszego układu punktów.
+- Przy dopisaniu punktu na końcu planer wykorzystuje zapisany początek trasy i pobiera tylko końcowy odcinek. Dokładne powtórzenie trasy może skorzystać z pamięci bez pobierania. Pamięć trwa do 15 minut w otwartej karcie i uwzględnia profil oraz preferencje dróg. Gdy brakuje dwóch odcinków, wysyłane jest jedno pełne zapytanie zamiast dwóch osobnych. Niezgodne połączenie geometrii powoduje pełne przeliczenie.
+- Zachowano pojedynczą kolejkę zapytań, minimum 5 sekund przerwy po odpowiedzi i respektowanie HTTP 403/429 oraz Retry-After. Czas odpowiedzi serwera i długich tras nadal zależy od usługi i sieci.
+- Ostatnia wycieczka nadal nie wczytuje się automatycznie. Start S z GPS nie jest przywróceniem poprzedniej trasy.
+
+## Wgranie na GitHub Pages
+
+Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS ani serwera testowego. W tytule strony i metadanych znajduje się numer **2.9.0**.
 
 ## Nowość: przerwy na mapie
 

@@ -44,7 +44,7 @@ async function tests(){
  vm.runInContext(app.slice(app.indexOf('function invalidate('),app.indexOf('\nlet routeHitLayer')),automatic.ctx);
  automatic.env.input=points.slice(0,100);vm.runInContext('for(const c of input){points.push(c);invalidate()}',automatic.ctx);
  assert.equal(autoCalls.length,0);assert.equal(autoJobs.size,1);assert.equal(vm.runInContext('mapDistancePending',automatic.ctx),true);
- const autoJob=[...autoJobs.values()][0];assert.equal(autoJob.ms,1500);await autoJob.fn();
+ const autoJob=[...autoJobs.values()][0];assert.equal(autoJob.ms,600);await autoJob.fn();
  assert.equal(autoCalls.length,1);assert.equal(vm.runInContext('track.length',automatic.ctx),100);assert(automatic.env.km>0);
  console.log('PASS: 100 rapid point additions automatically calculate the latest route once, without pressing calculate');
  const a=context(),calls=[];mock(a.env,calls);a.env.signal=new AbortController().signal;
@@ -56,9 +56,21 @@ async function tests(){
   assert.equal(vm.runInContext('track.length',a.ctx),count);
   assert.match(a.env.message,/Trasa gotowa/);
  }
- assert.deepEqual(calls.map(c=>c.ps.length),[29,30,31,35,40,101]);
+ assert.deepEqual(calls.map(c=>c.ps.length),[29,2,2,35,40,101]);
  const before=calls.length;await a.env.$('route').onclick(true);assert.equal(calls.length,before);
  console.log('PASS: distance updates at 29, 30, 31, 35, 40 and 101 points; no premature splitting');
+ const extension=context(),extensionCalls=[];mock(extension.env,extensionCalls);extension.env.signal=new AbortController().signal;
+ for(const count of [2,3,4]){extension.env.input=points.slice(0,count);const f=await vm.runInContext('fastRouteFeature(input,signal)',extension.ctx);assert.equal(f.geometry.coordinates.length,count)}
+ assert.deepEqual(extensionCalls.map(c=>c.ps.length),[2,2,2]);
+ await vm.runInContext('fastRouteFeature(input,signal)',extension.ctx);assert.equal(extensionCalls.length,3);
+ const missing=context(),missingCalls=[];mock(missing.env,missingCalls);missing.env.signal=extension.env.signal;missing.env.input=points.slice(0,2);
+ await vm.runInContext('fastRouteFeature(input,signal)',missing.ctx);missing.env.input=points.slice(0,4);await vm.runInContext('fastRouteFeature(input,signal)',missing.ctx);
+ assert.deepEqual(missingCalls.map(c=>c.ps.length),[2,4]);
+ const snappedExtension=context(),snappedExtensionCalls=[];mock(snappedExtension.env,snappedExtensionCalls);snappedExtension.env.signal=extension.env.signal;snappedExtension.env.input=points.slice(0,2);
+ const initial=await vm.runInContext('fastRouteFeature(input,signal)',snappedExtension.ctx);initial.geometry.coordinates.at(-1)[0]+=.00005;
+ snappedExtension.env.input=points.slice(0,3);const extended=await vm.runInContext('fastRouteFeature(input,signal)',snappedExtension.ctx);
+ assert.equal(snappedExtensionCalls.length,2);assert.equal(snappedExtensionCalls[1].ps[0][0],initial.geometry.coordinates.at(-1)[0]);assert.equal(extended.geometry.coordinates.length,3);
+ console.log('PASS: extending 2→3→4 points requests only a 2-point tail; exact repeat uses zero requests; two missing legs use one request; snapped seam anchors to road');
  a.env.input=points;const long=await vm.runInContext('fetchRoutingFeature(input,signal)',a.ctx);
  assert.deepEqual(JSON.parse(JSON.stringify(long.geometry.coordinates)),points);
  assert(calls.slice(before).length>1);
@@ -86,7 +98,7 @@ async function tests(){
  const pending=editing.env.$('route').onclick(true);await Promise.resolve();await Promise.resolve();
  editing.env.input=points.slice(0,40);vm.runInContext('points=input;revision++;routingRecalcRequested=true;',editing.ctx);
  await editing.env.$('route').onclick(true);assert.equal(editCalls,1);assert(!firstSignal.aborted);
- finishFirst();await pending;const latest=[...jobs.values()].find(j=>j.ms===1500);assert(latest);await latest.fn();
+ finishFirst();await pending;const latest=[...jobs.values()].find(j=>j.ms===600);assert(latest);await latest.fn();
  assert.equal(editCalls,2);assert.equal(vm.runInContext('track.length',editing.ctx),40);
  console.log('PASS: edits during active routing keep one request alive and calculate only latest 40-point state next');
  const manual=context(),manualCalls=[];mock(manual.env,manualCalls);manual.env.$('autoRouting').checked=false;
