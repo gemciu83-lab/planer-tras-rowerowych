@@ -46,7 +46,7 @@
   take(c=>Number.isFinite(c.ascent)?c.ascent:Infinity,c=>Number.isFinite(c.ascent)&&result.every(r=>Number.isFinite(r.ascent)&&c.ascent<r.ascent)?'Mniej podjazdów':'Trzeci wariant');
   return result;
  }
- const fieldLimits={speed:[3,60,16],pause:[0,1440,30],riderWeight:[25,250,70],bikeWeight:[3,60,22]};
+ const fieldLimits={speed:[3,60,16],pause:[0,1440,30],riderWeight:[25,250,70],bikeWeight:[3,60,22],luggageWeight:[0,100,0],windSpeed:[0,120,0],windDirection:[0,360,0]};
  function sanitizeTrip(value){
   if(!value||!coordinatesValid(value.points,Infinity)||!coordinatesValid(value.track)||value.track.length===1||(value.track.length>1&&value.points.length<2))return null;
   const settings={...value.settings};
@@ -55,6 +55,9 @@
   settings.name=typeof settings.name==='string'?settings.name.slice(0,100):'Moja rowerowa wyprawa';
   if(!['trekking','fastbike','mtb','direct'].includes(settings.profile))settings.profile='trekking';
   if(!['trekking','gravel','road','mtb'].includes(settings.bikeType))settings.bikeType='trekking';
+  if(!['auto','upright','touring','tucked'].includes(settings.ridingPosition))settings.ridingPosition='auto';
+  if(!['manual','forecast'].includes(settings.windMode))settings.windMode='manual';
+  settings.windDirection=String((Math.round(Number(settings.windDirection)/45)*45)%360);
   const routeType=['trekking','fastbike','mtb','direct','import'].includes(value.routeType)?value.routeType:'';
   return {points:value.points.map(c=>c[2]==='via'?[c[0],c[1],'via']:[c[0],c[1]]),track:value.track.map(c=>Number.isFinite(c[2])?[c[0],c[1],c[2]]:[c[0],c[1]]),routeType,settings,pointStops:root.PlannerTrip?.stops(value.points,value.pointStops)||[],routingPreferences:root.PlannerTrip?.preferences(value.routingPreferences)||{},routeBreaks:root.PlannerTrip?.routeBreaks(value.routeBreaks)||[],restSettings:root.PlannerTrip?.restSettings(value.restSettings)||{},pointLabels:sanitizePointLabels(value.points,value.pointLabels),surfaceData:sanitizeSurfaces(value.surfaceData),view:value.view};
  }

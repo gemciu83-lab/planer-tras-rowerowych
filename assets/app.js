@@ -4,7 +4,7 @@
 let mapDistancePending=false,previousRoute=null,pngExporting=false;
 let tripReady=false,historyMuted=false,draftTimer=null,lastInputCheckpoint=null;
 let historyCurrent=null,historyPast=[],historyFuture=[];
-const tripFields=['name','profile','speed','pause','riderWeight','bikeWeight','bikeType','departure'];
+const tripFields=['name','profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection','departure'];
 function updateMapDistance(km=length(track)){const valid=track.length>1,pending=mapDistancePending;$('mapDistanceValue').textContent=valid?km.toLocaleString('pl-PL',{minimumFractionDigits:1,maximumFractionDigits:1}):pending?'…':'—';$('mapDistanceStatus').textContent=pending?'Wyznaczanie trasy…':valid?'Dystans trasy':points.length>1?($('autoRouting').checked?'Brak wyznaczonej trasy':'Kliknij „Wyznacz trasę”'):'Dodaj start i metę';$('mapDistanceBadge').classList.toggle('distance-pending',pending);$('mapDistanceBadge').setAttribute('aria-busy',String(pending));}
 
 let mapInfoTimer=null,mapInfoCollapsed=false;
@@ -58,7 +58,7 @@ function status(text,error=false){$('status').textContent=text;setMapInfo(text,e
 function distance(a,b){const rad=Math.PI/180,dlat=(b[1]-a[1])*rad,dlon=(b[0]-a[0])*rad,t=Math.sin(dlat/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dlon/2)**2;return 6371*2*Math.atan2(Math.sqrt(t),Math.sqrt(Math.max(0,1-t)))}
 const distanceCache=new WeakMap();function length(cs){if(cs===points){let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i]);return total}if(distanceCache.has(cs))return distanceCache.get(cs);let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i]);distanceCache.set(cs,total);return total}
 function time(h){let m=Math.round(h*60);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
-function stats(){updateTripPlan();updatePlannerExtras();refreshRouteHover();const km=length(track);updateMapDistance(km);const speed=Math.min(60,Math.max(3,Number($('speed').value)||16)),pause=Math.min(1440,Math.max(0,Number($('pause').value)||0));$('distance').innerHTML=track.length>1?km.toLocaleString('pl-PL',{maximumFractionDigits:1})+' <small>km</small>':'— <small>km</small>';$('ride').textContent=track.length>1?time(km/speed):'—';$('total').textContent=track.length>1?time(km/speed+(pause+plannedStopsMinutes())/60):'—';let elevation=track.length>1&&track.every(c=>Number.isFinite(c[2])),up=0;if(elevation)up=PlannerCore.elevationModel(track,distance).ascent;$('up').innerHTML=(elevation?Math.round(up):'—')+' <small>m</small>';$('gpx').disabled=track.length<2;$('save').disabled=!points.length;$('save').textContent=track.length>1?'Zapisz trasę':'Zapisz punkty';$('route').disabled=points.length<2||mapDistancePending;$('route').textContent=mapDistancePending?'Wyznaczanie…':'Wyznacz trasę ↗';$('cancelRoute').disabled=!mapDistancePending&&!loopGenerating;$('saveMapPNG').disabled=pngExporting||mapDistancePending||!!previousRoute;updateExtraStats();$('mapRideValue').textContent=track.length>1?time(km/speed):'—';$('mapCaloriesValue').textContent=$('calories').textContent;for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight']]){if(document.activeElement!==$(quick))$(quick).value=$(source).value;}commitTrip();updateExportButtons();updateRoutingAvailability();}
+function stats(){updateTripPlan();updatePlannerExtras();refreshRouteHover();const km=length(track);updateMapDistance(km);const speed=Math.min(60,Math.max(3,Number($('speed').value)||16)),pause=Math.min(1440,Math.max(0,Number($('pause').value)||0));$('distance').innerHTML=track.length>1?km.toLocaleString('pl-PL',{maximumFractionDigits:1})+' <small>km</small>':'— <small>km</small>';$('ride').textContent=track.length>1?time(km/speed):'—';$('total').textContent=track.length>1?time(km/speed+(pause+plannedStopsMinutes())/60):'—';let elevation=track.length>1&&track.every(c=>Number.isFinite(c[2])),up=0;if(elevation)up=PlannerCore.elevationModel(track,distance).ascent;$('up').innerHTML=(elevation?Math.round(up):'—')+' <small>m</small>';$('gpx').disabled=track.length<2;$('save').disabled=!points.length;$('save').textContent=track.length>1?'Zapisz trasę':'Zapisz punkty';$('route').disabled=points.length<2||mapDistancePending;$('route').textContent=mapDistancePending?'Wyznaczanie…':'Wyznacz trasę ↗';$('cancelRoute').disabled=!mapDistancePending&&!loopGenerating;$('saveMapPNG').disabled=pngExporting||mapDistancePending||!!previousRoute;updateExtraStats();$('mapRideValue').textContent=track.length>1?time(km/speed):'—';$('mapCaloriesValue').textContent=$('calories').textContent;syncMapDock();for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight'],['mapLuggageWeight','luggageWeight']]){if(document.activeElement!==$(quick))$(quick).value=$(source).value;}commitTrip();updateExportButtons();updateRoutingAvailability();}
 let routeLayer,draftLayer,autoRouteTimer=null,locationMarker=null,accuracyCircle=null;
 function draw(){
  if(!map)return;
@@ -170,7 +170,7 @@ function locate(auto=false){
   const refineAllowed=!first&&session.ownedStart&&points.length===1&&points[0]===session.ownedStart&&revision===session.ownedRevision;
   if(initialAllowed||refineAllowed){
    setGPSStart(c.longitude,c.latitude);session.ownedStart=points.length===1?points[0]:null;session.ownedRevision=revision;
-   if(map)map.setView([c.latitude,c.longitude],c.accuracy<=30?17:c.accuracy<=150?15:13);
+   if(map)centerMapAboveDock([c.latitude,c.longitude],c.accuracy<=30?17:c.accuracy<=150?15:13);
   }
   drawGPSPosition(p);$('locate').classList.remove('is-locating');$('locate').setAttribute('aria-busy','false');
   const accuracy=Math.round(c.accuracy),cached=!fresh?' · pomiar sprzed '+Math.max(0,Math.round(age/1000))+' s':'';
@@ -301,7 +301,7 @@ $('route').onclick=async(auto=false)=>{
   if(snapshot!==revision||requestController.signal.aborted)return;
   track=result;surfaceData=feature?PlannerCore.surfaceModel(track,feature.properties?.messages,distance):null;routeType=profile;previousRoute=null;mapDistancePending=false;draw();stats();
   status(profile==='direct'?'Tryb ręczny: linie między punktami, bez dopasowania do dróg.':'Trasa gotowa w '+((performance.now()-startedRouting)/1000).toFixed(1)+' s.'+(routeLastPerformance.cachedLegs?' Wykorzystano zapisane odcinki.':'')+' Czas jest szacunkowy.');
-  if(map&&track.length&&auto!==true)map.fitBounds(routeLayer.getBounds(),{padding:[55,100]});
+  if(map&&track.length&&auto!==true)map.fitBounds(routeLayer.getBounds(),mapDockFitOptions());
  }catch(e){
   if(snapshot===revision){mapDistancePending=false;draw();stats();status(timedOut?'Serwer tras przekroczył czas obliczeń. Spróbuj ponownie.':e.routing?e.message:e instanceof TypeError?'Nie udało się połączyć z serwerem tras. Sprawdź sieć lub blokowanie połączeń przez rozszerzenia przeglądarki.':'Nie udało się wyznaczyć nowej trasy. Poprzedni przebieg pozostaje przygaszony; sprawdź połączenie i ponów.',true)}
   }finally{
@@ -315,22 +315,14 @@ $('mapCalculate').onclick=()=>$('route').onclick(false);
 let searchId=0,searchController=null;$('searchform').onsubmit=async e=>{e.preventDefault();const query=$('search').value.trim();if(!query)return;const id=++searchId;searchController?.abort();searchController=new AbortController();const thisSearch=searchController;const searchTimeout=setTimeout(()=>thisSearch.abort(),15000);$('results').replaceChildren();status('Szukam miejscowości…');try{const r=await fetch('https://photon.komoot.io/api/?'+new URLSearchParams({q:query,limit:5,lat:map?.getCenter().lat||51.405,lon:map?.getCenter().lng||19.703}),{signal:thisSearch.signal});if(!r.ok)throw Error();const data=await r.json();if(id!==searchId)return;if(!data.features?.length){status('Brak wyników. Spróbuj wpisać pełniejszy adres.',true);return}data.features.filter(f=>f?.geometry?.type==='Point'&&validCoordinates([f.geometry.coordinates])).forEach(f=>{const p=f.properties,b=document.createElement('button');b.type='button';b.textContent=[p.name,p.street,p.city,p.country].filter(Boolean).join(', ')||'Punkt na mapie';b.onclick=()=>{map?.setView([f.geometry.coordinates[1],f.geometry.coordinates[0]],15);add(f.geometry.coordinates.slice(0,2),b.textContent);$('results').replaceChildren()};$('results').append(b)});status('Wybierz wynik, aby dodać punkt trasy.')}catch{if(id===searchId)status('Wyszukiwanie chwilowo niedostępne. Dodaj punkt kliknięciem na mapie.',true)}finally{clearTimeout(searchTimeout)}};
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('gpx').onclick=()=>{if(track.length<2)return;const name=$('name').value.trim()||'Moja trasa';const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rowerem" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>'+esc(name)+'</name></metadata><trk><name>'+esc(name)+'</name><trkseg>'+track.map(c=>'<trkpt lat="'+c[1]+'" lon="'+c[0]+'">'+(Number.isFinite(c[2])?'<ele>'+c[2]+'</ele>':'')+'</trkpt>').join('')+'</trkseg></trk></gpx>';download(xml,'trasa-rowerowa.gpx','application/gpx+xml')};
-$('import').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>10000000)throw Error();const doc=new DOMParser().parseFromString(await f.text(),'application/xml');if(doc.querySelector('parsererror'))throw Error();const segments=[...doc.getElementsByTagNameNS('*','trkseg')];if(segments.length>1)throw Error('segments');let nodes=[...doc.getElementsByTagNameNS('*','trkpt')];if(!nodes.length)nodes=[...doc.getElementsByTagNameNS('*','rtept')];const cs=nodes.map(n=>{const lat=Number(n.getAttribute('lat')),lon=Number(n.getAttribute('lon')),ele=n.getElementsByTagNameNS('*','ele')[0];if(!n.hasAttribute('lat')||!n.hasAttribute('lon')||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw Error();return ele&&ele.textContent.trim()&&Number.isFinite(Number(ele.textContent))?[lon,lat,Number(ele.textContent)]:[lon,lat]});if(cs.length<2||!validCoordinates(cs))throw Error();checkpoint();clearRouteBreaks();invalidate(false);points=[cs[0].slice(0,2),cs.at(-1).slice(0,2)];track=cs;surfaceData=null;routeType='import';$('name').value=doc.getElementsByTagNameNS('*','name')[0]?.textContent?.slice(0,100)||f.name;renderPoints();map?.fitBounds(routeLayer.getBounds(),{padding:[55,100]});status('Wczytano ślad GPX. Zmiana punktów usuwa ślad i pozwala wyznaczyć nową trasę.')}catch(e){status(e.message==='segments'?'Plik zawiera kilka odcinków. Wczytaj jeden ciągły ślad GPX.':'Nieprawidłowy GPX, brak śladu lub plik większy niż 10 MB.',true)}finally{$('file').value=''}};
+$('import').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>10000000)throw Error();const doc=new DOMParser().parseFromString(await f.text(),'application/xml');if(doc.querySelector('parsererror'))throw Error();const segments=[...doc.getElementsByTagNameNS('*','trkseg')];if(segments.length>1)throw Error('segments');let nodes=[...doc.getElementsByTagNameNS('*','trkpt')];if(!nodes.length)nodes=[...doc.getElementsByTagNameNS('*','rtept')];const cs=nodes.map(n=>{const lat=Number(n.getAttribute('lat')),lon=Number(n.getAttribute('lon')),ele=n.getElementsByTagNameNS('*','ele')[0];if(!n.hasAttribute('lat')||!n.hasAttribute('lon')||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw Error();return ele&&ele.textContent.trim()&&Number.isFinite(Number(ele.textContent))?[lon,lat,Number(ele.textContent)]:[lon,lat]});if(cs.length<2||!validCoordinates(cs))throw Error();checkpoint();clearRouteBreaks();invalidate(false);points=[cs[0].slice(0,2),cs.at(-1).slice(0,2)];track=cs;surfaceData=null;routeType='import';$('name').value=doc.getElementsByTagNameNS('*','name')[0]?.textContent?.slice(0,100)||f.name;renderPoints();map?.fitBounds(routeLayer.getBounds(),mapDockFitOptions());status('Wczytano ślad GPX. Zmiana punktów usuwa ślad i pozwala wyznaczyć nową trasę.')}catch(e){status(e.message==='segments'?'Plik zawiera kilka odcinków. Wczytaj jeden ciągły ślad GPX.':'Nieprawidłowy GPX, brak śladu lub plik większy niż 10 MB.',true)}finally{$('file').value=''}};
 function validCoordinates(cs){return Array.isArray(cs)&&cs.length<=150000&&cs.every(c=>Array.isArray(c)&&Number.isFinite(c[0])&&Number.isFinite(c[1])&&Math.abs(c[0])<=180&&Math.abs(c[1])<=90)}
 try{const data=JSON.parse(localStorage.getItem('rowerem-routes-v1')||'[]');if(Array.isArray(data))saved=data.filter(s=>s&&typeof s.name==='string'&&PlannerCore.coordinatesValid(s.points,Infinity)&&validCoordinates(s.track)&&(s.track.length===0||s.track.length>1))}catch{}
 function persist(){try{localStorage.setItem('rowerem-routes-v1',JSON.stringify(saved));return true}catch{status('Brak miejsca lub zapisy są zablokowane. Wyeksportuj GPX.',true);return false}}
 function showSaved(){renderSavedCards()}
 $('save').onclick=saveCurrentTrip;
-const bikeModels={trekking:{crr:.008,cda:.6},gravel:{crr:.007,cda:.45},road:{crr:.005,cda:.32},mtb:{crr:.012,cda:.65}};
-function bounded(id,def,min,max){return Math.min(max,Math.max(min,Number($(id).value)||def))}
-function calories(cs,rider,bike,speed,type){
- if(cs.length<2)return 0;const metrics=PlannerCore.rideMetrics(cs,distance),model=bikeModels[type]||bikeModels.trekking,mass=rider+bike,v=speed/3.6;
- const force=mass*9.81*model.crr+.5*1.225*model.cda*v*v;let work=0;
- for(let i=0;i<metrics.meters.length;i++)if(metrics.meters[i]>=.01)work+=Math.max(0,force*metrics.meters[i]+mass*9.81*metrics.rise[i]);
- return work/(.97*.24*4184);
-}
 let elevationTrack=null,elevationData=[],routeDistance=0,viewStart=0,viewEnd=0,hoverMarker=null,drag=null;
-function updateExtraStats(){const kcal=calories(track,bounded('riderWeight',70,25,250),bounded('bikeWeight',22,3,60),bounded('speed',16,3,60),$('bikeType').value);$('calories').innerHTML=track.length>1?Math.round(kcal).toLocaleString('pl-PL')+' <small>kcal</small>':'— <small>kcal</small>';const fullElevation=track.length>1&&track.every(c=>Number.isFinite(c[2]));$('calorieNote').textContent='Szacunek kalorii podczas jazdy: opór powietrza i toczenia, masa rowerzysty + roweru'+(fullElevation?', nachylenie trasy.':'. Brak pełnych wysokości — odcinki bez danych liczone jak płaskie.')+' Założenia: bez wiatru i wspomagania, stałe tempo, sprawność organizmu 24%, napędu 97%. Wynik orientacyjny, bez postojów. Profil wygładzony w oknie 30 m; suma podjazdów z progiem 3 m. GPX zachowuje oryginalne wysokości.';if(elevationTrack!==track){elevationTrack=track;routeDistance=0;elevationData=PlannerCore.elevationModel(track,distance).coordinates.map((c,i)=>{if(i)routeDistance+=distance(track[i-1],c);return {x:routeDistance,y:Number.isFinite(c[2])?c[2]:null,c}});viewStart=0;viewEnd=routeDistance;if(hoverMarker){hoverMarker.remove();hoverMarker=null}drawProfile()}}
+function updateExtraStats(){updateEnergyDisplay();if(elevationTrack!==track){elevationTrack=track;routeDistance=0;elevationData=PlannerCore.elevationModel(track,distance).coordinates.map((c,i)=>{if(i)routeDistance+=distance(track[i-1],c);return {x:routeDistance,y:Number.isFinite(c[2])?c[2]:null,c}});viewStart=0;viewEnd=routeDistance;if(hoverMarker){hoverMarker.remove();hoverMarker=null}drawProfile()}}
 function profileBounds(){const visible=elevationData.filter((p,i)=>p.y!==null&&((p.x>=viewStart&&p.x<=viewEnd)||(p.x<viewStart&&elevationData[i+1]?.x>=viewStart)||(p.x>viewEnd&&elevationData[i-1]?.x<=viewEnd)));if(!visible.length)return null;let min=Infinity,max=-Infinity;for(const p of visible){min=Math.min(min,p.y);max=Math.max(max,p.y)}const pad=Math.max(5,(max-min)*.12);return {visible,min:Math.floor(min-pad),max:Math.ceil(max+pad)}}
 function drawProfile(){const svg=$('elevationChart'),bounds=profileBounds();$('rangeStart').value=viewStart.toFixed(2);$('rangeEnd').value=viewEnd.toFixed(2);const missing=elevationData.filter(p=>p.y===null).length;for(const id of ['zoomIn','zoomOut','zoomReset','rangeApply'])$(id).disabled=!bounds;$('zoomReset').disabled=!elevationData.some(p=>p.y!==null);$('rangeApply').disabled=!elevationData.some(p=>p.y!==null);$('zoomOut').disabled=!elevationData.some(p=>p.y!==null);$('elevationInfo').textContent=!elevationData.length?'Brak trasy':!bounds?'Brak wysokości w tym zakresie':missing?'Niepełne wysokości':'Wysokości dostępne';if(!bounds){svg.innerHTML='<text x="500" y="95" text-anchor="middle" fill="#718174" font-size="18">'+(track.length>1?'Brak danych wysokości. GPX musi zawierać wartości ele.':'Wyznacz trasę lub wgraj GPX, aby zobaczyć profil.')+'</text>';$('hoverInfo').textContent=track.length?'Wysokości nie są dopisywane automatycznie.':'Wgraj GPX lub wyznacz trasę.';return}const {min,max}=bounds,x=p=>60+(p.x-viewStart)/(viewEnd-viewStart||1)*920,y=p=>165-(p.y-min)/(max-min)*145;let markup='';for(let i=0;i<=4;i++){let yy=20+i*145/4,val=max-i*(max-min)/4;markup+='<line x1="60" x2="980" y1="'+yy+'" y2="'+yy+'" stroke="#e2e8de"/><text x="50" y="'+(yy+4)+'" text-anchor="end" font-size="12" fill="#718174">'+Math.round(val)+' m</text>';let xx=60+i*920/4,km=viewStart+i*(viewEnd-viewStart)/4;markup+='<text x="'+xx+'" y="190" text-anchor="middle" font-size="12" fill="#718174">'+km.toFixed(1)+' km</text>'}let path='',pen=false,lastIndex=-1;const step=Math.max(1,Math.ceil(elevationData.length/2500));for(let i=0;i<elevationData.length;i++){const p=elevationData[i];if((p.x<viewStart&&!(elevationData[i+1]?.x>=viewStart))||(p.x>viewEnd&&!(elevationData[i-1]?.x<=viewEnd)))continue;if(p.y===null){pen=false;continue}if(i%step&&i!==elevationData.length-1&&pen)continue;path+=(pen?' L':' M')+x(p).toFixed(2)+' '+y(p).toFixed(2);pen=true;lastIndex=i}markup+='<defs><clipPath id="profileClip"><rect x="60" y="20" width="920" height="145"/></clipPath></defs><path clip-path="url(#profileClip)" d="'+path+'" fill="none" stroke="#b6d793" stroke-width="2.5"/><line id="profileCursor" x1="60" x2="60" y1="20" y2="165" stroke="#91a987" stroke-dasharray="4 4" visibility="hidden"/>';svg.innerHTML=markup;$('hoverInfo').textContent='Zakres '+viewStart.toFixed(1)+'–'+viewEnd.toFixed(1)+' km';}
 function setView(a,b){const total=routeDistance,minSpan=Math.min(total,.05);if(total<=0)return;let span=Math.min(total,Math.max(minSpan,b-a));viewStart=Math.max(0,Math.min(total-span,a));viewEnd=viewStart+span;drawProfile()}
@@ -343,7 +335,7 @@ $('elevationChart').addEventListener('pointerdown',e=>{if(!profileBounds())retur
 $('elevationChart').addEventListener('pointermove',e=>{if(drag){const rect=$('elevationChart').getBoundingClientRect(),shift=(e.clientX-drag.x)/rect.width*(drag.b-drag.a)*1000/920;setView(drag.a-shift,drag.b-shift)}showHover(e)});
 for(const event of ['pointerup','pointercancel'])$('elevationChart').addEventListener(event,()=>drag=null);
 $('fullscreen').onclick=async()=>{const card=$('profileCard');if(document.fullscreenElement){await document.exitFullscreen();return}if(card.classList.contains('expanded')){card.classList.remove('expanded');return}try{if(!card.requestFullscreen)throw Error();await card.requestFullscreen()}catch{card.classList.add('expanded')}};
-document.addEventListener('keydown',e=>{if(e.key==='Escape')$('profileCard').classList.remove('expanded')});for(const id of ['riderWeight','bikeWeight','bikeType'])$(id).addEventListener('input',stats);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('profileCard').classList.remove('expanded')});for(const id of ['riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection'])$(id).addEventListener('input',stats);
 
 renderPoints();showSaved();initMapInfo();updateClock();setInterval(updateClock,1000);
 
@@ -358,12 +350,12 @@ $('followGPS').onclick=()=>{
  followId=navigator.geolocation.watchPosition(p=>{
   if(generation!==followGeneration)return;const c=p.coords;
   if(!validCoordinates([[c.longitude,c.latitude]])||!Number.isFinite(c.accuracy)||c.accuracy<0||Date.now()-p.timestamp>15000)return;
-  drawGPSPosition(p);if(c.accuracy<=100)map.panTo([c.latitude,c.longitude],{animate:false});
+  drawGPSPosition(p);if(c.accuracy<=100)centerMapAboveDock([c.latitude,c.longitude]);
   $('locationInfo').textContent='GPS na żywo · ±'+Math.round(c.accuracy)+' m'+(Number.isFinite(c.speed)&&c.speed>=0?' · '+(c.speed*3.6).toFixed(1)+' km/h':'')+' · '+new Date(p.timestamp).toLocaleTimeString('pl-PL');
  },e=>{if(generation!==followGeneration)return;if(e.code===1)stopFollow();status(e.code===1?'Brak zgody na lokalizację.':'GPS chwilowo niedostępny — czekam na kolejny pomiar.',true)}, {enableHighAccuracy:true,maximumAge:0,timeout:15000});
 };
 window.addEventListener('pagehide',stopFollow);
-$('fitRoute').onclick=()=>{const cs=track.length>1?track:points;if(cs.length)map.fitBounds(L.latLngBounds(cs.map(c=>[c[1],c[0]])),{padding:[65,110],maxZoom:17});else status('Dodaj punkty, aby dopasować widok mapy.')};
+$('fitRoute').onclick=()=>{const cs=track.length>1?track:points;if(cs.length)map.fitBounds(L.latLngBounds(cs.map(c=>[c[1],c[0]])),{...mapDockFitOptions(),maxZoom:17});else status('Dodaj punkty, aby dopasować widok mapy.')};
 $('reverseRoute').onclick=()=>{if(points.length<2)return;checkpoint();points.reverse();invalidate();renderPoints()};
 $('cancelRoute').onclick=()=>{routingRecalcRequested=false;if(loopGenerating){cancelLoopSearch();stats();status('Szukanie propozycji pętli przerwane.');return}if(!mapDistancePending)return;if(loopGenerating)$('loopResult').textContent='Szukanie pętli przerwane.';revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;draw();stats();status('Wyznaczanie anulowane. Punkty i poprzedni przebieg zostały zachowane.')};
 $('mapFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('map').parentElement.requestFullscreen()}catch{status('Pełny ekran jest niedostępny w tej przeglądarce.',true)}};
@@ -378,27 +370,43 @@ const exportSection=$('gpx').closest('.section');
 $('headerActions').append(exportSection.querySelector('.tools'),$('file'));
 exportSection.remove();
 const topSettings=$('topSettings');
-topSettings.append(document.querySelector('.settings-intro'),$('points').closest('.section'),$('riderWeight').closest('.section'),$('speed').closest('.section'));
+topSettings.append(document.querySelector('.settings-intro'),$('points').closest('.section'),$('riderWeight').closest('.section'),$('energySettings'),$('speed').closest('.section'));
 $('topSummary').append(document.querySelector('.stats'),document.querySelector('.quick-tools'));
 function setTopMenu(open){$('topMenu').hidden=!open;$('menuToggle').setAttribute('aria-expanded',String(open));$('menuToggle').textContent=open?'Ustawienia ▴':'Ustawienia ▾';map.invalidateSize({pan:false});}
 $('menuToggle').onclick=()=>setTopMenu($('topMenu').hidden);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('topMenu').hidden){setTopMenu(false);$('menuToggle').focus()}});
-for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight']]){
+for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight'],['mapLuggageWeight','luggageWeight']]){
  $(quick).value=$(source).value;
  $(quick).addEventListener('input',()=>{if(!$(quick).value||!$(quick).checkValidity())return;$(source).value=$(quick).value;stats()});
  $(quick).addEventListener('change',()=>{$(quick).value=$(source).value});
 }
 // Map controls must not add a waypoint or zoom the map while editing values.
-for(const id of ['mapSpeedTile','mapRiderTile','mapBikeTile']){L.DomEvent.disableClickPropagation($(id));L.DomEvent.disableScrollPropagation($(id))}
+for(const id of ['mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile']){L.DomEvent.disableClickPropagation($(id));L.DomEvent.disableScrollPropagation($(id))}
 
-const mapReadings=document.createElement('div');mapReadings.id='mapReadings';
-document.querySelector('.map-top').append(mapReadings);
-for(const id of ['hideMapReadings','mapDistanceBadge','mapCaloriesTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapTimeTile','mapCalculate'])mapReadings.append($(id));
-$('hideMapReadings').onclick=()=>{mapReadings.hidden=true;$('showMapReadings').hidden=false;$('showMapReadings').focus()};
-$('showMapReadings').onclick=()=>{mapReadings.hidden=false;$('showMapReadings').hidden=true;$('hideMapReadings').focus()};
+const mapReadings=$('mapReadings');
+for(const id of ['mapDistanceBadge','mapTimeTile','mapCaloriesTile'])$('mapDockStats').append($(id));
+for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile','mapBikeTypeTile','mapRidingPositionTile','mapEnergySettings'])$('mapParameters').append($(id));
+$('mapDockHeader').append($('mapCalculate'),$('hideMapReadings'));
+document.querySelector('.map-wrap').append($('showMapReadings'));
+$('hideMapReadings').setAttribute('aria-label','Schowaj cały panel parametrów');$('hideMapReadings').title='Schowaj panel (P)';
+$('hideMapReadings').onclick=()=>setMapDockOpen(false,true,true);
+$('showMapReadings').onclick=()=>setMapDockOpen(true,true,true);
 $('mapBottomActions').prepend($('mapFullscreen'));
-function positionMapActions(){ $('mapBottomActions').style.top=Math.max(0,$('map').offsetHeight-Math.max(65,$('mapBottomActions').offsetHeight+28))+'px';$('mapHelp').style.top=Math.max(0,$('map').offsetHeight-60)+'px'; }
-new ResizeObserver(positionMapActions).observe($('map'));positionMapActions();
+function positionMapActions(){
+ const actions=$('mapBottomActions'),mapNode=$('map'),help=$('mapHelp'),show=$('showMapReadings');
+ const visible=!mapReadings.hidden,dockHeight=visible?mapReadings.offsetHeight:0;
+ const minHeight=Math.max(window.innerWidth<=600?650:620,dockHeight+230)+'px';
+ if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
+ const height=mapNode.offsetHeight,top=Math.max(90,height-dockHeight-44);
+ mapReadings.style.top=top+'px';show.style.top=Math.max(0,height-show.offsetHeight-28)+'px';
+ actions.style.right='12px';actions.style.maxWidth='calc(100% - 65px)';
+ const actionsTop=visible?top-actions.offsetHeight-8:height-Math.max(65,actions.offsetHeight+28);
+ actions.style.top=Math.max(0,actionsTop)+'px';
+ help.style.top=Math.max(70,actionsTop-Math.max(32,help.offsetHeight)-8)+'px';
+}
+const dockObserver=new ResizeObserver(()=>{positionMapActions();map.invalidateSize({pan:false})});
+for(const element of [$('map'),mapReadings,$('mapBottomActions'),$('mapHelp')])dockObserver.observe(element);
+positionMapActions();
 L.DomEvent.disableClickPropagation($('mapBottomActions'));
 $('saveMapPNG').onclick=()=>exportTripImage('map');
 
@@ -422,7 +430,7 @@ function commitTrip(){
 function scheduleDraft(){if(!tripReady)return;clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,500)}
 function saveDraft(){
  if(!tripReady)return false;clearTimeout(draftTimer);
- try{localStorage.setItem('rowerem-settings-v1',JSON.stringify({...Object.fromEntries(['profile','speed','pause','riderWeight','bikeWeight','bikeType'].map(id=>[id,$(id).value])),routingPreferences:getRoutingPreferences()}));$('draftInfo').textContent='Parametry zapisane · '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});$('draftInfo').classList.remove('error');return true}
+ try{localStorage.setItem('rowerem-settings-v1',JSON.stringify({...Object.fromEntries(['profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection'].map(id=>[id,$(id).value])),routingPreferences:getRoutingPreferences()}));$('draftInfo').textContent='Parametry zapisane · '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});$('draftInfo').classList.remove('error');return true}
  catch{$('draftInfo').textContent='Nie udało się zapisać parametrów. Wyprawę możesz zapisać przyciskiem „Zapisz trasę” lub do GPX.';$('draftInfo').classList.add('error');return false}
 }
 function applyTrip(snapshot,fit=false){
@@ -432,7 +440,7 @@ function applyTrip(snapshot,fit=false){
  renderPoints();
  const view=snapshot.view;
  if(view&&Array.isArray(view.center)&&view.center.length===2&&view.center.every(Number.isFinite)&&Math.abs(view.center[0])<=90&&Math.abs(view.center[1])<=180&&Number.isFinite(view.zoom))map.setView(view.center,Math.max(2,Math.min(19,view.zoom)),{animate:false});
- else if(fit&&points.length)map.fitBounds(L.latLngBounds((track.length?track:points).map(c=>[c[1],c[0]])),{padding:[60,110],maxZoom:16});
+ else if(fit&&points.length)map.fitBounds(L.latLngBounds((track.length?track:points).map(c=>[c[1],c[0]])),{...mapDockFitOptions(),maxZoom:16});
  updatePreferencesState();historyMuted=false;commitTrip();
  if(points.length>1&&track.length<2&&$('autoRouting').checked){mapDistancePending=true;draw();stats();autoRouteTimer=setTimeout(()=>$('route').onclick(true),600)}
 }
@@ -444,7 +452,7 @@ document.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redoTrip():undoTrip()}
  if(e.key.toLowerCase()==='y'){e.preventDefault();redoTrip()}
 });
-const editableInputs=new Set([...tripFields.filter(id=>id!=='profile'),'mapSpeed','mapRiderWeight','mapBikeWeight']);
+const editableInputs=new Set([...tripFields.filter(id=>id!=='profile'),'mapSpeed','mapRiderWeight','mapBikeWeight','mapLuggageWeight']);
 document.addEventListener('focusin',()=>lastInputCheckpoint=null);
 document.addEventListener('input',e=>{
  if(!editableInputs.has(e.target.id))return;
@@ -460,13 +468,11 @@ function showGPSQuality(p){
  box.textContent='GPS ±'+accuracy+' m'+(accuracy>100?' · pozycja przybliżona, sprawdź start S':'');
  box.title='Dokładność zgłoszona przez urządzenie. Start S możesz przesuwać na mapie.';
 }
-// Keep readings compact; editable parameters expand separately.
-const parameterToggle=document.createElement('button');parameterToggle.id='toggleMapParameters';parameterToggle.type='button';parameterToggle.textContent='Parametry ▾';parameterToggle.setAttribute('aria-expanded','false');parameterToggle.setAttribute('aria-controls','mapParameters');
-const mapParameters=document.createElement('div');mapParameters.id='mapParameters';mapParameters.hidden=true;
-for(const id of ['mapSpeedTile','mapRiderTile','mapBikeTile'])mapParameters.append($(id));
-mapReadings.append(parameterToggle,mapParameters);
-parameterToggle.onclick=()=>{const open=mapParameters.hidden;mapParameters.hidden=!open;parameterToggle.setAttribute('aria-expanded',String(open));parameterToggle.textContent=open?'Parametry ▴':'Parametry ▾'};
+// One dock controls visibility of all map readings and editable parameters.
+const parameterToggle=$('toggleMapParameters'),mapParameters=$('mapParameters');
+parameterToggle.onclick=()=>setMapDockOpen(false,true,true);
 L.DomEvent.disableClickPropagation(mapReadings);L.DomEvent.disableScrollPropagation(mapReadings);
+L.DomEvent.disableClickPropagation($('showMapReadings'));
 
 // Start every session with a clean map. Only rider/bike preferences are restored.
 function clearTrip(){
@@ -478,7 +484,7 @@ $('clearRouteHeader').onclick=clearTrip;
 function initializeFreshTrip(){
  try{
   const settings=JSON.parse(localStorage.getItem('rowerem-settings-v1')||'null');
-  if(settings){const clean=PlannerCore.sanitizeTrip({points:[],track:[],settings});if(clean)for(const id of ['profile','speed','pause','riderWeight','bikeWeight','bikeType'])$(id).value=clean.settings[id];restoreRoutingPreferences(settings.routingPreferences)}
+  if(settings){const clean=PlannerCore.sanitizeTrip({points:[],track:[],settings});if(clean)for(const id of ['profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection'])$(id).value=clean.settings[id];restoreRoutingPreferences(settings.routingPreferences)}
  }catch{}
  clearRouteBreaks();points=[];track=[];routeType='';surfaceData=null;previousRoute=null;mapDistancePending=false;
  historyPast=[];historyFuture=[];tripReady=true;renderPoints();historyCurrent=captureTrip();updateHistoryButtons();
@@ -489,20 +495,19 @@ setTimeout(()=>locate(true),0);
 
 
 // Remember presentation preferences independently of the route and its undo history.
-function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,parameters:!mapParameters.hidden}))}catch{}}
+function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
 try{
  const prefs=JSON.parse(localStorage.getItem('rowerem-view-v1')||'null');
  if(prefs){
   if(Object.hasOwn(styleDefinitions,prefs.mapStyle)&&prefs.mapStyle!==$('mapStyle').value){$('mapStyle').value=prefs.mapStyle;switchMapStyle(prefs.mapStyle)}
   if(typeof prefs.slopeColors==='boolean')$('slopeColors').checked=prefs.slopeColors;
   if(typeof prefs.slopeLabels==='boolean')$('slopeLabels').checked=prefs.slopeLabels&&$('slopeColors').checked;
-  if(typeof prefs.readings==='boolean'){mapReadings.hidden=!prefs.readings;$('showMapReadings').hidden=prefs.readings}
-  if(typeof prefs.parameters==='boolean'){mapParameters.hidden=!prefs.parameters;parameterToggle.setAttribute('aria-expanded',String(prefs.parameters));parameterToggle.textContent=prefs.parameters?'Parametry ▴':'Parametry ▾'}
+  setMapDockOpen(typeof prefs.dockOpen==='boolean'?prefs.dockOpen:prefs.readings!==false);
   terrainVisible=null;renderRouteTerrain();
  }
 }catch{}
 for(const id of ['mapStyle','slopeColors','slopeLabels'])$(id).addEventListener('change',saveViewPreferences);
-for(const id of ['hideMapReadings','showMapReadings','toggleMapParameters'])$(id).addEventListener('click',()=>queueMicrotask(saveViewPreferences));
 
-initPlannerFeatures();initTripPlanning();initRestPlanning();
+
+initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls();initMapDock();
 

@@ -1,0 +1,21 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const source=fs.readFileSync(path.join(__dirname,'../assets/planner-dock.js'),'utf8');
+const nodes=new Map(),events=new Map(),counts={layout:0,save:0,profile:0,bike:0,position:0};
+function node(id){if(!nodes.has(id))nodes.set(id,{value:'',hidden:false,textContent:'',title:'',attrs:{},listeners:{},setAttribute(k,v){this.attrs[k]=v},focus(){env.document.activeElement=this},addEventListener(type,fn){this.listeners[type]=fn},dispatchEvent(event){this.listeners[event.type]?.(event)},scrollIntoView(){}});return nodes.get(id)}
+const env={$:node,Event:class{constructor(type){this.type=type}},document:{activeElement:null,addEventListener:(type,fn)=>events.set(type,fn)},positionMapActions(){counts.layout++},saveViewPreferences(){counts.save++},setTopMenu(){}};
+vm.createContext(env);vm.runInContext(source,env);
+node('luggageWeight').value='12';node('profile').value='trekking';node('bikeType').value='trekking';node('ridingPosition').value='auto';node('windStatus').textContent='Założenie: bez wiatru.';
+node('profile').listeners.change=()=>counts.profile++;node('bikeType').listeners.input=()=>counts.bike++;node('ridingPosition').listeners.input=()=>counts.position++;
+env.initMapDock();env.setMapDockOpen(false,true,true);assert(node('mapReadings').hidden);assert(!node('showMapReadings').hidden);assert.equal(node('luggageWeight').value,'12');assert.equal(counts.profile,0);assert.equal(counts.save,1);
+env.setMapDockOpen(true,true,true);assert(!node('mapReadings').hidden);assert(node('showMapReadings').hidden);assert.equal(node('toggleMapParameters').attrs['aria-expanded'],'true');
+node('mapProfile').value='mtb';node('mapProfile').listeners.change();assert.equal(node('profile').value,'mtb');assert.equal(counts.profile,1);
+node('mapBikeType').value='gravel';node('mapBikeType').listeners.change();node('mapRidingPosition').value='touring';node('mapRidingPosition').listeners.change();assert.equal(counts.profile,1);assert.equal(counts.bike,1);assert.equal(counts.position,1);
+node('profile').value='fastbike';env.document.activeElement=null;env.syncMapDock();assert.equal(node('mapProfile').value,'fastbike');
+const key=(extra={},editing=false)=>({key:'p',target:{closest:()=>editing?{}:null},preventDefault(){this.prevented=true},...extra});
+const handler=events.get('keydown');handler(key({},true));assert(!node('mapReadings').hidden);handler(key({ctrlKey:true}));assert(!node('mapReadings').hidden);handler(key({repeat:true}));assert(!node('mapReadings').hidden);
+const p=key();handler(p);assert(p.prevented);assert(node('mapReadings').hidden);handler(key());assert(!node('mapReadings').hidden);assert.equal(node('luggageWeight').value,'12');assert.equal(counts.profile,1);
+console.log('PASS: dock hides/restores without changing route or baggage; profile dispatches source change once; bike/posture stay local; P ignores typing/modifiers');
+node('mapReadings').offsetHeight=280;assert.equal(env.mapDockFitOptions().paddingBottomRight[1],356);
+const camera=[];env.map={setView:(...args)=>camera.push(['view',...args]),panBy:(...args)=>camera.push(['offset',...args]),panTo:(...args)=>camera.push(['pan',...args])};env.centerMapAboveDock([51,19],15);assert.equal(camera[1][1][1],162);
+node('mapReadings').hidden=true;assert.equal(env.mapDockFitOptions().paddingBottomRight[1],60);camera.length=0;env.centerMapAboveDock([51,19]);assert.equal(camera.length,1);assert.equal(camera[0][0],'pan');
+console.log('PASS: fitting and GPS centering reserve space only when the dock is visible');

@@ -1,6 +1,32 @@
-# Planer tras rowerowych 2.9
+# Planer tras rowerowych 3.1
 
-Nowa wersja: szybsze ustawienie startu GPS i krótsza reakcja automatycznego wyznaczania trasy. Zachowuje postoje na mapie z wersji 2.8.
+Nowa wersja: jeden dolny panel parametrów i wyników na mapie. Zachowuje bagaż, wiatr i podział kalorii wersji 3.0, GPS i trasowanie 2.9 oraz postoje na mapie.
+
+## Dolny panel na mapie
+
+- Na dole mapy, nad profilem wysokości, są osobne kafelki **dystansu, czasu jazdy i kalorii** oraz pola **tempa, masy rowerzysty, masy roweru i masy bagażu**.
+- **Profil trasy** wybiera sposób wyznaczania drogi: turystyczny, szosa, MTB lub ręczne linie. Zmiana korzysta z tego samego automatu co pole w górnych ustawieniach. **Rodzaj roweru** i **pozycja podczas jazdy** zmieniają obliczenia energii; nie zmieniają geometrii drogi.
+- **Wiatr i szczegóły kalorii** otwiera właściwą sekcję ustawień. Przycisk pokazuje także skrót bieżących założeń lub prognozy. Pełna obsługa wiatru i rozbicie kalorii pozostają w tej sekcji.
+- Kliknij **×** lub nagłówek **Parametry trasy**, aby schować cały panel razem z wynikami i polami. Na dole po lewej zostanie mała zakładka **⚙ Parametry trasy**, która przywraca całość.
+- Klawisz **P** także przełącza cały panel. Skrót nie działa podczas wpisywania danych, używania list wyboru ani w otwartym oknie dialogowym. Widoczność panelu jest zapamiętywana niezależnie od trasy i historii cofania. Starszy zapis widoczności kafelków jest obsługiwany.
+- Chowanie i przywracanie nie usuwa punktów, nie zmienia parametrów ani nie wyznacza ponownie trasy. Parametry i wyniki pozostają zsynchronizowane z ustawieniami u góry.
+- Przyciski postojów, pełnego ekranu i zapisu PNG są nad panelem. Dopasowanie całej trasy i początkowe centrowanie GPS uwzględniają miejsce zajmowane przez panel, aby punkty nie chowały się pod nim.
+- Po uruchomieniu nadal nie wczytujemy poprzedniej trasy. Styl mapy i przycisk GPS pozostają u góry mapy.
+
+## Bagaż, wiatr i kalorie
+
+- **Ustawienia → Rowerzysta, rower i bagaż**: masa roweru bez bagażu, osobna masa sakw/plecaka/ekwipunku i pozycja na rowerze. Masę bagażu zmienisz także w **dolnym panelu mapy**. Domyślnie bagaż = 0 kg; starsze wyprawy nie dostają dodatkowej masy automatycznie. Jeśli wcześniej wpisano rower wraz z sakwami, najpierw odejmij sakwy od masy roweru.
+- **Pozycja** zmienia założony opór powietrza: wyprostowana, turystyczna lub mocno pochylona. Opcja domyślna korzysta z dotychczasowego ustawienia dla typu roweru. Opór toczenia pozostaje zależny od typu roweru, a nie od udziału nawierzchni z OSM.
+- **Ustawienia → Wiatr i kalorie**: ręcznie wpisz prędkość wiatru i kierunek, **z którego wieje**. N = z północy, W = z zachodu. Domyślne 0 km/h oznacza wyraźne założenie bez wiatru. Dla każdego odcinka obliczamy kierunek jazdy i względny wektor powietrza, również przy bocznym wietrze. Silny wiatr w plecy może ograniczyć potrzebę pedałowania; nie daje ujemnych kalorii.
+- **Pobierz wiatr dla trasy**: jeden przycisk pobiera godzinną prognozę Open-Meteo dla 2–5 miejsc wzdłuż wyznaczonej trasy. Współrzędne wysyłane są zaokrąglone do 0,001°. Pobieranie odbywa się po kliknięciu, nie automatycznie przy każdym punkcie. Wymaga internetu i daty wyjazdu od teraz do 15 dni naprzód. Po sukcesie wybierany jest tryb prognozy.
+- Prognoza dobierana jest do przewidywanej godziny na każdym odcinku, z uwzględnieniem wcześniejszych zaplanowanych postojów. Ogólny dodatkowy zapas nie ma przypisanego miejsca, więc nie przypisujemy go arbitralnie do konkretnej godziny na trasie. Wiatr zmienia energię potrzebną do utrzymania wpisanego tempa; nie zmienia wpisanego tempa ani ETA.
+- W trybie prognozy brak danych, niewystarczający zakres godzin, zmiana geometrii lub prognoza starsza niż godzinę wymagają pobrania danych ponownie. Nie pokazujemy wtedy kalorii policzonych przy udawanym bezwietrzu. Można przełączyć na wiatr ręczny. Pobrana prognoza pozostaje w pamięci karty, nie jest zapisywana jako trwała prognoza w wycieczce; po ponownym otwarciu należy pobrać ją jeszcze raz.
+- **Aktywne**: modelowany wysiłek potrzebny do jazdy ponad spoczynek. Korzystamy z pracy mechanicznej, sprawności napędu 97% i założonej **sprawności netto 24%**. Masa mechaniczna = rowerzysta + rower + bagaż. **Całkowite** dodają do aktywnych dokładnie jeden wydatek spoczynkowy samego rowerzysty, około 1 kcal/kg/h przez czas jazdy i postojów. Nie doliczamy masy roweru ani sakw do metabolizmu.
+- Na mapie główny wynik to aktywne, a mniejszy podpis pokazuje całkowite. W ustawieniach jest rozbicie spoczynkowych na jazdę i postoje. Wyniki główne zaokrąglamy do 10 kcal; są przybliżeniem, nie pomiarem ani obietnicą dokładności fizjologicznej. Sprawność netto nie jest stała u każdej osoby. Nie modelujemy kosztu kadencji, rozpędzania ani dodatkowej pracy organizmu podczas toczenia bez pedałowania.
+- Prognoza dotyczy standardowego wiatru na 10 m; osłona lasów, zabudowy i lokalne porywy zmieniają faktyczny wiatr odczuwany przez rowerzystę. Model ma stałą gęstość powietrza i uproszczoną aerodynamikę, bez wspomagania elektrycznego.
+- Zmiana mas, pozycji, wiatru i postojów **nie pobiera ponownie geometrii trasy**. Nowe ustawienia są zachowane w zapisanych wyprawach, preferencjach rowerzysty oraz historii cofania/ponawiania.
+
+Źródła założeń: [wydatek spoczynkowy 1 MET](https://pacompendium.com/), [różnica między sprawnością netto i brutto w badaniu jazdy przy 50 W](https://pmc.ncbi.nlm.nih.gov/articles/PMC5867372/), [model fizyczny jazdy](https://pubmed.ncbi.nlm.nih.gov/7615475/), [API i jednostki prognozy Open-Meteo](https://open-meteo.com/en/docs). Wyniki modelu planera nie są bezpośrednią kopią metody MET ani wyniku konkretnego zegarka.
 
 ## Szybszy start i obliczenia
 
@@ -15,7 +41,7 @@ Nowa wersja: szybsze ustawienie startu GPS i krótsza reakcja automatycznego wyz
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS ani serwera testowego. W tytule strony i metadanych znajduje się numer **2.9.0**.
+Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.1.0**.
 
 ## Nowość: przerwy na mapie
 

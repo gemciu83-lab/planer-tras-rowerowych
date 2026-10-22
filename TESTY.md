@@ -1,4 +1,37 @@
-# Weryfikacja wersji 2.9 — 22.10.2026
+# Weryfikacja wersji 3.1 — 22.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` przechodzi, łącznie z dotychczasowymi testami trasowania, GPS, energii, postojów i nowymi testami dolnego panelu. Testy panelu obejmują zachowanie parametrów i trasy przy ukrywaniu, pojedyncze przekazanie zmiany profilu do dotychczasowej kontrolki, lokalne przeliczenie kalorii po zmianie roweru/pozycji, synchronizację pól, skrót P z pomijaniem wpisywania tekstu oraz miejsce rezerwowane w dopasowaniu mapy i centrowaniu GPS.
+
+Przeglądarka, lokalny serwer testowy i syntetyczna trasa 50 km:
+
+- Dystans, czas, aktywne i całkowite kalorie oraz wszystkie podstawowe pola przeniesione do dolnego panelu. U góry mapy pozostają styl mapy i GPS.
+- Zmiana bagażu na 12 kg, rodzaju roweru na gravel i pozycji na turystyczną synchronizuje ustawienia. Licznik zapytań do routingu pozostaje 0, liczba punktów 2 i dystans 50,0 km.
+- × chowa jednocześnie wyniki i pola. P przywraca całość; pole bagażu nadal pokazuje 12 kg, a wynik kalorii jest aktualny.
+- Po schowaniu i odświeżeniu panel pozostaje schowany, widoczna jest zakładka przywracania. Trasa po odświeżeniu jest pusta, zgodnie z wcześniejszym wymaganiem.
+- Wybór profilu „Ręcznie” z dolnej listy uruchamia automatyczne przeliczenie i daje 50,0 km bez naciskania przycisku wyznaczania. Obie kontrolki profilu pozostają zgodne. Dopasowywania MTB/szosy na rzeczywistym BRouterze w tej zmianie nie testowano ponownie; używany jest istniejący mechanizm i jego testy.
+- Po dopasowaniu załadowanej trasy oba znaczniki S i 1 znajdują się nad panelem. Przyciski mapy są w osobnym rzędzie ponad panelem. Nie stwierdzono poziomego przewijania strony ani błędów JavaScript podczas tych prób.
+
+Zewnętrzne usługi i fizyczny GPS nie były ponownie weryfikowane w tej zmianie układu. Wcześniejsze sprawdzenia 3.0 opisano niżej. Testowy serwer, przyciski i syntetyczna trasa nie wchodzą do paczki. Asystent nie opublikował wersji 3.1 na GitHubie ani GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.0
+
+Nowy moduł energii i interfejs zachowują trasowanie 2.9. Testy fizycznego modelu obejmują masę roweru i bagażu, masę rowerzysty, pozycję jazdy, podjazdy/zjazdy, wiatr czołowy/boczny/tylny, odwrócenie kierunku przejazdu oraz brak ujemnych kalorii. Wydatek spoczynkowy zależy tylko od rowerzysty i czasu; postoje nie zmieniają kalorii aktywnych i dodają spoczynkowe dokładnie raz. Testy prognozy sprawdzają UTC, zakres godzin, wpływ wcześniejszych postojów, brakujące dane/null, jednostki m/s, zmianę trasy i wygaśnięcie pamięci prognozy. Starsze zapisy otrzymują 0 kg bagażu, domyślną pozycję i ręczny wiatr 0 km/h; nowe pola przechodzą walidację i wczytanie zapisanej wyprawy.
+
+W przeglądarce, na syntetycznej płaskiej trasie 50 km:
+
+- Rowerzysta 70 kg, rower 15 kg, 20 km/h: około 920 aktywnych i 1100 całkowitych kcal. Są to zaokrąglone wyniki modelu, nie pomiar fizjologiczny.
+- Bagaż 10 kg dodany z kafelka mapy synchronizuje się z polem w ustawieniach i podnosi wynik do około 960 aktywnych i 1140 całkowitych kcal.
+- Ręczny wiatr 20 km/h z północy daje na trasie na północ większy wynik; zmiana na wiatr z południa obniża go. Pozycja turystyczna również zmienia wynik.
+- Dodatkowy postój 30 min dolicza 35 kcal spoczynkowych dla osoby 70 kg; aktywne nie rosną od samego postoju.
+- Zapis, odświeżenie z pustą trasą i ręczne wczytanie zachowują osobno rower 15 kg, bagaż 10 kg, pozycję, wiatr i postoje.
+- Błąd HTTP 503 w kontrolowanej prognozie daje w trybie prognozy brak kalorii i czytelny komunikat; poprawna odpowiedź przywraca obliczenia.
+- Rzeczywiste Open-Meteo w przeglądarce poprawnie zwróciło prognozę dla publicznych miejsc na trasie testowej. Przykładowy wynik: około 1510 aktywnych / 1690 całkowitych kcal, 48% dystansu pod wiatr i 52% przy wietrze bocznym. To jednorazowe sprawdzenie dostępności usługi, nie potwierdzenie faktycznego pogody ani spalania użytkownika.
+- Zmiany mas, pozycji, przerw i wiatru oraz pobranie prognozy: **0 zapytań do serwera trasowania**. Brak błędów JavaScript w konsoli podczas tych prób.
+- Układ ustawień ma trzy kolumny na sprawdzonym widoku komputerowym, bez poziomego przewijania i bez wewnętrznych suwaków nowych paneli. Rozwinięte parametry mapy mieszczą się na mapie; przyciski dolne nie nachodzą na pole bagażu. W trybie prognozy ręczne pola wiatru są schowane, a opis podaje zakres prognozowanych prędkości dla przejazdu.
+
+Nie zmierzono wydatku energetycznego rzeczywistego rowerzysty. To model planowania, z ograniczeniami opisanymi w README. Testy interfejsu wykorzystywały kontrolowaną lokalizację i syntetyczną trasę. Testowe serwery, przyciski i atrapy pogody/GPS są poza paczką. Wersja 3.0 nie została opublikowana na GitHubie ani GitHub Pages przez asystenta.
+
+## Weryfikacja wcześniejszej wersji 2.9
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi. Nowe testy GPS obejmują natychmiastowe ustawienie S, kliknięcie punktu 1 podczas doprecyzowania, świeży pomiar po niedawnym pomiarze z pamięci, ignorowanie późniejszego starego pomiaru, ochronę przeciągniętego S i istniejącej wycieczki, błędne współrzędne, brak zgody, przekroczenie czasu, anulowanie oraz wariant bez watchPosition. Testy trasowania potwierdzają zwłokę 600 ms, pobieranie tylko dwupunktowego końca przy rozbudowie 2→3→4 punktów, zerową liczbę zapytań przy dokładnym powtórzeniu, pełne zapytanie zamiast dwóch brakujących odcinków i połączenie z faktycznym końcem poprzedniej geometrii drogowej. Testy kolejki i HTTP 403/429 nadal przechodzą.
 
@@ -29,4 +62,4 @@ Renderer PNG ma dodane znaczniki przerw; test rysowania sprawdza podpisy planowa
 
 Wyszukiwanie sklepów/wody/odpoczynku przez Overpass nie było zmieniane ani ponownie potwierdzane na żywo. Zachowuje ograniczenia dostępności zewnętrznego serwera opisane w README.
 
-Paczka nie zawiera trasy syntetycznej, testowego serwera, atrap GPS ani zapisanych wycieczek. Asystent nie opublikował wersji 2.9 na GitHubie ani GitHub Pages.
+Paczka nie zawiera trasy syntetycznej, testowego serwera, atrap GPS ani zapisanych wycieczek.

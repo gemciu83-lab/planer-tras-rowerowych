@@ -12,7 +12,7 @@ function setup({points=[],watch=true}={}){
  function node(n){if(!nodes.has(n))nodes.set(n,{textContent:'',classList:{add(){},remove(){},toggle(){}},setAttribute(k,v){this[k]=v}});return nodes.get(n)}
  function layer(){return {addTo(){return this},bindTooltip(){return this},on(){return this},setLatLng(p){calls.draws.push(p);return this},setRadius(){return this},setTooltipContent(){return this}}}
  if(watch)env.navigator.geolocation.watchPosition=(ok,fail,options)=>{calls.watch.push({ok,fail,options});return calls.watch.length};
- Object.assign(env,{points,revision:0,locationMarker:null,accuracyCircle:null});vm.createContext(env);vm.runInContext(gps,env);
+ Object.assign(env,{points,revision:0,locationMarker:null,accuracyCircle:null,centerMapAboveDock:(...args)=>env.map.setView(...args)});vm.createContext(env);vm.runInContext(gps,env);
  const fix=(lon=19,lat=51,accuracy=150,age=0)=>({coords:{longitude:lon,latitude:lat,accuracy},timestamp:Date.now()-age});
  return {env,calls,jobs,node,fix,run:s=>vm.runInContext(s,env)};
 }

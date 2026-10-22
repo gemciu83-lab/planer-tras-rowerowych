@@ -1,0 +1,54 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path'),root=path.resolve(__dirname,'..');
+const env={};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-energy.js','utf8'),env);const E=env.PlannerEnergy;
+const north=[[19,51],[19,51.45]],south=[...north].reverse(),flat={meters:[50000],rise:[0]},base={rider:70,bike:15,luggage:0,speed:20,type:'trekking',windSpeed:0,windDirection:0,stopMinutes:0};
+const estimate=(options={},cs=north,metrics=flat)=>E.estimate(cs,metrics,{...base,...options});
+const initial=estimate();assert.equal(Math.round(initial.active),925);assert.equal(initial.restRide,175);assert.equal(initial.total,initial.active+175);
+const bag=estimate({luggage:10}),bike=estimate({bike:25});assert.equal(bag.active,bike.active);assert(bag.active>initial.active);assert.equal(bag.rest,initial.rest);
+const stop=estimate({stopMinutes:30});assert.equal(stop.active,initial.active);assert.equal(stop.total-initial.total,35);assert.equal(stop.restStops,35);
+const person=estimate({rider:90});assert(person.active>initial.active);assert.equal(person.restRide,225);
+assert(estimate({speed:25}).active>initial.active);assert(estimate({position:'upright'}).active>estimate({position:'touring'}).active);assert(estimate({position:'touring'}).active>estimate({position:'tucked'}).active);
+console.log('PASS: luggage and bike enter mechanical mass once; only rider enters resting kcal; stops add rest once; position and speed affect energy');
+const head=estimate({windSpeed:20,windDirection:0}),tail=estimate({windSpeed:20,windDirection:180}),cross=estimate({windSpeed:20,windDirection:90});
+assert(head.active>cross.active&&cross.active>initial.active&&initial.active>tail.active);assert(head.upwind>0);assert(tail.downwind>0);assert(cross.crosswind>0);
+assert.equal(estimate({windSpeed:20,windDirection:0},south).active,tail.active);
+const blow=estimate({speed:10,windSpeed:80,windDirection:180});assert.equal(blow.active,0);assert(blow.total>0);
+const climb=estimate({},north,{meters:[50000],rise:[1000]});assert(climb.active>initial.active);assert.equal(estimate({},north,{meters:[50000],rise:[-10000]}).active,0);
+assert.equal(estimate({windAt:()=>null}).valid,false);assert(Number.isFinite(estimate({type:'constructor',position:'constructor'}).active));
+console.log('PASS: meteorological wind direction reverses with travel; crosswind uses vector drag; tailwind/descent cannot create negative active kcal');
+const epoch=Date.UTC(2026,9,22,10),sample=[{meters:0},{meters:50000}];
+const data=(speed,direction)=>({hourly_units:{wind_speed_10m:'m/s'},hourly:{time:[epoch/1000,epoch/1000+3600],wind_speed_10m:[speed,speed+1],wind_direction_10m:[direction,direction]}});
+const forecast=E.parseForecast([data(5,0),data(10,180)],sample);
+assert.equal(E.forecastAt(forecast,0,epoch).speed,5);assert.equal(E.forecastAt(forecast,50000,epoch+3600000).speed,11);assert.equal(E.forecastAt(forecast,50000,epoch+7200000),null);assert.equal(E.forecastAt(forecast,0,epoch-1),null);
+assert.throws(()=>E.parseForecast([data(5,0)],sample));const hole=data(5,0);hole.hourly.wind_speed_10m[0]=null;assert.equal(E.forecastAt(E.parseForecast(hole,[sample[0]]),0,epoch),null);
+assert.equal(E.forecastAt(E.parseForecast(data(0,0),[sample[0]]),0,epoch).speed,0);
+const badUnits=data(5,0);badUnits.hourly_units.wind_speed_10m='km/h';assert.throws(()=>E.parseForecast(badUnits,[sample[0]]));
+console.log('PASS: hourly forecast uses UTC instants and route samples; missing hours/nulls/wrong units are not treated as calm wind');
+const core={};vm.runInNewContext(fs.readFileSync(root+'/assets/planner-core.js','utf8'),core);const C=core.PlannerCore;
+const clean=C.sanitizeTrip({points:north,track:north,settings:{luggageWeight:12.5,ridingPosition:'touring',windMode:'forecast',windSpeed:20,windDirection:270}});
+assert.equal(clean.settings.luggageWeight,'12.5');assert.equal(clean.settings.ridingPosition,'touring');assert.equal(clean.settings.windMode,'forecast');assert.equal(clean.settings.windDirection,'270');
+const old=C.sanitizeTrip({points:north,track:north,settings:{}});assert.equal(old.settings.luggageWeight,'0');assert.equal(old.settings.windMode,'manual');assert.equal(old.settings.ridingPosition,'auto');
+console.log('PASS: new energy settings validate and older trips get zero luggage, calm manual wind and default posture');
+const source=fs.readFileSync(root+'/assets/planner-features.js','utf8'),saved=source.slice(source.indexOf('function savedSnapshot('),source.indexOf('\n',source.indexOf('function savedSnapshot(')));
+const snapshotContext={PlannerCore:C,record:{points:north,track:north,luggageWeight:12.5,ridingPosition:'touring',windMode:'manual',windSpeed:20,windDirection:270}};vm.runInNewContext(saved+';result=savedSnapshot(record)',snapshotContext);assert.equal(snapshotContext.result.settings.luggageWeight,'12.5');assert.equal(snapshotContext.result.settings.windSpeed,'20');
+// Execute real UI calculations with forecast and point-stop timing, without routing.
+const nodes=new Map(),node=id=>{if(!nodes.has(id))nodes.set(id,{value:({riderWeight:'70',bikeWeight:'15',luggageWeight:'0',speed:'20',bikeType:'trekking',ridingPosition:'auto',windMode:'manual',windSpeed:'0',windDirection:'0',pause:'0',departure:'2026-10-22T10:00'})[id]||'',textContent:'',selectedOptions:[{textContent:'N'}],addEventListener(){}});return nodes.get(id)};
+const ui={PlannerEnergy:E,PlannerCore:{rideMetrics:()=>flat},$:node,track:north,distance(){},plannedStopsMinutes:()=>30,getPointStops:()=>[0,0],ensureTripPlan:()=>({total:50000}),activeRouteBreaks:()=>[{meters:0,minutes:30}],tripPlanPositions:[0,50000],mapDistancePending:false,previousRoute:null,Date,Math,JSON,console};vm.createContext(ui);vm.runInContext(fs.readFileSync(root+'/assets/planner-energy-ui.js','utf8'),ui);
+vm.runInContext('updateEnergyDisplay()',ui);assert.match(node('energyRest').textContent,/35 kcal/);assert.equal(node('energyTotal').textContent,'≈ '+(Math.round(stop.total/10)*10).toLocaleString('pl-PL')+' kcal');
+node('windMode').value='forecast';node('departure').value=new Date(epoch).toISOString();ui.forecast=forecast;
+// Freeze test time to within forecast freshness; production stores fetch time, never a forecast as permanent settings.
+vm.runInContext('energyForecast={track,records:forecast,fetchedAt:Date.now()};energyForecastSerial++;',ui);
+const forecastResult=vm.runInContext('estimateTripEnergy()',ui);assert(forecastResult.valid);
+ui.activeRouteBreaks=()=>[{meters:1000,minutes:60}];assert.equal(vm.runInContext('estimateTripEnergy().valid',ui),false);ui.activeRouteBreaks=()=>[{meters:0,minutes:30}];
+vm.runInContext('energyForecast.fetchedAt-=3600001',ui);assert.equal(vm.runInContext('estimateTripEnergy().valid',ui),false);
+ui.track=north.map(c=>c.slice());assert.equal(vm.runInContext('estimateTripEnergy().valid',ui),false);
+console.log('PASS: UI totals and saved reload retain baggage; expired or changed-route forecast cannot reuse cached calories');
+async function weatherRequests(){
+ let finish,signal,calls=0;const current=new Date();current.setMinutes(current.getMinutes()-current.getTimezoneOffset());node('departure').value=current.toISOString().slice(0,16);node('windMode').value='manual';
+ Object.assign(ui,{AbortController,URLSearchParams,setTimeout:()=>1,clearTimeout(){},PlannerTrip:{pointAt:(_index,m)=>[19,51+m/111195]},checkpoint(){},stats(){vm.runInContext('updateEnergyDisplay()',ui)},fetch:(url,options)=>{calls++;assert(String(url).startsWith('https://api.open-meteo.com/'));signal=options.signal;return new Promise(resolve=>finish=resolve)}});
+ const pending=vm.runInContext('fetchRouteWind()',ui);assert.equal(calls,1);ui.track=ui.track.map(c=>c.slice());vm.runInContext('updateEnergyDisplay()',ui);assert(signal.aborted);
+ finish({ok:true,json:async()=>[data(5,0),data(5,0),data(5,0)]});await pending;assert.equal(node('windMode').value,'manual');assert.equal(vm.runInContext('energyRequest',ui),null);
+ node('windMode').value='forecast';ui.fetch=async()=>({ok:false,status:503});await vm.runInContext('fetchRouteWind()',ui);assert.match(node('windStatus').textContent,/HTTP 503/);assert.equal(node('calories').textContent,'— kcal');assert.equal(node('fetchWind').disabled,false);
+ ui.fetch=async()=>{throw new TypeError('Failed to fetch')};await vm.runInContext('fetchRouteWind()',ui);assert.match(node('windStatus').textContent,/Nie udało się połączyć/);
+ console.log('PASS: route edits abort weather fetch; stale responses cannot change mode; HTTP/network failure releases controls without inventing calm-wind calories');
+}
+weatherRequests().catch(error=>{console.error(error);process.exitCode=1});
