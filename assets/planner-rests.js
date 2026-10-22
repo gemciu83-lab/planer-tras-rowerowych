@@ -47,7 +47,7 @@ function updateRestMarkers(){
  if(!restMarkerLayer)return;const items=restMarkerItems(),key=JSON.stringify([items.map(p=>[p.kind,p.pointIndex,p.meters,p.minutes]),$('departure').value,$('speed').value,mapDistancePending,!!previousRoute]);
  if(restRenderTrack!==track||restRenderKey!==key){
   restRenderTrack=track;restRenderKey=key;restMarkerLayer.clearLayers();const index=ensureTripPlan(),obstacles=[];
-  const mapRect=$('map').getBoundingClientRect();for(const el of [$('mapReadings'),$('mapBottomActions'),document.querySelector('.map-buttons')])if(el){const r=el.getBoundingClientRect();if(r.width&&r.height)obstacles.push({x:r.left-mapRect.left,y:r.top-mapRect.top,w:r.width,h:r.height})}
+  const mapRect=$('map').getBoundingClientRect();for(const el of [$('mapReadings'),$('mapReadoutStack'),$('mapBottomActions'),document.querySelector('.map-buttons')])if(el){const r=el.getBoundingClientRect();if(r.width&&r.height)obstacles.push({x:r.left-mapRect.left,y:r.top-mapRect.top,w:r.width,h:r.height})}
   const positions=items.map(item=>{const c=PlannerTrip.pointAt(index,item.meters),p=map.latLngToContainerPoint([c[1],c[0]]);return {x:p.x,y:p.y,base:item.kind==='point'?25:0,text:item.kind==='suggestion'?'Odpoczynek? · '+restKm(item.meters):'Postój '+item.minutes+' min · '+restKm(item.meters)}});
   for(const p of positions)obstacles.push({x:p.x-14,y:p.y+(p.base||0)-14,w:28,h:28});
   for(const point of points){const p=map.latLngToContainerPoint([point[1],point[0]]);obstacles.push({x:p.x-20,y:p.y-20,w:40,h:40})}

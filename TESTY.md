@@ -1,4 +1,17 @@
-# Weryfikacja wersji 3.1 — 22.10.2026
+# Weryfikacja wersji 3.2 — 22.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` przechodzi. Zmieniono układ, nie model energii ani sposób wysyłania tras. Test panelu potwierdza, że ukrywanie dotyczy parametrów, a osobna sekcja statystyk pozostaje widoczna.
+
+W przeglądarce na syntetycznej trasie 50 km:
+
+- Wszystkie pięć pól ma tę samą współrzędną pionową: profil trasy, tempo, rowerzysta, rower, bagaż. Pasek w sprawdzonym widoku ma 67 px wysokości.
+- Bagaż 10 kg jest widoczny obok masy roweru, synchronizuje się z ustawieniami i zmienia wynik do około 960 aktywnych kcal. Licznik trasowania pozostaje 0.
+- × chowa pasek i zostawia małą zakładkę „⚙ Parametry”. Statystyki po prawej pozostają widoczne, liczba punktów wynosi nadal 2. Przywrócenie zachowuje bagaż 10 kg.
+- Brak poziomego przewijania strony i błędów JavaScript podczas próby.
+
+Repozytorium GitHub main odczytane w trakcie zadania zawierało index.html z numerem 3.1.0 i polem mapLuggageWeight. Zrzut użytkownika pokazywał wcześniejszy układ. Nie potwierdzono, czy powodem była stara otwarta karta, pamięć przeglądarki czy stan wdrożenia Pages. Bieżącej strony Pages nie udało się odczytać narzędziem web. Wersja 3.2 została przygotowana lokalnie i nie została opublikowana przez asystenta.
+
+## Sprawdzenia wcześniejszej wersji 3.1
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi, łącznie z dotychczasowymi testami trasowania, GPS, energii, postojów i nowymi testami dolnego panelu. Testy panelu obejmują zachowanie parametrów i trasy przy ukrywaniu, pojedyncze przekazanie zmiany profilu do dotychczasowej kontrolki, lokalne przeliczenie kalorii po zmianie roweru/pozycji, synchronizację pól, skrót P z pomijaniem wpisywania tekstu oraz miejsce rezerwowane w dopasowaniu mapy i centrowaniu GPS.
 

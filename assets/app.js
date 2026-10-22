@@ -384,9 +384,9 @@ for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight
 for(const id of ['mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile']){L.DomEvent.disableClickPropagation($(id));L.DomEvent.disableScrollPropagation($(id))}
 
 const mapReadings=$('mapReadings');
-for(const id of ['mapDistanceBadge','mapTimeTile','mapCaloriesTile'])$('mapDockStats').append($(id));
-for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile','mapBikeTypeTile','mapRidingPositionTile','mapEnergySettings'])$('mapParameters').append($(id));
-$('mapDockHeader').append($('mapCalculate'),$('hideMapReadings'));
+for(const id of ['mapDistanceBadge','mapCaloriesTile','mapTimeTile','mapCalculate'])$('mapReadoutStack').append($(id));
+for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile'])$('mapParameters').append($(id));
+mapReadings.append($('hideMapReadings'));document.querySelector('.map-top').append($('mapReadoutStack'));
 document.querySelector('.map-wrap').append($('showMapReadings'));
 $('hideMapReadings').setAttribute('aria-label','Schowaj cały panel parametrów');$('hideMapReadings').title='Schowaj panel (P)';
 $('hideMapReadings').onclick=()=>setMapDockOpen(false,true,true);
@@ -394,15 +394,16 @@ $('showMapReadings').onclick=()=>setMapDockOpen(true,true,true);
 $('mapBottomActions').prepend($('mapFullscreen'));
 function positionMapActions(){
  const actions=$('mapBottomActions'),mapNode=$('map'),help=$('mapHelp'),show=$('showMapReadings');
- const visible=!mapReadings.hidden,dockHeight=visible?mapReadings.offsetHeight:0;
- const minHeight=Math.max(window.innerWidth<=600?650:620,dockHeight+230)+'px';
- if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
- const height=mapNode.offsetHeight,top=Math.max(90,height-dockHeight-44);
- mapReadings.style.top=top+'px';show.style.top=Math.max(0,height-show.offsetHeight-28)+'px';
+ const width=mapNode.clientWidth,wide=width>=1120;
  actions.style.right='12px';actions.style.maxWidth='calc(100% - 65px)';
- const actionsTop=visible?top-actions.offsetHeight-8:height-Math.max(65,actions.offsetHeight+28);
- actions.style.top=Math.max(0,actionsTop)+'px';
- help.style.top=Math.max(70,actionsTop-Math.max(32,help.offsetHeight)-8)+'px';
+ const stripWidth=wide?Math.min(780,width-actions.offsetWidth-100):width-24;
+ mapReadings.style.width=Math.max(240,stripWidth)+'px';mapReadings.style.left=(wide?Math.max(60,(width-actions.offsetWidth-stripWidth)/2):12)+'px';
+ const visible=!mapReadings.hidden,stripHeight=visible?mapReadings.offsetHeight:0;
+ const minHeight=Math.max(window.innerWidth<=600?650:620,stripHeight+230)+'px';if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
+ const height=mapNode.offsetHeight,top=Math.max(90,height-stripHeight-44);
+ mapReadings.style.top=top+'px';show.style.top=Math.max(0,height-show.offsetHeight-28)+'px';
+ const actionsTop=visible&&!wide?top-actions.offsetHeight-8:height-Math.max(65,actions.offsetHeight+28);
+ actions.style.top=Math.max(0,actionsTop)+'px';help.style.top=Math.max(70,(visible?Math.min(top,actionsTop):actionsTop)-Math.max(32,help.offsetHeight)-8)+'px';
 }
 const dockObserver=new ResizeObserver(()=>{positionMapActions();map.invalidateSize({pan:false})});
 for(const element of [$('map'),mapReadings,$('mapBottomActions'),$('mapHelp')])dockObserver.observe(element);

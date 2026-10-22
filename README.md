@@ -1,16 +1,16 @@
-# Planer tras rowerowych 3.1
+# Planer tras rowerowych 3.2
 
-Nowa wersja: jeden dolny panel parametrów i wyników na mapie. Zachowuje bagaż, wiatr i podział kalorii wersji 3.0, GPS i trasowanie 2.9 oraz postoje na mapie.
+Nowa wersja: wąski pasek parametrów na dole mapy, zgodnie ze wskazanym układem. Dystans, kalorie i czas pozostają po prawej. Zachowuje bagaż, wiatr, podział kalorii, GPS, trasowanie i postoje.
 
-## Dolny panel na mapie
+## Wąski pasek parametrów
 
-- Na dole mapy, nad profilem wysokości, są osobne kafelki **dystansu, czasu jazdy i kalorii** oraz pola **tempa, masy rowerzysty, masy roweru i masy bagażu**.
-- **Profil trasy** wybiera sposób wyznaczania drogi: turystyczny, szosa, MTB lub ręczne linie. Zmiana korzysta z tego samego automatu co pole w górnych ustawieniach. **Rodzaj roweru** i **pozycja podczas jazdy** zmieniają obliczenia energii; nie zmieniają geometrii drogi.
-- **Wiatr i szczegóły kalorii** otwiera właściwą sekcję ustawień. Przycisk pokazuje także skrót bieżących założeń lub prognozy. Pełna obsługa wiatru i rozbicie kalorii pozostają w tej sekcji.
-- Kliknij **×** lub nagłówek **Parametry trasy**, aby schować cały panel razem z wynikami i polami. Na dole po lewej zostanie mała zakładka **⚙ Parametry trasy**, która przywraca całość.
+- Na dole mapy pola są obok siebie: **profil trasy, tempo, masa rowerzysty, masa roweru i masa bagażu**. W sprawdzonym widoku komputerowym pasek ma 67 px wysokości. Na małych ekranach pola mogą przejść do kolejnych rzędów, aby pozostały czytelne.
+- **Profil trasy** wybiera sposób wyznaczania drogi: turystyczny, szosa, MTB lub ręczne linie. Zmiana korzysta z tego samego automatu co pole w górnych ustawieniach. Rodzaj roweru, pozycja, wiatr i szczegółowe rozbicie kalorii pozostają w **Ustawieniach** u góry strony.
+- **Bagaż · kg** jest osobnym polem tuż po **Rower · kg**. Edycja działa od razu i jest zsynchronizowana z ustawieniami oraz zapisem wycieczki.
+- Kliknij **×**, aby schować cały dolny pasek do małej zakładki **⚙ Parametry**. Kliknięcie zakładki przywraca wszystkie pola. Kafelki dystansu, kalorii i czasu po prawej pozostają widoczne.
 - Klawisz **P** także przełącza cały panel. Skrót nie działa podczas wpisywania danych, używania list wyboru ani w otwartym oknie dialogowym. Widoczność panelu jest zapamiętywana niezależnie od trasy i historii cofania. Starszy zapis widoczności kafelków jest obsługiwany.
 - Chowanie i przywracanie nie usuwa punktów, nie zmienia parametrów ani nie wyznacza ponownie trasy. Parametry i wyniki pozostają zsynchronizowane z ustawieniami u góry.
-- Przyciski postojów, pełnego ekranu i zapisu PNG są nad panelem. Dopasowanie całej trasy i początkowe centrowanie GPS uwzględniają miejsce zajmowane przez panel, aby punkty nie chowały się pod nim.
+- Przyciski postojów, pełnego ekranu i PNG są obok paska po prawej; przy mniejszej szerokości przechodzą ponad pasek, aby nie zasłaniać pól. Dopasowanie całej trasy i początkowe centrowanie GPS uwzględniają pasek.
 - Po uruchomieniu nadal nie wczytujemy poprzedniej trasy. Styl mapy i przycisk GPS pozostają u góry mapy.
 
 ## Bagaż, wiatr i kalorie
@@ -41,7 +41,7 @@ Nowa wersja: jeden dolny panel parametrów i wyników na mapie. Zachowuje bagaż
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.1.0**.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.2.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 

@@ -33,7 +33,7 @@ async function tests(){
  console.log('PASS: manual name wins over late reverse geocode; a touch changes nothing until an action is chosen');
  const html=fs.readFileSync(root+'/index.html','utf8'),ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size);
  for(const file of html.matchAll(/(?:src|href)="(assets\/[^"]+)"/g))assert(fs.existsSync(root+'/'+file[1].split(/[?#]/)[0]));
- for(const file of ['app','planner-core','planner-features'])assert(html.includes('assets/'+file+'.js?v=3.1.0'));
+ for(const file of ['app','planner-core','planner-features'])assert(html.includes('assets/'+file+'.js?v=3.2.0'));
  for(const file of [app,source])for(const match of file.matchAll(/\$\('([^']+)'\)/g))assert(ids.includes(match[1])||['mapParameters','toggleMapParameters','profileCursor'].includes(match[1]),'Missing DOM '+match[1]);
  assert(app.includes('function initializeFreshTrip()'));assert(!app.includes("getItem('rowerem-draft-v2')"));
  console.log('PASS: assets and control references; empty-map startup retained');

@@ -11,15 +11,9 @@ function setMapDockOpen(open,remember=false,focus=false){
  if(focus)(open?toggle:show).focus({preventScroll:true});
  positionMapActions();if(remember)saveViewPreferences();
 }
-function syncMapDock(){
- for(const [quick,source] of [['mapProfile','profile'],['mapBikeType','bikeType'],['mapRidingPosition','ridingPosition']])if(document.activeElement!==$(quick))$(quick).value=$(source).value;
- const wind=$('windStatus').textContent;$('mapWindBrief').textContent=wind;$('mapEnergySettings').title=wind;
-}
+function syncMapDock(){if(document.activeElement!==$('mapProfile'))$('mapProfile').value=$('profile').value}
 function initMapDock(){
- for(const [quick,source,event] of [['mapProfile','profile','change'],['mapBikeType','bikeType','input'],['mapRidingPosition','ridingPosition','input']]){
-  $(quick).addEventListener('change',()=>{$(source).value=$(quick).value;$(source).dispatchEvent(new Event(event,{bubbles:true}))});
- }
- $('mapEnergySettings').onclick=()=>{setTopMenu(true);$('energySettings').scrollIntoView({behavior:'smooth',block:'center'});$('windMode').focus({preventScroll:true})};
+ $('mapProfile').addEventListener('change',()=>{$('profile').value=$('mapProfile').value;$('profile').dispatchEvent(new Event('change',{bubbles:true}))});
  document.addEventListener('keydown',e=>{
   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.key.toLowerCase()!=='p'||e.target.closest('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
   e.preventDefault();setMapDockOpen($('mapReadings').hidden,true,true);
