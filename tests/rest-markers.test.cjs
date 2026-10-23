@@ -28,7 +28,7 @@ pending.mapDistancePending=true;assert.equal(vm.runInContext('restMarkerItems().
 console.log('PASS: clear resets the pause plan; stale or pending geometry never displays current rest markers');
 const labels=[];pending.imageCtx={beginPath(){},arc(){},fill(){},stroke(){},fillRect(){},strokeRect(){},measureText:t=>({width:t.length*6}),fillText:t=>labels.push(t)};
 vm.runInContext('drawRestImage(imageCtx,[{kind:"planned",meters:25000,minutes:10,p:{x:50,y:70}},{kind:"suggestion",meters:50000,minutes:15,p:{x:90,y:100}}])',pending);
-assert(labels.some(t=>t.includes('Postój 10 min')));assert(labels.some(t=>t.includes('Odpoczynek?')));
+assert.equal(labels.filter(t=>t==='P').length,2);assert(labels.some(t=>t.includes('Postój 10 min')));assert(labels.some(t=>t.includes('Odpoczynek?')));
 console.log('PASS: canvas renderer draws separate planned/suggested pause captions');
 const layout=vm.runInContext('restLabelLayout([{x:100,y:100,text:"Odpoczynek? · 20 km"},{x:140,y:100,text:"Postój 10 min · 25 km"}],{x:500,y:400},[{x:86,y:86,w:28,h:28},{x:126,y:86,w:28,h:28}])',pending);
 const a=layout[0].rect,b=layout[1].rect;assert(!(a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y));

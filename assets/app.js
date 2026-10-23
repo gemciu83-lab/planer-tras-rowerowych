@@ -385,7 +385,7 @@ for(const id of ['mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile']){
 
 const mapReadings=$('mapReadings');
 for(const id of ['mapDistanceBadge','mapCaloriesTile','mapTimeTile','mapCalculate'])$('mapReadoutStack').append($(id));
-for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile'])$('mapParameters').append($(id));
+for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile','mapBikeTypeTile'])$('mapParameters').append($(id));
 mapReadings.append($('hideMapReadings'));document.querySelector('.map-top').append($('mapReadoutStack'));
 document.querySelector('.map-wrap').append($('showMapReadings'));
 $('hideMapReadings').setAttribute('aria-label','Schowaj cały panel parametrów');$('hideMapReadings').title='Schowaj panel (P)';

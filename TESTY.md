@@ -1,4 +1,18 @@
-# Weryfikacja wersji 3.2 — 22.10.2026
+# Weryfikacja wersji 3.3 — 22.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` przechodzi. Dodano synchronizację dolnego wyboru rodzaju roweru z istniejącym modelem energii, a test renderera PNG potwierdza rysowanie litery P dla obu rodzajów przerw.
+
+W przeglądarce na syntetycznej trasie 50 km:
+
+- Sześć osobnych kafelków ma tę samą współrzędną pionową i wysokość 54 px: profil, tempo, rowerzysta, rower, bagaż i rodzaj roweru.
+- Bagaż 10 kg i rodzaj Gravel synchronizują się z ustawieniami; profil wyznaczania pozostaje trekking. Licznik żądań trasowania wynosi 0.
+- Zarówno żółta propozycja, jak i zaakceptowany zielony postój mają na mapie literę P. Po akceptacji podpis pokazuje „Postój 10 min · 25 km”. Samo dodanie przerwy nie wysyła zapytania trasowania.
+- × chowa dolne kafelki do „⚙ Parametry”. Kafelki statystyk pozostają widoczne po prawej. Przywrócenie zachowuje bagaż 10 kg i wybór Gravel.
+- Brak poziomego przewijania oraz błędów JavaScript w sprawdzonym widoku komputerowym.
+
+Test pobierania PNG w przeglądarce nie był ponawiany; sam renderer oznaczenia P jest objęty testem automatycznym. Usług trasowania, rzeczywistej pogody i fizycznego GPS nie sprawdzano ponownie w tej zmianie układu. Testowy serwer, kontrolowana lokalizacja i syntetyczna trasa są poza paczką. Asystent nie opublikował wersji 3.3 na GitHubie ani GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.2
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi. Zmieniono układ, nie model energii ani sposób wysyłania tras. Test panelu potwierdza, że ukrywanie dotyczy parametrów, a osobna sekcja statystyk pozostaje widoczna.
 

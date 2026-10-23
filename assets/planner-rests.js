@@ -54,7 +54,7 @@ function updateRestMarkers(){
   const layout=restLabelLayout(positions,map.getSize(),obstacles);
   for(let i=0;i<items.length;i++){const item=items[i];
    const c=PlannerTrip.pointAt(index,item.meters);if(!c)continue;const suggestion=item.kind==='suggestion',caption=document.createElement('span');caption.textContent=suggestion?'Odpoczynek? · '+restKm(item.meters):'Postój '+item.minutes+' min · '+restKm(item.meters);
-   const title=caption.textContent,marker=L.marker([c[1],c[0]],{title,zIndexOffset:suggestion?1200:1400,icon:L.divIcon({className:'rest-pin '+(suggestion?'rest-suggestion':'rest-planned'),html:'<span aria-hidden="true">Ⅱ</span>',iconSize:[24,24],iconAnchor:item.kind==='point'?[12,-13]:[12,12]})});
+   const title=caption.textContent,marker=L.marker([c[1],c[0]],{title,zIndexOffset:suggestion?1200:1400,icon:L.divIcon({className:'rest-pin '+(suggestion?'rest-suggestion':'rest-planned'),html:'<span aria-hidden="true">P</span>',iconSize:[24,24],iconAnchor:item.kind==='point'?[12,-13]:[12,12]})});
    marker.bindTooltip(caption,{permanent:true,interactive:true,direction:layout[i].direction,offset:layout[i].offset,className:'rest-map-label '+(suggestion?'rest-map-suggestion':'rest-map-planned'),opacity:1}).bindPopup(()=>restPopup(item)).addTo(restMarkerLayer);
    marker.getTooltip().on('click',event=>{if(event.originalEvent)L.DomEvent.stop(event.originalEvent);marker.openPopup()});
   }
@@ -63,7 +63,7 @@ function updateRestMarkers(){
 }
 function updateRestOverview(items=restMarkerItems()){
  const planned=items.filter(p=>p.kind!=='suggestion'),suggestions=items.filter(p=>p.kind==='suggestion'),valid=track.length>1&&!mapDistancePending&&!previousRoute;
- $('openRestPlanner').textContent='Ⅱ Postoje · '+(planned.length?planned.length+' zaplan.':restPlanningSettings.intervalKm+' km');
+ $('openRestPlanner').textContent='P Postoje · '+(planned.length?planned.length+' zaplan.':restPlanningSettings.intervalKm+' km');
  $('restOverview').textContent=!valid?'Wyznacz trasę, aby zobaczyć znaczniki przerw.':'Zaplanowane: '+planned.length+' · propozycje: '+suggestions.length+'. Propozycje doliczamy do czasu dopiero po kliknięciu „Zaplanuj ten postój”.';
  const list=$('routeRestList');list.replaceChildren();
  for(const p of routeRestBreaks){const row=document.createElement('div'),name=document.createElement('span'),edit=document.createElement('button'),remove=document.createElement('button'),active=valid&&p.meters<=(ensureTripPlan()?.total||0)+.5;row.className='rest-list-row';name.textContent=restKm(p.meters)+' · '+p.minutes+' min'+(!active?' · poza aktualną trasą — nie doliczamy':'');edit.type=remove.type='button';edit.textContent='Pokaż / zmień';edit.disabled=!active;edit.onclick=()=>{$('restDialog').close();const c=PlannerTrip.pointAt(ensureTripPlan(),p.meters);map.setView([c[1],c[0]],Math.max(14,map.getZoom()));L.popup().setLatLng([c[1],c[0]]).setContent(restPopup({kind:'planned',...p})).openOn(map)};remove.textContent='Usuń';remove.onclick=()=>removeRouteRest(p.meters);row.append(name,edit,remove);list.append(row)}
@@ -86,6 +86,6 @@ function initRestPlanning(){
 }
 function drawRestImage(ctx,items){
  for(const item of items){
-  const p=item.p,suggestion=item.kind==='suggestion';ctx.fillStyle=suggestion?'#f8edbc':'#c9e8b3';ctx.strokeStyle=suggestion?'#987527':'#3e714c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#273c2a';ctx.fillRect(p.x-4,p.y-5,3,10);ctx.fillRect(p.x+2,p.y-5,3,10);ctx.font='bold 11px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';const label=(suggestion?'Odpoczynek?':'Postój '+item.minutes+' min')+' · '+restKm(item.meters),width=ctx.measureText(label).width+12;ctx.fillStyle=suggestion?'#fff7d5':'#e7f4df';ctx.fillRect(p.x+14,p.y-12,width,24);ctx.strokeRect(p.x+14,p.y-12,width,24);ctx.fillStyle='#273c2a';ctx.fillText(label,p.x+20,p.y);
+  const p=item.p,suggestion=item.kind==='suggestion';ctx.fillStyle=suggestion?'#f8edbc':'#c9e8b3';ctx.strokeStyle=suggestion?'#987527':'#3e714c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#273c2a';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('P',p.x,p.y+.5);ctx.font='bold 11px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';const label=(suggestion?'Odpoczynek?':'Postój '+item.minutes+' min')+' · '+restKm(item.meters),width=ctx.measureText(label).width+12;ctx.fillStyle=suggestion?'#fff7d5':'#e7f4df';ctx.fillRect(p.x+14,p.y-12,width,24);ctx.strokeRect(p.x+14,p.y-12,width,24);ctx.fillStyle='#273c2a';ctx.fillText(label,p.x+20,p.y);
  }
 }

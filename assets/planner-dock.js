@@ -11,8 +11,9 @@ function setMapDockOpen(open,remember=false,focus=false){
  if(focus)(open?toggle:show).focus({preventScroll:true});
  positionMapActions();if(remember)saveViewPreferences();
 }
-function syncMapDock(){if(document.activeElement!==$('mapProfile'))$('mapProfile').value=$('profile').value}
+function syncMapDock(){for(const [quick,source] of [['mapProfile','profile'],['mapBikeType','bikeType']])if(document.activeElement!==$(quick))$(quick).value=$(source).value}
 function initMapDock(){
+ $('mapBikeType').addEventListener('change',()=>{$('bikeType').value=$('mapBikeType').value;$('bikeType').dispatchEvent(new Event('input',{bubbles:true}))});
  $('mapProfile').addEventListener('change',()=>{$('profile').value=$('mapProfile').value;$('profile').dispatchEvent(new Event('change',{bubbles:true}))});
  document.addEventListener('keydown',e=>{
   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.key.toLowerCase()!=='p'||e.target.closest('input,textarea,select,[contenteditable="true"],dialog[open]'))return;

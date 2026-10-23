@@ -9,7 +9,7 @@ node('profile').listeners.change=()=>counts.profile++;node('bikeType').listeners
 env.initMapDock();env.setMapDockOpen(false,true,true);assert(node('mapReadings').hidden);assert(!node('showMapReadings').hidden);assert.equal(node('luggageWeight').value,'12');assert.equal(counts.profile,0);assert.equal(counts.save,1);
 env.setMapDockOpen(true,true,true);assert(!node('mapReadings').hidden);assert(node('showMapReadings').hidden);assert.equal(node('toggleMapParameters').attrs['aria-expanded'],'true');
 node('mapProfile').value='mtb';node('mapProfile').listeners.change();assert.equal(node('profile').value,'mtb');assert.equal(counts.profile,1);
-assert.equal(counts.profile,1);assert.equal(counts.bike,0);assert.equal(counts.position,0);assert.equal(node('mapReadoutStack').hidden,false);
+node('mapBikeType').value='gravel';node('mapBikeType').listeners.change();assert.equal(node('bikeType').value,'gravel');assert.equal(counts.profile,1);assert.equal(counts.bike,1);assert.equal(counts.position,0);assert.equal(node('mapReadoutStack').hidden,false);
 node('profile').value='fastbike';env.document.activeElement=null;env.syncMapDock();assert.equal(node('mapProfile').value,'fastbike');
 const key=(extra={},editing=false)=>({key:'p',target:{closest:()=>editing?{}:null},preventDefault(){this.prevented=true},...extra});
 const handler=events.get('keydown');handler(key({},true));assert(!node('mapReadings').hidden);handler(key({ctrlKey:true}));assert(!node('mapReadings').hidden);handler(key({repeat:true}));assert(!node('mapReadings').hidden);

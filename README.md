@@ -1,17 +1,18 @@
-# Planer tras rowerowych 3.2
+# Planer tras rowerowych 3.3
 
-Nowa wersja: wąski pasek parametrów na dole mapy, zgodnie ze wskazanym układem. Dystans, kalorie i czas pozostają po prawej. Zachowuje bagaż, wiatr, podział kalorii, GPS, trasowanie i postoje.
+Nowa wersja: sześć małych, osobnych kafelków na dole mapy oraz litera P przy postojach. Dystans, czas jazdy i kalorie pozostają w poprzednim miejscu po prawej. Zachowuje bagaż, wiatr, podział kalorii, GPS i trasowanie.
 
 ## Wąski pasek parametrów
 
-- Na dole mapy pola są obok siebie: **profil trasy, tempo, masa rowerzysty, masa roweru i masa bagażu**. W sprawdzonym widoku komputerowym pasek ma 67 px wysokości. Na małych ekranach pola mogą przejść do kolejnych rzędów, aby pozostały czytelne.
-- **Profil trasy** wybiera sposób wyznaczania drogi: turystyczny, szosa, MTB lub ręczne linie. Zmiana korzysta z tego samego automatu co pole w górnych ustawieniach. Rodzaj roweru, pozycja, wiatr i szczegółowe rozbicie kalorii pozostają w **Ustawieniach** u góry strony.
+- Na dole mapy pola są obok siebie: **profil trasy, tempo, masa rowerzysty, masa roweru, masa bagażu i rodzaj roweru**. Każdy kafelek ma własne tło; usunięto wspólny duży panel. W sprawdzonym widoku komputerowym kafelki mają 54 px wysokości. Na małych ekranach pola mogą przejść do kolejnych rzędów, aby pozostały czytelne.
+- **Profil trasy** wybiera sposób wyznaczania drogi: turystyczny, szosa, MTB lub ręczne linie. Zmiana korzysta z tego samego automatu co pole w górnych ustawieniach. **Rodzaj roweru** jest szóstym kafelkiem: trekking/miejski, gravel, szosowy lub MTB; zmienia model energii bez pobierania nowej geometrii. Pozycja jazdy, wiatr i szczegółowe rozbicie kalorii pozostają w **Ustawieniach** u góry strony.
 - **Bagaż · kg** jest osobnym polem tuż po **Rower · kg**. Edycja działa od razu i jest zsynchronizowana z ustawieniami oraz zapisem wycieczki.
 - Kliknij **×**, aby schować cały dolny pasek do małej zakładki **⚙ Parametry**. Kliknięcie zakładki przywraca wszystkie pola. Kafelki dystansu, kalorii i czasu po prawej pozostają widoczne.
 - Klawisz **P** także przełącza cały panel. Skrót nie działa podczas wpisywania danych, używania list wyboru ani w otwartym oknie dialogowym. Widoczność panelu jest zapamiętywana niezależnie od trasy i historii cofania. Starszy zapis widoczności kafelków jest obsługiwany.
 - Chowanie i przywracanie nie usuwa punktów, nie zmienia parametrów ani nie wyznacza ponownie trasy. Parametry i wyniki pozostają zsynchronizowane z ustawieniami u góry.
 - Przyciski postojów, pełnego ekranu i PNG są obok paska po prawej; przy mniejszej szerokości przechodzą ponad pasek, aby nie zasłaniać pól. Dopasowanie całej trasy i początkowe centrowanie GPS uwzględniają pasek.
 - Po uruchomieniu nadal nie wczytujemy poprzedniej trasy. Styl mapy i przycisk GPS pozostają u góry mapy.
+- Znaczniki zaplanowanych postojów i propozycji mają literę **P**. Propozycje są żółte, zaplanowane postoje zielone; podpis nadal wyjaśnia rodzaj przerwy. Renderer PNG także używa P.
 
 ## Bagaż, wiatr i kalorie
 
@@ -41,7 +42,7 @@ Nowa wersja: wąski pasek parametrów na dole mapy, zgodnie ze wskazanym układe
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.2.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.3.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
