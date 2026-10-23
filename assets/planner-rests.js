@@ -1,7 +1,7 @@
 /* Rest markers live on the routed geometry and never trigger routing requests. */
 'use strict';
 let routeRestBreaks=[],restPlanningSettings=PlannerTrip.restSettings(),restMarkerLayer=null,restRenderKey='',restRenderTrack=null;
-try{restPlanningSettings=PlannerTrip.restSettings(JSON.parse(localStorage.getItem('rowerem-rest-settings-v1')||'null'))}catch{}
+// Rest settings start fresh; an explicitly loaded trip may restore its own settings.
 function getRestSettings(){return {...restPlanningSettings}}
 function restoreRestSettings(value){restPlanningSettings=PlannerTrip.restSettings(value);syncRestControls()}
 function getRouteBreaks(){return routeRestBreaks.map(p=>({...p}))}
@@ -80,7 +80,7 @@ function initRestPlanning(){
  restMarkerLayer=L.layerGroup().addTo(map);syncRestControls();
  $('mapParameters').append($('openRestPlanner'));positionMapActions();
  $('openRestPlanner').onclick=()=>{updateRestOverview();$('restDialog').showModal()};$('closeRestDialog').onclick=()=>$('restDialog').close();
- for(const id of ['restEvery','restMinutes','showRestSuggestions'])$(id).addEventListener('change',()=>{if(!$('restEvery').checkValidity()||!$('restMinutes').checkValidity()){syncRestControls();return}checkpoint();restPlanningSettings=PlannerTrip.restSettings({intervalKm:Number($('restEvery').value),minutes:Number($('restMinutes').value),showSuggestions:$('showRestSuggestions').checked});try{localStorage.setItem('rowerem-rest-settings-v1',JSON.stringify(restPlanningSettings))}catch{}restRenderKey='';stats()});
+ for(const id of ['restEvery','restMinutes','showRestSuggestions'])$(id).addEventListener('change',()=>{if(!$('restEvery').checkValidity()||!$('restMinutes').checkValidity()){syncRestControls();return}checkpoint();restPlanningSettings=PlannerTrip.restSettings({intervalKm:Number($('restEvery').value),minutes:Number($('restMinutes').value),showSuggestions:$('showRestSuggestions').checked});restRenderKey='';stats()});
  map.on('zoomend resize',()=>{restRenderKey='';updateRestMarkers()});
  updateRestMarkers();
 }

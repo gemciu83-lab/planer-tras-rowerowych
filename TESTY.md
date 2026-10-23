@@ -1,4 +1,16 @@
-# Weryfikacja wersji 3.6 — 23.10.2026
+# Weryfikacja wersji 3.7 — 23.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` przechodzi. Nowy test uruchomienia sprawdza przeniesienie wyłącznie masy rowerzysty ze starego magazynu, pierwszeństwo nowej zapisanej masy, ignorowanie pozostałych starych parametrów, wartości domyślne, pustą trasę i historię, zachowanie zapisanych wycieczek, ponowne uruchomienie, nieprawidłowe wartości i zablokowany localStorage.
+
+W przeglądarce:
+
+- Zmieniono masę rowerzysty na 68,5 kg, bagaż na 9 kg, masę roweru na 12 kg, tempo na 29 km/h, profil na Ręcznie i rower na Gravel. W postojach wpisano 50 km oraz 30 min.
+- Po przeładowaniu masa rowerzysty wynosi 68,5 kg. Bagaż wraca do 2 kg, rower do 22 kg, tempo do 16 km/h, profil i rodzaj roweru do trekking, a postoje do 25 km i 10 min. Opisy własnych list wyboru pokazują zgodne wartości.
+- Na starcie brak punktów i trasy, licznik żądań trasowania 0, brak błędów JavaScript. GPS w podglądzie jest zastąpiony odmową dostępu, dlatego nie dodaje S.
+
+Zapisane wycieczki nadal przechowują indywidualne parametry i są wczytywane ręcznie. Nie testowano ponownie fizycznego GPS ani zewnętrznych usług. Podgląd testowy nie wchodzi do ZIP. Wersja 3.7 nie została opublikowana przez asystenta na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.6 — 23.10.2026
 
 Pełny zestaw `node tests/planner.test.cjs` oraz sprawdzenie składni wszystkich plików JavaScript przechodzą. Nowy moduł planner-selects.js zmienia widoczny interfejs dwóch dolnych list; zachowuje dotychczasowe wartości i zdarzenia change oryginalnych pól.
 

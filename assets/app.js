@@ -429,8 +429,10 @@ function commitTrip(){
 function scheduleDraft(){if(!tripReady)return;clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,500)}
 function saveDraft(){
  if(!tripReady)return false;clearTimeout(draftTimer);
- try{localStorage.setItem('rowerem-settings-v1',JSON.stringify({...Object.fromEntries(['profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection'].map(id=>[id,$(id).value])),routingPreferences:getRoutingPreferences()}));$('draftInfo').textContent='Parametry zapisane · '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});$('draftInfo').classList.remove('error');return true}
- catch{$('draftInfo').textContent='Nie udało się zapisać parametrów. Wyprawę możesz zapisać przyciskiem „Zapisz trasę” lub do GPX.';$('draftInfo').classList.add('error');return false}
+ const weight=Number($('riderWeight').value);
+ if(!Number.isFinite(weight)||weight<25||weight>250){$('draftInfo').textContent='Parametry tej sesji — wpisz prawidłową masę rowerzysty.';return false}
+ try{localStorage.setItem('rowerem-rider-v1',JSON.stringify({riderWeight:String(weight)}));$('draftInfo').textContent='Parametry tej sesji · masa rowerzysty zapamiętana';$('draftInfo').classList.remove('error');return true}
+ catch{$('draftInfo').textContent='Brak zapisu masy rowerzysty. Parametry działają w tej sesji; trasę możesz zapisać do GPX.';$('draftInfo').classList.add('error');return false}
 }
 function applyTrip(snapshot,fit=false){
  historyMuted=true;cancelLoopSearch();stopGPS();stopFollow();revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;previousRoute=null;
@@ -473,21 +475,30 @@ parameterToggle.onclick=()=>setMapDockOpen(false,true,true);
 L.DomEvent.disableClickPropagation(mapReadings);L.DomEvent.disableScrollPropagation(mapReadings);
 L.DomEvent.disableClickPropagation($('showMapReadings'));
 
-// Start every session with a clean map. Only rider/bike preferences are restored.
+// Start every session with a clean map and fixed defaults; remember only rider mass.
 function clearTrip(){
  checkpoint();stopGPS();stopFollow();clearRouteBreaks();points=[];invalidate(false);renderPoints();
  $('loopResult').textContent='Ustaw start S, aby zaplanować nową pętlę.';
  status('Trasa wyczyszczona. Ustaw start na mapie lub użyj „Moja lokalizacja”.');
 }
 $('clearRouteHeader').onclick=clearTrip;
-function initializeFreshTrip(){
- try{
-  const settings=JSON.parse(localStorage.getItem('rowerem-settings-v1')||'null');
-  if(settings){const clean=PlannerCore.sanitizeTrip({points:[],track:[],settings});if(clean)for(const id of ['profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection'])$(id).value=clean.settings[id];restoreRoutingPreferences(settings.routingPreferences)}
+function readRiderPreference(){
+ // Migrate only rider mass from older versions; never restore their session settings.
+ for(const key of ['rowerem-rider-v1','rowerem-settings-v1'])try{
+  const savedWeight=JSON.parse(localStorage.getItem(key)||'null')?.riderWeight;
+  if((typeof savedWeight==='string'&&savedWeight.trim())||typeof savedWeight==='number'){
+   const weight=Number(savedWeight);if(Number.isFinite(weight)&&weight>=25&&weight<=250)return String(weight);
+  }
  }catch{}
+ return '70';
+}
+function initializeFreshTrip(){
+ const defaults={profile:'trekking',speed:'16',pause:'0',riderWeight:readRiderPreference(),bikeWeight:'22',luggageWeight:'2',bikeType:'trekking',ridingPosition:'auto',windMode:'manual',windSpeed:'0',windDirection:'0'};
+ for(const [id,value] of Object.entries(defaults))$(id).value=value;
+ restoreRoutingPreferences();restoreRestSettings();
  clearRouteBreaks();points=[];track=[];routeType='';surfaceData=null;previousRoute=null;mapDistancePending=false;
  historyPast=[];historyFuture=[];tripReady=true;renderPoints();historyCurrent=captureTrip();updateHistoryButtons();
- $('draftInfo').textContent='Nowa wyprawa — trasy wczytujesz samodzielnie z GPX lub zapisanych wypraw.';
+ $('draftInfo').textContent='Nowa wyprawa · bagaż 2 kg · profil i rower trekking · masa rowerzysty zapamiętana';
 }
 initializeFreshTrip();
 setTimeout(()=>locate(true),0);

@@ -1,6 +1,14 @@
-# Planer tras rowerowych 3.6
+# Planer tras rowerowych 3.7
 
-Nowa wersja: ciemne listy Profil trasy i Rodzaj roweru na dole mapy otwierają się zawsze nad kafelkami. Kafelki mają teraz 40 px wysokości, większy tekst i delikatne zaznaczenie na zewnętrznej ramce. Parametry, Postoje, Pełny ekran i Zapisz PNG nadal tworzą wspólny rząd od lewej do prawej. Mały boczny X (18 px) chowa parametry i Postoje; pozostawia przyciski pełnego ekranu i PNG. Dystans, czas jazdy i kalorie pozostają po prawej. Zachowano bagaż, wiatr, podział kalorii, GPS i trasowanie.
+Nowa wersja: po ponownym otwarciu strona nie przywraca parametrów poprzedniej sesji. Zapamiętuje tylko masę rowerzysty. Nowa wyprawa zaczyna z bagażem 2 kg, profilem Turystyczny / trekking oraz rowerem Trekking / miejski. Zachowano ciemne listy otwierane do góry i dolne kafelki 40 px.
+
+## Parametry przy uruchomieniu
+
+- Masa rowerzysty: ostatnia prawidłowo zapamiętana wartość, a przy pierwszej wizycie 70 kg. Ze starszej wersji przenoszona jest tylko ta masa.
+- Bagaż: 2 kg; profil trasy: Turystyczny / trekking; rodzaj roweru: Trekking / miejski.
+- Pozostałe wartości nowej sesji: tempo 16 km/h, masa roweru 22 kg, dodatkowy zapas postojów 0 min, pozycja domyślna, wiatr ręczny 0 km/h. Preferencje dróg są wyzerowane. Propozycje odpoczynku wracają do 25 km i 10 minut.
+- Zmiany tych pól działają podczas bieżącej sesji i w historii cofania. Jeśli ręcznie zapiszesz wycieczkę, jej parametry nadal zostaną zachowane i można je przywrócić przez świadome wczytanie tej wycieczki. Zapisane wyprawy nie są usuwane.
+- Mapa nadal zaczyna bez poprzedniej trasy; automatyczny GPS może ustawić start S. Ustawienia wyglądu, takie jak schowanie paska, są nadal zapamiętywane niezależnie od parametrów wycieczki. Zachowano też wybór automatycznego przeliczania oraz wymaganą przerwę po odmowie serwera.
 
 ## Wąski pasek parametrów
 
@@ -17,7 +25,7 @@ Nowa wersja: ciemne listy Profil trasy i Rodzaj roweru na dole mapy otwierają s
 
 ## Bagaż, wiatr i kalorie
 
-- **Ustawienia → Rowerzysta, rower i bagaż**: masa roweru bez bagażu, osobna masa sakw/plecaka/ekwipunku i pozycja na rowerze. Masę bagażu zmienisz także w **dolnym panelu mapy**. Domyślnie bagaż = 0 kg; starsze wyprawy nie dostają dodatkowej masy automatycznie. Jeśli wcześniej wpisano rower wraz z sakwami, najpierw odejmij sakwy od masy roweru.
+- **Ustawienia → Rowerzysta, rower i bagaż**: masa roweru bez bagażu, osobna masa sakw/plecaka/ekwipunku i pozycja na rowerze. Masę bagażu zmienisz także w **dolnym panelu mapy**. Nowa sesja zaczyna z bagażem 2 kg; starsze zapisane wyprawy bez pola bagażu nadal zachowują 0 kg. Jeśli wcześniej wpisano rower wraz z sakwami, najpierw odejmij sakwy od masy roweru.
 - **Pozycja** zmienia założony opór powietrza: wyprostowana, turystyczna lub mocno pochylona. Opcja domyślna korzysta z dotychczasowego ustawienia dla typu roweru. Opór toczenia pozostaje zależny od typu roweru, a nie od udziału nawierzchni z OSM.
 - **Ustawienia → Wiatr i kalorie**: ręcznie wpisz prędkość wiatru i kierunek, **z którego wieje**. N = z północy, W = z zachodu. Domyślne 0 km/h oznacza wyraźne założenie bez wiatru. Dla każdego odcinka obliczamy kierunek jazdy i względny wektor powietrza, również przy bocznym wietrze. Silny wiatr w plecy może ograniczyć potrzebę pedałowania; nie daje ujemnych kalorii.
 - **Pobierz wiatr dla trasy**: jeden przycisk pobiera godzinną prognozę Open-Meteo dla 2–5 miejsc wzdłuż wyznaczonej trasy. Współrzędne wysyłane są zaokrąglone do 0,001°. Pobieranie odbywa się po kliknięciu, nie automatycznie przy każdym punkcie. Wymaga internetu i daty wyjazdu od teraz do 15 dni naprzód. Po sukcesie wybierany jest tryb prognozy.
@@ -26,7 +34,7 @@ Nowa wersja: ciemne listy Profil trasy i Rodzaj roweru na dole mapy otwierają s
 - **Aktywne**: modelowany wysiłek potrzebny do jazdy ponad spoczynek. Korzystamy z pracy mechanicznej, sprawności napędu 97% i założonej **sprawności netto 24%**. Masa mechaniczna = rowerzysta + rower + bagaż. **Całkowite** dodają do aktywnych dokładnie jeden wydatek spoczynkowy samego rowerzysty, około 1 kcal/kg/h przez czas jazdy i postojów. Nie doliczamy masy roweru ani sakw do metabolizmu.
 - Na mapie główny wynik to aktywne, a mniejszy podpis pokazuje całkowite. W ustawieniach jest rozbicie spoczynkowych na jazdę i postoje. Wyniki główne zaokrąglamy do 10 kcal; są przybliżeniem, nie pomiarem ani obietnicą dokładności fizjologicznej. Sprawność netto nie jest stała u każdej osoby. Nie modelujemy kosztu kadencji, rozpędzania ani dodatkowej pracy organizmu podczas toczenia bez pedałowania.
 - Prognoza dotyczy standardowego wiatru na 10 m; osłona lasów, zabudowy i lokalne porywy zmieniają faktyczny wiatr odczuwany przez rowerzystę. Model ma stałą gęstość powietrza i uproszczoną aerodynamikę, bez wspomagania elektrycznego.
-- Zmiana mas, pozycji, wiatru i postojów **nie pobiera ponownie geometrii trasy**. Nowe ustawienia są zachowane w zapisanych wyprawach, preferencjach rowerzysty oraz historii cofania/ponawiania.
+- Zmiana mas, pozycji, wiatru i postojów **nie pobiera ponownie geometrii trasy**. Ustawienia pozostają w bieżącej sesji, ręcznie zapisanych wyprawach oraz historii cofania/ponawiania. Automatycznie między sesjami zachowywana jest tylko masa rowerzysty.
 
 Źródła założeń: [wydatek spoczynkowy 1 MET](https://pacompendium.com/), [różnica między sprawnością netto i brutto w badaniu jazdy przy 50 W](https://pmc.ncbi.nlm.nih.gov/articles/PMC5867372/), [model fizyczny jazdy](https://pubmed.ncbi.nlm.nih.gov/7615475/), [API i jednostki prognozy Open-Meteo](https://open-meteo.com/en/docs). Wyniki modelu planera nie są bezpośrednią kopią metody MET ani wyniku konkretnego zegarka.
 
@@ -43,7 +51,7 @@ Nowa wersja: ciemne listy Profil trasy i Rodzaj roweru na dole mapy otwierają s
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.6.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.7.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -80,7 +88,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.6.0”.
+Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.7.0”.
 
 ## Weryfikacja
 
