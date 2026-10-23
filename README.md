@@ -1,6 +1,14 @@
-# Planer tras rowerowych 3.7
+# Planer tras rowerowych 3.8
 
-Nowa wersja: po ponownym otwarciu strona nie przywraca parametrów poprzedniej sesji. Zapamiętuje tylko masę rowerzysty. Nowa wyprawa zaczyna z bagażem 2 kg, profilem Turystyczny / trekking oraz rowerem Trekking / miejski. Zachowano ciemne listy otwierane do góry i dolne kafelki 40 px.
+Nowa wersja: Postoje można regulować bezpośrednio w dolnym kafelku mapy. Wpisz odstęp w kilometrach oraz czas nowej przerwy w minutach. Zachowano ciemne listy, kafelki 40 px i ustawienia startowe z wersji 3.7.
+
+## Postoje bezpośrednio na mapie
+
+- Kafelek **Postoje** zawiera dwa edytowalne pola: **km** oznacza odstęp między propozycjami, **min** czas nowego postoju. Przykład: 20 km i 12 min oznacza propozycje co 20 km z domyślną przerwą 12 minut.
+- Prawidłowe wartości są uwzględniane od razu podczas wpisywania. Obsługiwany zakres to 5–250 km i 1–1440 min, w pełnych jednostkach. Nieprawidłowy wpis nie zmienia planu; po opuszczeniu pola przywracana jest ostatnia prawidłowa wartość.
+- Zmiana odstępu aktualizuje żółte propozycje. Zmiana minut dotyczy przyszłych przerw; już zaakceptowane postoje zachowują własny czas. Propozycję trzeba nadal zatwierdzić na mapie, zanim zacznie być doliczana do czasu wyprawy.
+- Mały przycisk **…** w kafelku otwiera listę postojów i szczegółowe ustawienia. Pola na mapie i w oknie są synchronizowane w obie strony. Zmiany nie wyznaczają ponownie drogi.
+- X chowa także kafelek postojów. Pełny ekran i PNG pozostają widoczne. Przywrócenie paska zachowuje wpisane wartości.
 
 ## Parametry przy uruchomieniu
 
@@ -19,7 +27,7 @@ Nowa wersja: po ponownym otwarciu strona nie przywraca parametrów poprzedniej s
 - Kliknij **×**, aby schować cały dolny pasek do małej zakładki **⚙ Parametry**. Kliknięcie zakładki przywraca wszystkie pola. Kafelki dystansu, kalorii i czasu po prawej pozostają widoczne.
 - Klawisz **P** także przełącza cały panel. Skrót nie działa podczas wpisywania danych, używania list wyboru ani w otwartym oknie dialogowym. Widoczność panelu jest zapamiętywana niezależnie od trasy i historii cofania. Starszy zapis widoczności kafelków jest obsługiwany.
 - Chowanie i przywracanie nie usuwa punktów, nie zmienia parametrów ani nie wyznacza ponownie trasy. Parametry i wyniki pozostają zsynchronizowane z ustawieniami u góry.
-- **P Postoje** należy do dolnego paska parametrów i chowa się razem z nim. Pełny ekran i PNG pozostają widoczne po prawej. Dopasowanie całej trasy i początkowe centrowanie GPS uwzględniają pasek.
+- Kafelek **Postoje** należy do dolnego paska parametrów i chowa się razem z nim. Pełny ekran i PNG pozostają widoczne po prawej. Dopasowanie całej trasy i początkowe centrowanie GPS uwzględniają pasek.
 - Po uruchomieniu nadal nie wczytujemy poprzedniej trasy. Styl mapy i przycisk GPS pozostają u góry mapy.
 - Znaczniki zaplanowanych postojów i propozycji mają literę **P**. Propozycje są żółte, zaplanowane postoje zielone; podpis nadal wyjaśnia rodzaj przerwy. Renderer PNG także używa P.
 
@@ -51,13 +59,13 @@ Nowa wersja: po ponownym otwarciu strona nie przywraca parametrów poprzedniej s
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.7.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.8.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
 - Po wyznaczeniu lub wczytaniu trasy pojawiają się żółte znaczniki **„Odpoczynek?”**, domyślnie co 25 km. To propozycje pozycji na śladzie, a nie potwierdzone sklepy, ławki czy miejsca odpoczynku w terenie.
 - Kliknij ikonę lub jej podpis, ustaw czas i wybierz **„Zaplanuj ten postój”**. Znacznik zmieni się na zielony **„Postój 10 min”**. Dopiero zaakceptowany postój wpływa na czas wyprawy i kolejne godziny przyjazdu.
-- W dolnym pasku parametrów mapy jest przycisk **„P Postoje”**. Zmienisz tam odstęp (domyślnie 25 km), domyślny czas przerwy (10 min), schowasz propozycje i usuniesz zaplanowane przerwy. Zmiana domyślnego czasu dotyczy kolejnych propozycji; nie nadpisuje już zaplanowanych przerw.
+- W dolnym kafelku **Postoje** zmienisz odstęp (domyślnie 25 km) oraz domyślny czas przerwy (10 min). Przycisk **…** otwiera szczegóły, gdzie schowasz propozycje i usuniesz zaplanowane przerwy. Zmiana domyślnego czasu dotyczy kolejnych propozycji; nie nadpisuje już zaplanowanych przerw.
 - Postoje wpisane przy punktach wycieczki także mają zielony znacznik na mapie. Kliknij go, aby zmienić czas lub usunąć przerwę.
 - Przerwy na kilometrze nie są nowymi punktami trasowania: ich edycja nie zmienia kilometrażu ani nie wysyła zapytań do serwera tras. Nie proponujemy kolejnej przerwy do 500 m od już zaplanowanej ani w ostatnich 500 m przed metą.
 - Przerwy zapisują się z wycieczką i działają z cofaniem/ponawianiem zmian. Po zmianie przebiegu wycieczki przerwa „25 km” pozostaje na 25. kilometrze od startu nowego przebiegu. Jeśli skrócisz trasę przed ten kilometr, nie doliczamy takiej przerwy; jej wpis pozostaje do usunięcia lub ponownego wykorzystania po wydłużeniu trasy.
@@ -88,7 +96,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.7.0”.
+Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.8.0”.
 
 ## Weryfikacja
 

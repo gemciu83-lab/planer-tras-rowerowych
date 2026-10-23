@@ -33,3 +33,15 @@ console.log('PASS: canvas renderer draws separate planned/suggested pause captio
 const layout=vm.runInContext('restLabelLayout([{x:100,y:100,text:"Odpoczynek? · 20 km"},{x:140,y:100,text:"Postój 10 min · 25 km"}],{x:500,y:400},[{x:86,y:86,w:28,h:28},{x:126,y:86,w:28,h:28}])',pending);
 const a=layout[0].rect,b=layout[1].rect;assert(!(a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y));
 console.log('PASS: neighbouring rest labels choose non-overlapping positions');
+
+// Both visible control locations update one rest plan without requesting roads again.
+pending.mapDistancePending=false;pending.previousRoute=null;
+for(const id of ['restEvery','restMinutes','mapRestEvery','mapRestMinutes'])node(id).checkValidity=()=>{const value=Number(node(id).value),interval=id.endsWith('Every');return node(id).value!==''&&Number.isInteger(value)&&value>=(interval?5:1)&&value<=(interval?250:1440)};
+vm.runInContext('restoreRestSettings({intervalKm:25,minutes:10,showSuggestions:true});restoreRouteBreaks([{meters:25000,minutes:7}])',pending);
+node('mapRestEvery').value='20';node('mapRestMinutes').value='15';const checkpointBefore=checkpoints;
+vm.runInContext('changeRestControls(true)',pending);
+assert.equal(node('restEvery').value,'20');assert.equal(node('restMinutes').value,'15');assert.equal(vm.runInContext('getRestSettings().minutes',pending),15);assert.equal(checkpoints,checkpointBefore+1);assert.equal(requests,0);assert.equal(vm.runInContext('getRouteBreaks()[0].minutes',pending),7);
+vm.runInContext('changeRestControls(true)',pending);assert.equal(checkpoints,checkpointBefore+1);
+node('restEvery').value='30';node('restMinutes').value='12';node('showRestSuggestions').checked=false;vm.runInContext('changeRestControls(false)',pending);assert.equal(node('mapRestEvery').value,'30');assert.equal(node('mapRestMinutes').value,'12');
+node('mapRestEvery').value='1';vm.runInContext('changeRestControls(true)',pending);assert.equal(node('mapRestEvery').value,'30');assert.equal(vm.runInContext('getRestSettings().showSuggestions',pending),false);assert.equal(requests,0);
+console.log('PASS: inline/dialog rest fields sync both ways, validate limits, preserve accepted pauses and avoid duplicate undo entries or routing');

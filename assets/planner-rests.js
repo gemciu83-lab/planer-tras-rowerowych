@@ -63,7 +63,7 @@ function updateRestMarkers(){
 }
 function updateRestOverview(items=restMarkerItems()){
  const planned=items.filter(p=>p.kind!=='suggestion'),suggestions=items.filter(p=>p.kind==='suggestion'),valid=track.length>1&&!mapDistancePending&&!previousRoute;
- $('openRestPlanner').textContent='P Postoje · '+(planned.length?planned.length+' zaplan.':restPlanningSettings.intervalKm+' km');
+ $('openRestPlanner').textContent='⋯';$('openRestPlanner').title='Lista i ustawienia postojów · '+(planned.length?planned.length+' zaplan.':restPlanningSettings.intervalKm+' km / '+restPlanningSettings.minutes+' min');$('openRestPlanner').setAttribute('aria-label','Otwórz listę i ustawienia postojów');
  $('restOverview').textContent=!valid?'Wyznacz trasę, aby zobaczyć znaczniki przerw.':'Zaplanowane: '+planned.length+' · propozycje: '+suggestions.length+'. Propozycje doliczamy do czasu dopiero po kliknięciu „Zaplanuj ten postój”.';
  const list=$('routeRestList');list.replaceChildren();
  for(const p of routeRestBreaks){const row=document.createElement('div'),name=document.createElement('span'),edit=document.createElement('button'),remove=document.createElement('button'),active=valid&&p.meters<=(ensureTripPlan()?.total||0)+.5;row.className='rest-list-row';name.textContent=restKm(p.meters)+' · '+p.minutes+' min'+(!active?' · poza aktualną trasą — nie doliczamy':'');edit.type=remove.type='button';edit.textContent='Pokaż / zmień';edit.disabled=!active;edit.onclick=()=>{$('restDialog').close();const c=PlannerTrip.pointAt(ensureTripPlan(),p.meters);map.setView([c[1],c[0]],Math.max(14,map.getZoom()));L.popup().setLatLng([c[1],c[0]]).setContent(restPopup({kind:'planned',...p})).openOn(map)};remove.textContent='Usuń';remove.onclick=()=>removeRouteRest(p.meters);row.append(name,edit,remove);list.append(row)}
@@ -75,12 +75,27 @@ function renderRestSchedule(host){
  entries.sort((a,b)=>a.meters-b.meters);
  for(const entry of entries){const row=document.createElement('div'),name=document.createElement('span'),value=document.createElement('strong');name.textContent=entry.name+(entry.minutes?' · '+entry.minutes+' min':'');value.textContent=arrivalLabel(entry.meters);row.append(name,value);host.append(row)}
 }
-function syncRestControls(){for(const [id,value] of [['restEvery',restPlanningSettings.intervalKm],['restMinutes',restPlanningSettings.minutes]])if($(id))$(id).value=String(value);if($('showRestSuggestions'))$('showRestSuggestions').checked=restPlanningSettings.showSuggestions}
+function syncRestControls(){
+ for(const [id,value] of [['restEvery',restPlanningSettings.intervalKm],['restMinutes',restPlanningSettings.minutes],['mapRestEvery',restPlanningSettings.intervalKm],['mapRestMinutes',restPlanningSettings.minutes]])if($(id))$(id).value=String(value);
+ if($('showRestSuggestions'))$('showRestSuggestions').checked=restPlanningSettings.showSuggestions;
+}
+function changeRestControls(fromMap=false){
+ const interval=$(fromMap?'mapRestEvery':'restEvery'),minutes=$(fromMap?'mapRestMinutes':'restMinutes');
+ if(!interval.checkValidity()||!minutes.checkValidity()){syncRestControls();return}
+ const next=PlannerTrip.restSettings({intervalKm:Number(interval.value),minutes:Number(minutes.value),showSuggestions:fromMap?restPlanningSettings.showSuggestions:$('showRestSuggestions').checked});
+ if(JSON.stringify(next)===JSON.stringify(restPlanningSettings)){syncRestControls();return}
+ checkpoint();restPlanningSettings=next;syncRestControls();restRenderKey='';stats();
+}
 function initRestPlanning(){
  restMarkerLayer=L.layerGroup().addTo(map);syncRestControls();
- $('mapParameters').append($('openRestPlanner'));positionMapActions();
+ $('mapParameters').append($('mapRestTile'));$('mapRestFields').append($('openRestPlanner'));positionMapActions();
  $('openRestPlanner').onclick=()=>{updateRestOverview();$('restDialog').showModal()};$('closeRestDialog').onclick=()=>$('restDialog').close();
- for(const id of ['restEvery','restMinutes','showRestSuggestions'])$(id).addEventListener('change',()=>{if(!$('restEvery').checkValidity()||!$('restMinutes').checkValidity()){syncRestControls();return}checkpoint();restPlanningSettings=PlannerTrip.restSettings({intervalKm:Number($('restEvery').value),minutes:Number($('restMinutes').value),showSuggestions:$('showRestSuggestions').checked});restRenderKey='';stats()});
+ for(const id of ['restEvery','restMinutes','showRestSuggestions'])$(id).addEventListener('change',()=>changeRestControls(false));
+ for(const id of ['restEvery','restMinutes'])$(id).addEventListener('input',()=>{if($('restEvery').checkValidity()&&$('restMinutes').checkValidity())changeRestControls(false)});
+ for(const id of ['mapRestEvery','mapRestMinutes']){
+  $(id).addEventListener('input',()=>{if($('mapRestEvery').checkValidity()&&$('mapRestMinutes').checkValidity())changeRestControls(true)});
+  $(id).addEventListener('change',()=>changeRestControls(true));
+ }
  map.on('zoomend resize',()=>{restRenderKey='';updateRestMarkers()});
  updateRestMarkers();
 }

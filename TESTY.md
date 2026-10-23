@@ -1,4 +1,18 @@
-# Weryfikacja wersji 3.7 — 23.10.2026
+# Weryfikacja wersji 3.8 — 23.10.2026
+
+Pełny zestaw testów obejmuje dodatkowo synchronizację postojów pomiędzy mapą i oknem ustawień, odrzucanie wartości poza zakresem, brak powtarzanego wpisu historii dla tych samych wartości, zachowanie czasu zaakceptowanej przerwy oraz brak żądań trasowania.
+
+Sprawdzenie w przeglądarce na syntetycznej trasie 50 km:
+
+- Wpisanie w kafelku mapy 10 km oraz 15 min natychmiast tworzy propozycje na 10, 20, 30 i 40 km. Okno szczegółów pokazuje te same wartości.
+- Kliknięta propozycja 10 km ma w formularzu czas 15 min. Po zatwierdzeniu znacznik pokazuje Postój 15 min · 10 km.
+- Zmiana czasu nowych przerw na 20 min nie nadpisuje zaakceptowanego postoju 15 min. Okno listy poprawnie pokazuje obie informacje.
+- Zmiana w oknie na 20 km i 12 min aktualizuje pola mapy. Pozostają propozycje 20 i 40 km oraz zaplanowany postój 15 min na 10 km.
+- Schowanie i przywrócenie paska zachowuje 20 km i 12 min. Kafelek ma 40 px wysokości i jest w jednej linii z pozostałymi narzędziami, bez poziomego przewijania. Licznik trasowania przez całą próbę wynosi 0. Brak błędów JavaScript.
+
+Ustawień startowych z 3.7 nie zmieniano w tej poprawce. Nie sprawdzano ponownie fizycznego GPS, pogody ani zewnętrznej usługi trasowania. Podgląd i syntetyczne dane są poza paczką. Wersja nie została opublikowana przez asystenta na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.7 — 23.10.2026
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi. Nowy test uruchomienia sprawdza przeniesienie wyłącznie masy rowerzysty ze starego magazynu, pierwszeństwo nowej zapisanej masy, ignorowanie pozostałych starych parametrów, wartości domyślne, pustą trasę i historię, zachowanie zapisanych wycieczek, ponowne uruchomienie, nieprawidłowe wartości i zablokowany localStorage.
 

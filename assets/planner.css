@@ -54,7 +54,7 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .map-footer{position:absolute;left:12px;right:12px;z-index:550;display:flex;align-items:center;gap:8px;min-width:0}
 .map-footer #mapReadings{position:static;display:flex;flex:1;flex-direction:row;align-items:center;gap:5px;min-width:0;width:auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
 .map-footer #toggleMapParameters{display:none}
-.map-footer #mapParameters{display:grid;grid-template-columns:1.9fr 1fr 1.1fr 1fr 1fr 1.55fr 1.25fr;gap:8px;flex:1;min-width:0}
+.map-footer #mapParameters{display:grid;grid-template-columns:1.9fr 1fr 1.1fr 1fr 1fr 1.55fr 1.7fr;gap:8px;flex:1;min-width:0}
 .map-footer .map-input-tile,.map-footer #openRestPlanner,.map-footer #mapBottomActions button,.map-footer #showMapReadings{height:40px;min-height:40px;margin:0;border:1px solid #526d5b;border-radius:10px;background:#203536f5;box-shadow:0 3px 12px #0002;color:#daffbd}
 .map-footer .map-input-tile{display:flex;flex-direction:column;justify-content:center;gap:1px;width:auto;min-width:0;padding:3px 8px;backdrop-filter:blur(8px)}
 .map-footer .map-input-tile label{font-size:9px;font-weight:500;line-height:11px;white-space:nowrap;margin:0;color:#b9c9c3}
@@ -82,3 +82,14 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .map-footer .map-select-option{display:block;width:100%;min-height:34px;padding:7px 9px;margin:0;border:1px solid transparent;border-radius:6px;background:#203536;color:#e2eddf;text-align:left;font-size:12px;font-weight:500;line-height:18px;white-space:normal;box-shadow:none}
 .map-footer .map-select-option:hover,.map-footer .map-select-option:focus-visible{background:#34564b;border-color:#7c9b82;outline:none;color:#f0ffe7}
 .map-footer .map-select-option[aria-selected=true]{background:#2b483e;color:#d4f2ba;font-weight:700}
+
+/* Edit suggestion distance and duration directly in a single map tile. */
+.map-footer #mapRestTile .map-rest-title{font-size:9px;line-height:11px;color:#b9c9c3;font-weight:500}
+.map-footer #mapRestFields{display:flex;align-items:center;gap:4px;height:20px;min-width:0}
+.map-footer #mapRestFields label{display:flex;align-items:center;gap:2px;flex:1;min-width:0;font-size:9px;line-height:20px;margin:0}
+.map-footer #mapRestFields input{width:100%;min-width:0;appearance:textfield}
+.map-footer #mapRestFields input::-webkit-inner-spin-button,.map-footer #mapRestFields input::-webkit-outer-spin-button{appearance:none;margin:0}
+.map-footer #mapRestFields label>span{color:#b9c9c3;flex:0 0 auto}
+.map-footer #mapRestTile #openRestPlanner{display:grid;place-items:center;flex:0 0 20px;width:20px;height:20px;min-height:20px;margin:0;padding:0;border:0;border-radius:4px;font-size:18px;line-height:20px;color:#d2e5c9;background:transparent;box-shadow:none;overflow:visible}
+.map-footer #mapRestTile #openRestPlanner:hover,.map-footer #mapRestTile #openRestPlanner:focus-visible{background:#3c5c4d;outline:none}
+@media(max-width:700px){.map-footer #mapRestTile{grid-column:span 3}.map-footer #mapRestFields label{flex:0 1 75px}.map-footer #mapRestTile #openRestPlanner{margin-left:auto}}
