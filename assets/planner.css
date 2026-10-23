@@ -52,3 +52,17 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 @media(max-width:700px){.map-parameter-strip#mapReadings{gap:5px;padding:0}.map-parameter-strip #toggleMapParameters{font-size:9px;padding:2px}#mapParameters.map-strip-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.map-strip-fields #mapProfileTile{grid-column:span 2}.map-parameter-strip input,.map-parameter-strip select{font-size:12px}.map-readout-stack .map-mini-stat,.map-readout-stack .map-distance,.map-readout-stack #mapCalculate{width:105px}.map-readout-stack .map-mini-stat strong{font-size:14px}}
 @media print{#mapReadings,#showMapReadings,.map-readout-stack{display:none!important}.map-wrap #map{min-height:0!important}}
 
+
+/* Uniform, minimal footer controls: the PNG button defines the row height. */
+.map-parameter-strip#mapReadings{gap:5px;align-items:center}
+#mapParameters.map-strip-fields{grid-template-columns:1.8fr repeat(4,minmax(0,1fr)) 1.4fr 1.15fr;gap:5px;align-items:center}
+.map-parameter-strip .map-input-tile,#mapParameters #openRestPlanner,#mapBottomActions button,#showMapReadings{height:32px;min-height:32px;border-radius:10px;background:#203536f2;border:1px solid #526d5b;box-shadow:0 3px 12px #0002;color:#daffbd}
+.map-parameter-strip .map-input-tile{padding:2px 6px;gap:0;justify-content:center}
+.map-parameter-strip label{font-size:8px;line-height:9px;color:#b9c9c3;font-weight:500;margin:0}
+.map-parameter-strip input,.map-parameter-strip select{height:16px;min-height:16px;line-height:16px;padding:0 1px;font-size:11px;font-weight:600;background:transparent;border:0;border-radius:3px;box-shadow:none;color:#daffbd}
+.map-parameter-strip #toggleMapParameters{width:23px;height:32px;padding:0;font-size:14px;flex:0 0 23px;line-height:1}
+.map-parameter-strip #hideMapReadings{width:25px;height:32px;flex:0 0 25px;font-size:17px;background:#203536f2;border-color:#526d5b;border-radius:10px}
+#mapParameters #openRestPlanner,#mapBottomActions button{padding:6px 8px;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mapParameters #openRestPlanner{width:100%;min-width:0;color:#daffbd;background:#203536f2}
+#showMapReadings{padding:6px 10px;font-size:10px;line-height:18px}
+@media(max-width:700px){#mapParameters.map-strip-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.map-parameter-strip .map-input-tile{padding:2px 5px}.map-parameter-strip input,.map-parameter-strip select{height:16px;font-size:11px}#mapParameters #openRestPlanner{grid-column:span 2}}

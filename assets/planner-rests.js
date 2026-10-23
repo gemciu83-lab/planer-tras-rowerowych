@@ -78,7 +78,7 @@ function renderRestSchedule(host){
 function syncRestControls(){for(const [id,value] of [['restEvery',restPlanningSettings.intervalKm],['restMinutes',restPlanningSettings.minutes]])if($(id))$(id).value=String(value);if($('showRestSuggestions'))$('showRestSuggestions').checked=restPlanningSettings.showSuggestions}
 function initRestPlanning(){
  restMarkerLayer=L.layerGroup().addTo(map);syncRestControls();
- $('mapBottomActions').prepend($('openRestPlanner'));positionMapActions();
+ $('mapParameters').append($('openRestPlanner'));positionMapActions();
  $('openRestPlanner').onclick=()=>{updateRestOverview();$('restDialog').showModal()};$('closeRestDialog').onclick=()=>$('restDialog').close();
  for(const id of ['restEvery','restMinutes','showRestSuggestions'])$(id).addEventListener('change',()=>{if(!$('restEvery').checkValidity()||!$('restMinutes').checkValidity()){syncRestControls();return}checkpoint();restPlanningSettings=PlannerTrip.restSettings({intervalKm:Number($('restEvery').value),minutes:Number($('restMinutes').value),showSuggestions:$('showRestSuggestions').checked});try{localStorage.setItem('rowerem-rest-settings-v1',JSON.stringify(restPlanningSettings))}catch{}restRenderKey='';stats()});
  map.on('zoomend resize',()=>{restRenderKey='';updateRestMarkers()});

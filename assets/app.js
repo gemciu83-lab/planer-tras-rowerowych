@@ -396,14 +396,14 @@ function positionMapActions(){
  const actions=$('mapBottomActions'),mapNode=$('map'),help=$('mapHelp'),show=$('showMapReadings');
  const width=mapNode.clientWidth,wide=width>=1120;
  actions.style.right='12px';actions.style.maxWidth='calc(100% - 65px)';
- const stripWidth=wide?Math.min(780,width-actions.offsetWidth-100):width-24;
+ const stripWidth=wide?Math.min(850,width-actions.offsetWidth-100):width-24;
  mapReadings.style.width=Math.max(240,stripWidth)+'px';mapReadings.style.left=(wide?Math.max(60,(width-actions.offsetWidth-stripWidth)/2):12)+'px';
  const visible=!mapReadings.hidden,stripHeight=visible?mapReadings.offsetHeight:0;
  const minHeight=Math.max(window.innerWidth<=600?650:620,stripHeight+230)+'px';if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
- const height=mapNode.offsetHeight,top=Math.max(90,height-stripHeight-44);
- mapReadings.style.top=top+'px';show.style.top=Math.max(0,height-show.offsetHeight-28)+'px';
- const actionsTop=visible&&!wide?top-actions.offsetHeight-8:height-Math.max(65,actions.offsetHeight+28);
- actions.style.top=Math.max(0,actionsTop)+'px';help.style.top=Math.max(70,(visible?Math.min(top,actionsTop):actionsTop)-Math.max(32,help.offsetHeight)-8)+'px';
+ const height=mapNode.offsetHeight,rowHeight=Math.max(32,actions.offsetHeight,wide?stripHeight:0),rowTop=Math.max(70,height-rowHeight-28);
+ const stripTop=visible&&!wide?rowTop-stripHeight-8:rowTop;
+ mapReadings.style.top=stripTop+'px';show.style.top=rowTop+'px';actions.style.top=rowTop+'px';
+ help.style.top=Math.max(70,(visible?Math.min(stripTop,rowTop):rowTop)-Math.max(32,help.offsetHeight)-8)+'px';
 }
 const dockObserver=new ResizeObserver(()=>{positionMapActions();map.invalidateSize({pan:false})});
 for(const element of [$('map'),mapReadings,$('mapBottomActions'),$('mapHelp')])dockObserver.observe(element);

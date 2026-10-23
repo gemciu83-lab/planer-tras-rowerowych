@@ -1,4 +1,17 @@
-# Weryfikacja wersji 3.3 — 22.10.2026
+# Weryfikacja wersji 3.4 — 23.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` przechodzi. Zmiana dotyczy układu parametrów i położenia istniejącego przycisku postojów.
+
+W przeglądarce na syntetycznej trasie 50 km, przy szerokości mapy 1265 px:
+
+- Sześć kafelków pól, Postoje, Pełny ekran mapy i Zapisz PNG mają dokładnie 32 px wysokości i wspólną współrzędną pionową. Grupy nie nachodzą na siebie. Nie ma poziomego przewijania strony.
+- Postoje otwiera dotychczasowe okno z odstępem 25 km i czasem 10 minut.
+- Bagaż 10 kg i wybór Gravel pozostają po schowaniu i przywróceniu paska. Licznik zapytań trasowania wynosi 0.
+- X chowa także Postoje. Zakładka Parametry przywraca komplet. Statystyki po prawej i przyciski pełnego ekranu oraz PNG pozostają widoczne.
+
+Węższe widoki mają układ zawijany; nie wykonywano osobnej próby urządzenia mobilnego. Rzeczywiste GPS, serwer trasowania, pobieranie PNG i pogoda nie były ponownie sprawdzane w tej zmianie wyglądu. Podgląd testowy i syntetyczna trasa nie należą do paczki. Wersja nie została opublikowana przez asystenta na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.3 — 22.10.2026
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi. Dodano synchronizację dolnego wyboru rodzaju roweru z istniejącym modelem energii, a test renderera PNG potwierdza rysowanie litery P dla obu rodzajów przerw.
 
