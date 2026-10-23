@@ -8,7 +8,7 @@ function setMapDockOpen(open,remember=false,focus=false){
  const panel=$('mapReadings'),show=$('showMapReadings'),toggle=$('toggleMapParameters');
  panel.hidden=!open;show.hidden=open;
  show.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-expanded',String(open));
- if(focus)(open?toggle:show).focus({preventScroll:true});
+ if(focus)(open?$('mapProfile'):show).focus({preventScroll:true});
  positionMapActions();if(remember)saveViewPreferences();
 }
 function syncMapDock(){for(const [quick,source] of [['mapProfile','profile'],['mapBikeType','bikeType']])if(document.activeElement!==$(quick))$(quick).value=$(source).value}

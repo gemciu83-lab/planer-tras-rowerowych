@@ -392,22 +392,20 @@ $('hideMapReadings').setAttribute('aria-label','Schowaj cały panel parametrów'
 $('hideMapReadings').onclick=()=>setMapDockOpen(false,true,true);
 $('showMapReadings').onclick=()=>setMapDockOpen(true,true,true);
 $('mapBottomActions').prepend($('mapFullscreen'));
+// A shared row keeps every independent tile aligned with PNG/fullscreen.
+const mapFooter=$('mapFooter');mapFooter.append(mapReadings,$('showMapReadings'),$('mapBottomActions'));
 function positionMapActions(){
- const actions=$('mapBottomActions'),mapNode=$('map'),help=$('mapHelp'),show=$('showMapReadings');
- const width=mapNode.clientWidth,wide=width>=1120;
- actions.style.right='12px';actions.style.maxWidth='calc(100% - 65px)';
- const stripWidth=wide?Math.min(850,width-actions.offsetWidth-100):width-24;
- mapReadings.style.width=Math.max(240,stripWidth)+'px';mapReadings.style.left=(wide?Math.max(60,(width-actions.offsetWidth-stripWidth)/2):12)+'px';
- const visible=!mapReadings.hidden,stripHeight=visible?mapReadings.offsetHeight:0;
- const minHeight=Math.max(window.innerWidth<=600?650:620,stripHeight+230)+'px';if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
- const height=mapNode.offsetHeight,rowHeight=Math.max(32,actions.offsetHeight,wide?stripHeight:0),rowTop=Math.max(70,height-rowHeight-28);
- const stripTop=visible&&!wide?rowTop-stripHeight-8:rowTop;
- mapReadings.style.top=stripTop+'px';show.style.top=rowTop+'px';actions.style.top=rowTop+'px';
- help.style.top=Math.max(70,(visible?Math.min(stripTop,rowTop):rowTop)-Math.max(32,help.offsetHeight)-8)+'px';
+ const mapNode=$('map'),help=$('mapHelp');
+ const footerHeight=mapFooter.offsetHeight;
+ const minHeight=Math.max(window.innerWidth<=600?650:620,footerHeight+230)+'px';
+ if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
+ const footerTop=Math.max(70,mapNode.offsetHeight-footerHeight-28);
+ mapFooter.style.top=footerTop+'px';
+ help.style.top=Math.max(70,footerTop-Math.max(32,help.offsetHeight)-8)+'px';
 }
 const dockObserver=new ResizeObserver(()=>{positionMapActions();map.invalidateSize({pan:false})});
-for(const element of [$('map'),mapReadings,$('mapBottomActions'),$('mapHelp')])dockObserver.observe(element);
-positionMapActions();
+for(const element of [$('map'),mapFooter,mapReadings,$('mapBottomActions'),$('mapHelp')])dockObserver.observe(element);
+positionMapActions();L.DomEvent.disableClickPropagation(mapFooter);L.DomEvent.disableScrollPropagation(mapFooter);
 L.DomEvent.disableClickPropagation($('mapBottomActions'));
 $('saveMapPNG').onclick=()=>exportTripImage('map');
 

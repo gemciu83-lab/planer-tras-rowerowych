@@ -1,4 +1,18 @@
-# Weryfikacja wersji 3.4 — 23.10.2026
+# Weryfikacja wersji 3.5 — 23.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` przechodzi. Usunięto nakładające się starsze style dolnego paska. Parametry i przyciski mapy są teraz dziećmi jednego rzędu, dzięki czemu przeglądarka wyrównuje je razem.
+
+Sprawdzenie w przeglądarce na syntetycznej trasie 50 km, mapa o szerokości 1265 px:
+
+- Pierwszy kafelek zaczyna się na x=12 px, a prawy brzeg PNG jest na x=1253 px. Rząd zajmuje dostępną szerokość z równymi marginesami po 12 px.
+- Profil, tempo, rowerzysta, rower, bagaż, rodzaj roweru, Postoje, Pełny ekran i PNG mają tę samą współrzędną y i wysokość dokładnie 32 px. Każdy kafelek ma własną ramkę i tło. Wewnętrzne pola mają przezroczyste tło i brak ramki.
+- X ma 18 × 18 px i jest wyśrodkowany pionowo z boku parametrów. Chowa cały zestaw, łącznie z Postojami, pozostawiając Pełny ekran, PNG i statystyki po prawej.
+- Przywrócenie przez Parametry zachowuje bagaż 10 kg i rodzaj Gravel, a fokus trafia do widocznego pola profilu. Licznik trasowania podczas edycji i chowania wynosi 0.
+- Postoje otwiera istniejące okno ustawień przerw. Brak poziomego przewijania i błędów JavaScript podczas próby.
+
+Wąskiego ekranu fizycznego nie testowano osobno; układ ma reguły zawijania poniżej 950 px. Zmiana nie dotyczy modelu energii ani usług trasowania. Nie sprawdzano ponownie rzeczywistego GPS, pogody ani pobierania PNG. Serwer podglądu i syntetyczne dane nie wchodzą do ZIP. Asystent nie opublikował wersji 3.5 na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.4 — 23.10.2026
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi. Zmiana dotyczy układu parametrów i położenia istniejącego przycisku postojów.
 

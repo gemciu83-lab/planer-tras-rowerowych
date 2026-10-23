@@ -1,10 +1,10 @@
-# Planer tras rowerowych 3.4
+# Planer tras rowerowych 3.5
 
-Nowa wersja: minimalistyczne kafelki parametrów i Postoje na dole mapy, w jednej linii z przyciskiem Zapisz PNG na szerokim ekranie. Wszystkie mają 32 px wysokości. Dystans, czas jazdy i kalorie pozostają po prawej. Zachowano bagaż, wiatr, podział kalorii, GPS i trasowanie.
+Nowa wersja: osobne kafelki od lewej do prawej krawędzi mapy. Parametry, Postoje, Pełny ekran i Zapisz PNG tworzą wspólny rząd, wszystkie o wysokości 32 px. Mały boczny X (18 px) chowa parametry i Postoje; pozostawia przyciski pełnego ekranu i PNG. Dystans, czas jazdy i kalorie pozostają po prawej. Zachowano bagaż, wiatr, podział kalorii, GPS i trasowanie.
 
 ## Wąski pasek parametrów
 
-- Na dole mapy są obok siebie: **profil trasy, tempo, masa rowerzysty, masa roweru, masa bagażu, rodzaj roweru i Postoje**. Każdy kafelek ma własne tło w stylu przycisku Zapisz PNG i wysokość 32 px. Przy szerokości mapy od 1120 px rząd jest wyrównany z przyciskami pełnego ekranu i PNG. Na mniejszych ekranach parametry przechodzą ponad przyciski, a na telefonach do kolejnych rzędów.
+- Na dole mapy są obok siebie: **profil trasy, tempo, masa rowerzysty, masa roweru, masa bagażu, rodzaj roweru i Postoje**. Każdy kafelek jest osobnym elementem o wysokości 32 px. Pola nie mają drugiego obramowanego pudełka wewnątrz. Wspólny rząd zaczyna się 12 px od lewej krawędzi mapy, a kończy przyciskiem PNG 12 px od prawej. Kafelki wykorzystują dostępne miejsce, bez ograniczenia szerokości do 850 px i bez dodatkowego przycisku koła zębatego. Na ekranach szerszych niż 950 px wszystkie narzędzia są w jednej linii; na mniejszych ekranach parametry przechodzą ponad przyciski, a na telefonach do kolejnych rzędów.
 - **Profil trasy** wybiera sposób wyznaczania drogi: turystyczny, szosa, MTB lub ręczne linie. Zmiana korzysta z tego samego automatu co pole w górnych ustawieniach. **Rodzaj roweru** jest szóstym kafelkiem: trekking/miejski, gravel, szosowy lub MTB; zmienia model energii bez pobierania nowej geometrii. Pozycja jazdy, wiatr i szczegółowe rozbicie kalorii pozostają w **Ustawieniach** u góry strony.
 - **Bagaż · kg** jest osobnym polem tuż po **Rower · kg**. Edycja działa od razu i jest zsynchronizowana z ustawieniami oraz zapisem wycieczki.
 - Kliknij **×**, aby schować cały dolny pasek do małej zakładki **⚙ Parametry**. Kliknięcie zakładki przywraca wszystkie pola. Kafelki dystansu, kalorii i czasu po prawej pozostają widoczne.
@@ -42,7 +42,7 @@ Nowa wersja: minimalistyczne kafelki parametrów i Postoje na dole mapy, w jedne
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.4.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.5.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -79,7 +79,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.4.0”.
+Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.5.0”.
 
 ## Weryfikacja
 
