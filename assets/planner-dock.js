@@ -6,12 +6,13 @@ function centerMapAboveDock(position,zoom){
 }
 function setMapDockOpen(open,remember=false,focus=false){
  const panel=$('mapReadings'),show=$('showMapReadings'),toggle=$('toggleMapParameters');
+ if(!open&&typeof closeMapSelects==='function')closeMapSelects();
  panel.hidden=!open;show.hidden=open;
  show.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-expanded',String(open));
- if(focus)(open?$('mapProfile'):show).focus({preventScroll:true});
+ if(focus)(open?(document.getElementById?.('mapProfileButton')||$('mapProfile')):show).focus({preventScroll:true});
  positionMapActions();if(remember)saveViewPreferences();
 }
-function syncMapDock(){for(const [quick,source] of [['mapProfile','profile'],['mapBikeType','bikeType']])if(document.activeElement!==$(quick))$(quick).value=$(source).value}
+function syncMapDock(){for(const [quick,source] of [['mapProfile','profile'],['mapBikeType','bikeType']])if(document.activeElement!==$(quick))$(quick).value=$(source).value;if(typeof syncMapSelects==='function')syncMapSelects()}
 function initMapDock(){
  $('mapBikeType').addEventListener('change',()=>{$('bikeType').value=$('mapBikeType').value;$('bikeType').dispatchEvent(new Event('input',{bubbles:true}))});
  $('mapProfile').addEventListener('change',()=>{$('profile').value=$('mapProfile').value;$('profile').dispatchEvent(new Event('change',{bubbles:true}))});

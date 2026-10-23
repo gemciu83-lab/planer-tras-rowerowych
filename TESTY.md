@@ -1,4 +1,18 @@
-# Weryfikacja wersji 3.5 — 23.10.2026
+# Weryfikacja wersji 3.6 — 23.10.2026
+
+Pełny zestaw `node tests/planner.test.cjs` oraz sprawdzenie składni wszystkich plików JavaScript przechodzą. Nowy moduł planner-selects.js zmienia widoczny interfejs dwóch dolnych list; zachowuje dotychczasowe wartości i zdarzenia change oryginalnych pól.
+
+W przeglądarce przy szerokości mapy 1265 px:
+
+- Wszystkie sześć kafelków parametrów oraz Postoje, Pełny ekran i PNG mają wspólną współrzędną y i wysokość 40 px. Brak poziomego przewijania strony.
+- Obie listy otwierają się powyżej kafelka. Tło menu to rgb(32, 53, 54), a opcje mają jasny tekst. Podpisy mają osobne 11 px wysokości i pozostają nad treścią pola. Zaznaczenie nie rysuje obrysu wokół samego tekstu.
+- Wybór Ręcznie zmienia oryginalne pole profilu. Wczytanie syntetycznej trasy trekkingowej przywraca odpowiedni podpis na kafelku.
+- Klawiatura: strzałka i Enter wybierają Gravel oraz synchronizują rodzaj roweru w ustawieniach. End i Escape zamykają listę bez zmiany profilu. Tab zamyka listę profilu i przenosi fokus do tempa. Kliknięcie w bagaż zamyka listę rodzaju roweru.
+- X i ponowne otwarcie zachowują bagaż 10 kg i Gravel; fokus trafia do widocznego przycisku wyboru profilu. Podczas tych zmian licznik zapytań trasowania wynosi 0. Nie stwierdzono błędów JavaScript.
+
+Weryfikacja używała lokalnego podglądu i syntetycznej trasy 50 km; nie testowano ponownie zewnętrznych usług, fizycznego GPS ani pobierania PNG. Pliki podglądu są poza paczką. Asystent nie opublikował wersji 3.6 na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.5 — 23.10.2026
 
 Pełny zestaw `node tests/planner.test.cjs` przechodzi. Usunięto nakładające się starsze style dolnego paska. Parametry i przyciski mapy są teraz dziećmi jednego rzędu, dzięki czemu przeglądarka wyrównuje je razem.
 

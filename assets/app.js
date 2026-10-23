@@ -508,5 +508,5 @@ try{
 for(const id of ['mapStyle','slopeColors','slopeLabels'])$(id).addEventListener('change',saveViewPreferences);
 
 
-initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls();initMapDock();
+initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls();initMapDock();initMapSelects();
 

@@ -55,11 +55,11 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .map-footer #mapReadings{position:static;display:flex;flex:1;flex-direction:row;align-items:center;gap:5px;min-width:0;width:auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
 .map-footer #toggleMapParameters{display:none}
 .map-footer #mapParameters{display:grid;grid-template-columns:1.9fr 1fr 1.1fr 1fr 1fr 1.55fr 1.25fr;gap:8px;flex:1;min-width:0}
-.map-footer .map-input-tile,.map-footer #openRestPlanner,.map-footer #mapBottomActions button,.map-footer #showMapReadings{height:32px;min-height:32px;margin:0;border:1px solid #526d5b;border-radius:10px;background:#203536f5;box-shadow:0 3px 12px #0002;color:#daffbd}
-.map-footer .map-input-tile{display:flex;flex-direction:column;justify-content:center;gap:0;width:auto;min-width:0;padding:2px 7px;backdrop-filter:blur(8px)}
-.map-footer .map-input-tile label{font-size:8px;font-weight:500;line-height:10px;white-space:nowrap;margin:0;color:#b9c9c3}
-.map-footer .map-input-tile input,.map-footer .map-input-tile select{display:block;width:100%;height:16px;min-height:16px;max-height:16px;line-height:16px;margin:0;padding:0;font-size:11px;font-weight:600;border:0;border-radius:0;background:transparent;box-shadow:none;color:#daffbd}
-.map-footer .map-input-tile input:focus-visible,.map-footer .map-input-tile select:focus-visible{outline:2px solid var(--accent);outline-offset:0;border-radius:3px}
+.map-footer .map-input-tile,.map-footer #openRestPlanner,.map-footer #mapBottomActions button,.map-footer #showMapReadings{height:40px;min-height:40px;margin:0;border:1px solid #526d5b;border-radius:10px;background:#203536f5;box-shadow:0 3px 12px #0002;color:#daffbd}
+.map-footer .map-input-tile{display:flex;flex-direction:column;justify-content:center;gap:1px;width:auto;min-width:0;padding:3px 8px;backdrop-filter:blur(8px)}
+.map-footer .map-input-tile label{font-size:9px;font-weight:500;line-height:11px;white-space:nowrap;margin:0;color:#b9c9c3}
+.map-footer .map-input-tile input,.map-footer .map-input-tile select{display:block;width:100%;height:20px;min-height:20px;max-height:20px;line-height:20px;margin:0;padding:0;font-size:12px;font-weight:600;border:0;border-radius:0;background:transparent;box-shadow:none;color:#daffbd}
+.map-footer .map-input-tile input:focus-visible,.map-footer .map-input-tile select:focus-visible{outline:none;border-radius:0}
 .map-footer .map-input-tile select option{background:#203536;color:#daffbd}
 .map-footer #openRestPlanner{width:100%;min-width:0;padding:5px 6px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .map-footer #hideMapReadings{position:static;display:grid;place-items:center;flex:0 0 18px;width:18px;height:18px;min-height:18px;padding:0;line-height:1;font-size:16px;border:1px solid #6b8776;border-radius:5px;background:#203536f5;color:#c9d8ce;box-shadow:none}
@@ -69,3 +69,16 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 @media(max-width:950px){.map-footer{flex-wrap:wrap}.map-footer #mapReadings{flex-basis:100%}.map-footer #mapBottomActions{margin-left:auto}}
 @media(max-width:700px){.map-footer #mapParameters{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.map-footer #mapProfileTile{grid-column:span 2}.map-footer #openRestPlanner{grid-column:span 3}.map-readout-stack .map-mini-stat,.map-readout-stack .map-distance,.map-readout-stack #mapCalculate{width:105px}.map-readout-stack .map-mini-stat strong{font-size:14px}}
 @media print{#mapFooter,.map-readout-stack{display:none!important}.map-wrap #map{min-height:0!important}}
+
+/* Custom upward menus avoid native white popups and keep focus outside the text. */
+.map-footer .map-input-tile{position:relative}
+.map-footer .map-input-tile:focus-within{border-color:#9bb997;box-shadow:0 0 0 1px #9bb99755,0 3px 12px #0002}
+.map-footer .map-select-button{position:relative;display:block;width:100%;min-width:0;height:20px;min-height:20px;padding:0 16px 0 0;margin:0;border:0;border-radius:0;background:transparent;color:#daffbd;text-align:left;font-size:12px;font-weight:600;line-height:20px;box-shadow:none;outline:none}
+.map-footer .map-select-button span{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.map-footer .map-select-button:hover,.map-footer .map-select-button:focus-visible{background:transparent;outline:none}
+.map-footer .map-select-button:after{content:'';position:absolute;right:2px;top:5px;width:6px;height:6px;border-top:1.5px solid #bad5b8;border-left:1.5px solid #bad5b8;transform:rotate(45deg)}
+.map-footer .map-select-open{z-index:5;border-color:#9bb997}
+.map-select-options{position:absolute;left:-1px;bottom:calc(100% + 7px);width:max(100%,220px);max-width:calc(100vw - 30px);max-height:min(260px,42dvh);overflow-y:auto;padding:4px;border:1px solid #607e6b;border-radius:10px;background:#203536;color:#e2eddf;box-shadow:0 6px 25px #0006;overscroll-behavior:contain;scrollbar-width:thin;color-scheme:dark}
+.map-footer .map-select-option{display:block;width:100%;min-height:34px;padding:7px 9px;margin:0;border:1px solid transparent;border-radius:6px;background:#203536;color:#e2eddf;text-align:left;font-size:12px;font-weight:500;line-height:18px;white-space:normal;box-shadow:none}
+.map-footer .map-select-option:hover,.map-footer .map-select-option:focus-visible{background:#34564b;border-color:#7c9b82;outline:none;color:#f0ffe7}
+.map-footer .map-select-option[aria-selected=true]{background:#2b483e;color:#d4f2ba;font-weight:700}
