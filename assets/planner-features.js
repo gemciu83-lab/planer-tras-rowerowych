@@ -66,7 +66,7 @@ function handlePlannerMapClick(e){
  start.type=stop.type=cancel.type='button';start.textContent='Ustaw start S';stop.textContent=points.length?'Dodaj przystanek / metę':'Dodaj jako start S';cancel.textContent='Anuluj';
  start.onclick=()=>{
   const closed=points.length>2&&distance(points[0],points.at(-1))<.001;
-  checkpoint();stopGPS();if(points.length)points[0]=c;else points.push(c);if(closed)points[points.length-1]=c.slice();map.closePopup();invalidate();renderPoints();
+  if(typeof moveImportedWaypoint==='function'&&moveImportedWaypoint(0,c)){map.closePopup();return}checkpoint();stopGPS();if(points.length)points[0]=c;else points.push(c);if(closed)points[points.length-1]=c.slice();map.closePopup();invalidate();renderPoints();
  };
  stop.onclick=()=>{if(!points.length)stopGPS();map.closePopup();add(c)};cancel.onclick=()=>map.closePopup();content.append(start,stop,cancel);
  L.popup({closeButton:false,autoPan:true,className:'touch-action-popup'}).setLatLng(e.latlng).setContent(content).openOn(map);
@@ -131,7 +131,7 @@ function renderLoopCards(){
  });
 }
 
-function savedSnapshot(record){if(!record)return null;return PlannerCore.sanitizeTrip({points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,routeBreaks:record.routeBreaks,restSettings:record.restSettings,surfaceData:record.surfaceData,settings:{name:record.name,profile:record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,luggageWeight:record.luggageWeight,bikeType:record.bikeType,ridingPosition:record.ridingPosition,windMode:record.windMode,windSpeed:record.windSpeed,windDirection:record.windDirection,departure:record.departure}})}
+function savedSnapshot(record){if(!record)return null;return PlannerCore.sanitizeTrip({points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,routeBreaks:record.routeBreaks,restSettings:record.restSettings,surfaceData:record.surfaceData,importIndices:record.importIndices,elevationSource:record.elevationSource,settings:{name:record.name,profile:record.profile||record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,luggageWeight:record.luggageWeight,bikeType:record.bikeType,ridingPosition:record.ridingPosition,windMode:record.windMode,windSpeed:record.windSpeed,windDirection:record.windDirection,departure:record.departure}})}
 function renderSavedCards(){
  const host=$('saved');host.replaceChildren();let count=0;
  saved.forEach(record=>{
@@ -150,7 +150,7 @@ function renderSavedCards(){
 }
 function saveCurrentTrip(){
  if(!points.length)return;if(saved.length>=20){status('Limit 20 wypraw. Usuń zbędną lub wyeksportuj GPX.',true);return}
- saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),routeBreaks:getRouteBreaks(),restSettings:getRestSettings(),track:track.map(c=>c.slice()),surfaceData,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),luggageWeight:Number($('luggageWeight').value),bikeType:$('bikeType').value,ridingPosition:$('ridingPosition').value,windMode:$('windMode').value,windSpeed:Number($('windSpeed').value),windDirection:Number($('windDirection').value)});
+ saved.push({name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),routeBreaks:getRouteBreaks(),restSettings:getRestSettings(),track:track.map(c=>c.slice()),surfaceData,importIndices:typeof gpxImportIndices!=='undefined'&&routeType==='import'?gpxImportIndices.slice():null,elevationSource:typeof gpxElevationSource!=='undefined'?gpxElevationSource:'',profile:$('profile').value,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),luggageWeight:Number($('luggageWeight').value),bikeType:$('bikeType').value,ridingPosition:$('ridingPosition').value,windMode:$('windMode').value,windSpeed:Number($('windSpeed').value),windDirection:Number($('windDirection').value)});
  if(persist()){showSaved();status(track.length>1?'Wyprawa zapisana. Znajdziesz ją w „Moich zapisanych wyprawach”.':'Zapisano punkty wyprawy. Wczytasz je ręcznie z „Moich zapisanych wypraw”.')}else saved.pop();
 }
 

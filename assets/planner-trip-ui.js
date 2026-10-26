@@ -39,6 +39,7 @@ function insertPlaceStop(item){
  if(placesTrack!==track||track.length<2||mapDistancePending||previousRoute)return;
  if(points.some(c=>PlannerTrip.haversine(c,item.c)<.015)){status('Ten przystanek jest już na trasie. Czas postoju ustawisz na liście punktów.');return}
  ensureTripPlan();const positions=tripPlanPositions;let at=1;while(at<points.length-1&&positions[at]<=item.meters)at++;
+ if(typeof insertImportedWaypoint==='function'&&insertImportedWaypoint(at,item.c,{name:item.name,stopMinutes:10})){map.closePopup();return}
  checkpoint();const c=item.c.slice();points.splice(at,0,c);pointNames.set(PlannerCore.pointKey(c),item.name);pointStopTimes.set(c,10);invalidate();renderPoints();status('Dodano „'+item.name+'” z postojem 10 min. Czas zmienisz przy punkcie w Ustawieniach.');
 }
 function renderPlaces(){

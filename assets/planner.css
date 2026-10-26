@@ -93,3 +93,5 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .map-footer #mapRestTile #openRestPlanner{display:grid;place-items:center;flex:0 0 20px;width:20px;height:20px;min-height:20px;margin:0;padding:0;border:0;border-radius:4px;font-size:18px;line-height:20px;color:#d2e5c9;background:transparent;box-shadow:none;overflow:visible}
 .map-footer #mapRestTile #openRestPlanner:hover,.map-footer #mapRestTile #openRestPlanner:focus-visible{background:#3c5c4d;outline:none}
 @media(max-width:700px){.map-footer #mapRestTile{grid-column:span 3}.map-footer #mapRestFields label{flex:0 1 75px}.map-footer #mapRestTile #openRestPlanner{margin-left:auto}}
+
+.gpx-info{margin:10px 0 0;font-size:11px;line-height:1.5;color:#b9cfbf}#fetchGPXElevation{border-color:#8ba875;color:#d8eccc}

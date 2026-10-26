@@ -1,4 +1,20 @@
-# Weryfikacja wersji 3.8 — 23.10.2026
+# Weryfikacja wersji 3.9 — 26.10.2026
+
+Pełny zestaw testów obejmuje dodatkowo parser GPX, punkty kontrolne i ich zapis, lokalne łączenie odcinków, zachowanie nieedytowanych współrzędnych, pętle, brak sztucznych łączników, transakcyjne zatwierdzanie zmian oraz uzupełnianie wysokości. Testy sprawdzają także błąd i nieaktualną odpowiedź podczas edycji lub pobierania wysokości.
+
+Przeglądarka, lokalny podgląd i syntetyczne GPX:
+
+- GPX z prefiksem przestrzeni nazw `g:` i 241 wysokościami tworzy 21 punktów kontrolnych na pętli 81,2 km. Profil jest od razu widoczny i zawiera wykres. Oryginalna geometria nie jest upraszczana.
+- Wywołano zdarzenie dragend rzeczywistego markera Leaflet. Zapytanie obejmuje trzy sąsiednie punkty, a nie całą pętlę. Porównanie współrzędnych potwierdza identyczny prefiks i sufiks śladu. Cofnięcie przywraca 241 oryginalnych wierzchołków i prawidłowe powiązania punktów; ponowienie przywraca zmianę.
+- Kontrolowany błąd trasowania pozostawia poprzednią geometrię i punkty w całości, wraz z kilometrażem i profilem.
+- Obsługa przeciągania linii została uruchomiona przez zdarzenia mousedown/mousemove/mouseup testowego podglądu. Dodaje punkt i zmienia fragment. Przesunięcie startu pętli zachowuje zamkniętą geometrię oraz prawidłowe indeksy punktów. Te próby zdarzeń są testem integracji, nie ręczną próbą fizycznej myszy użytkownika.
+- GPX 2D początkowo nie ma profilu. Po kliknięciu Pobierz wysokości kontrolowany wynik wypełnia 241 wartości i pokazuje wykres. Kontrolowane HTTP 503 nie zmienia ani geometrii, ani brakujących wartości.
+- Dodatkowo rzeczywista usługa Open-Meteo poprawnie uzupełniła wysokości dla krótkiego śladu na publicznych, syntetycznych współrzędnych. Profil pojawił się w przeglądarce. To test dostępności API, nie ocena dokładności modelu terenu.
+- Ręczny zapis, odświeżenie strony z pustą mapą i ponowne wczytanie zachowują 241 wierzchołków, 21 punktów kontrolnych, komplet wysokości i informację o DEM. Brak poziomego przewijania i błędów aplikacji w konsoli w sprawdzonym widoku.
+
+Rzeczywistego pliku użytkownika nie otrzymano — dostępny był zrzut ekranu. Testy używają wygenerowanych GPX. Nowe lokalne odcinki w podglądzie korzystały z kontrolowanych odpowiedzi trasowania; nowego przebiegu BRoutera nie sprawdzano na żywo. Dotychczasowe testy kolejki, 403/429 i tras z ponad 1000 punktów nadal obowiązują. Serwer, dodatkowe przyciski i dane podglądu są poza ZIP. Asystent nie opublikował wersji 3.9 na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.8 — 23.10.2026
 
 Pełny zestaw testów obejmuje dodatkowo synchronizację postojów pomiędzy mapą i oknem ustawień, odrzucanie wartości poza zakresem, brak powtarzanego wpisu historii dla tych samych wartości, zachowanie czasu zaakceptowanej przerwy oraz brak żądań trasowania.
 

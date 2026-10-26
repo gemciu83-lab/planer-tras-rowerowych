@@ -1,6 +1,24 @@
-# Planer tras rowerowych 3.8
+# Planer tras rowerowych 3.9
 
-Nowa wersja: Postoje można regulować bezpośrednio w dolnym kafelku mapy. Wpisz odstęp w kilometrach oraz czas nowej przerwy w minutach. Zachowano ciemne listy, kafelki 40 px i ustawienia startowe z wersji 3.7.
+Nowa wersja: poprawiony import GPX, edycja pojedynczych fragmentów bez usuwania pozostałego śladu oraz opcjonalne uzupełnianie brakujących wysokości. Zachowano kafelki, postoje i dotychczasowe ustawienia startowe.
+
+## GPX: profil i edycja
+
+- GPX z wartościami `ele` od razu pokazuje profil. Odczyt obsługuje przestrzenie nazw, ślady `trkpt` oraz trasy `rtept`. Zero i ujemne wysokości są prawidłowymi danymi. Brak `ele` nie jest zamieniany na zero.
+- Przy imporcie zachowujemy wszystkie współrzędne śladu. Tworzymy dodatkowe punkty do edycji wzdłuż przebiegu, zwykle około dwudziestu na krótszej trasie lub co około 5 km na dłuższej. Nie ogranicza to liczby punktów, które można dodać. W starszej wersji import tworzył jedynie start i metę.
+- Przesunięcie punktu lub linii wyznacza tylko odcinek między sąsiednimi punktami kontrolnymi. Pozostałe wierzchołki śladu pozostają identyczne. Do zakończenia obliczeń widoczny jest poprzedni ślad. Brak połączenia, błąd serwera lub anulowanie nie usuwa trasy ani jej punktów.
+- Jeżeli nowy odcinek jest przyciągnięty do innej drogi i nie łączy się z GPX w granicy 1 m, zmiana zostanie odrzucona. Nie dopisujemy sztucznych łączników w linii prostej. Surowy ślad GPS poza siecią dróg może z tego powodu wymagać innego miejsca edycji. Tryb Ręcznie świadomie tworzy linie proste.
+- Możesz dodać punkt, usunąć punkt pośredni lub odwrócić GPX. Usunięcie skrajnego punktu skraca ślad do kolejnego punktu. Przesunięcie wspólnego startu i mety pętli zachowuje pętlę, zmieniając tylko sąsiednie odcinki przy starcie. Cofanie i ponawianie obejmuje te zmiany.
+- Zmiana profilu lub preferencji sama nie usuwa GPX; ustawienia zostaną użyte przy następnej lokalnej edycji. Osobny przycisk Wyznacz trasę nadal służy do świadomego przeliczenia całej trasy po punktach.
+- Ręczny zapis wyprawy przechowuje również powiązania punktów z GPX i źródło wysokości. Po wczytaniu zapisanej wycieczki można kontynuować lokalną edycję. Starsze zapisy importów są przekształcane do edytowalnego modelu podczas wczytania.
+
+## GPX bez wysokości
+
+Kliknij **Pobierz wysokości** nad wykresem. Sam import nie wysyła śladu do usługi wysokości. Po kliknięciu do Open-Meteo wysyłamy do 600 próbek współrzędnych, zaokrąglonych do 5 miejsc po przecinku, w paczkach do 100. Nie wysyłamy nazwy pliku, nazw punktów ani całego pliku GPX.
+
+Brakujące wartości uzupełniane są modelem terenu Copernicus DEM 90 m, z interpolacją między próbkami; oryginalne wysokości pozostają zachowane. To przybliżenie terenu, nie pomiar z licznika i nie dokładny model mostów, tuneli czy krótkich stromych odcinków. Nie gwarantuje dokładnej sumy podjazdów. Współrzędne i kilometraż nie zmieniają się. Dane są dodawane dopiero po kompletnym, prawidłowym wyniku; błąd, anulowanie lub zmiana trasy w trakcie pobierania nie nadpisuje GPX. Można cofnąć uzupełnienie wysokości.
+
+Źródła danych: [Open-Meteo Elevation API](https://open-meteo.com/en/docs/elevation-api), [Copernicus DEM / ESA](https://doi.org/10.5270/ESA-c5d3d65). Dostępność usługi zależy od internetu i jej limitów. W plikach zawierających kilka oddzielnych odcinków trzeba wybrać jeden ciągły ślad — nie łączymy rozłącznych tras automatycznie.
 
 ## Postoje bezpośrednio na mapie
 
@@ -59,7 +77,7 @@ Nowa wersja: Postoje można regulować bezpośrednio w dolnym kafelku mapy. Wpis
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.8.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.9.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -96,7 +114,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.8.0”.
+Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.9.0”.
 
 ## Weryfikacja
 
