@@ -30,6 +30,14 @@ function updateEnergyDisplay(){
  $('mapTotalCaloriesValue').textContent=valid?'Całkowite: ≈ '+energyKcal(result.total):'Całkowite: —';
  const restKcal=n=>Math.round(n).toLocaleString('pl-PL')+' kcal';
  $('energyRest').textContent=valid?'Spoczynkowe: około '+restKcal(result.rest)+' — podczas jazdy '+restKcal(result.restRide)+', na postojach '+restKcal(result.restStops)+'.':'Całkowite = aktywne + wydatek spoczynkowy podczas jazdy i postojów.';
+ let quality='';
+ if(valid){
+  const missing=result.missingHeightMeters||0,pct=Math.round(missing/result.meters*1000)/10;
+  quality=missing>.01?'Brak wysokości na '+pct.toLocaleString('pl-PL')+'% dystansu. Te odcinki policzono bez podjazdów — uzupełnij profil.':'Wysokości dostępne wzdłuż całego śladu.';
+  if(!forecastMode&&Number($('windSpeed').value)===0)quality+=' Założono brak wiatru.';
+  quality+=' Stałe średnie tempo; rozpędzanie, zmiany rytmu i indywidualna reakcja na długą jazdę nie są odtwarzane.';
+ }
+ $('energyQuality').textContent=quality;$('mapCaloriesTile').title=quality;
  let note=forecastMode?(energyForecast?.track===track?'Prognoza Open-Meteo pobrana '+new Date(energyForecast.fetchedAt).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})+'.':'Pobierz prognozę dla bieżącej trasy lub wybierz wiatr ręczny.'):Number($('windSpeed').value)>0?'Wiatr ręczny: '+$('windSpeed').value+' km/h, z kierunku '+$('windDirection').selectedOptions[0].textContent+'.':'Założenie: bez wiatru.';
  if(forecastMode&&validTrack&&!valid)note+=' Brak pełnej, aktualnej prognozy dla godzin przejazdu. Kalorie wymagają ponownego pobrania prognozy albo trybu ręcznego.';
  if(valid&&forecastMode)note+=' Wiatr na trasie: '+Math.round(result.windMin*3.6)+'–'+Math.round(result.windMax*3.6)+' km/h.';

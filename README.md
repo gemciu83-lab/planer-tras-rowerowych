@@ -1,6 +1,6 @@
-# Planer tras rowerowych 3.9
+# Planer tras rowerowych 3.10
 
-Nowa wersja: poprawiony import GPX, edycja pojedynczych fragmentów bez usuwania pozostałego śladu oraz opcjonalne uzupełnianie brakujących wysokości. Zachowano kafelki, postoje i dotychczasowe ustawienia startowe.
+Nowa wersja: poprawiono pomijanie prawdziwych podjazdów w rzadkim GPX. W ustawieniach kalorii pokazujemy też procent dystansu bez danych wysokości i wskazówkę porównywania kalorii aktywnych oraz całkowitych z zegarkiem. Model nie otrzymał mnożnika za długi dystans. Szczegóły, scenariusze 123 km i źródła są w AUDYT-KALORII.md.
 
 ## GPX: profil i edycja
 
@@ -77,7 +77,7 @@ Brakujące wartości uzupełniane są modelem terenu Copernicus DEM 90 m, z inte
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.9.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.10.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -114,7 +114,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.9.0”.
+Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.10.0”.
 
 ## Weryfikacja
 

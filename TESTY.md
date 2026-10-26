@@ -1,4 +1,14 @@
-# Weryfikacja wersji 3.9 — 26.10.2026
+# Weryfikacja wersji 3.10 — 26.10.2026
+
+Pełny zestaw testów przechodzi. Dodano testy zachowania rzeczywistego szczytu w GPX z punktami odległymi o 500 m, filtrowania pojedynczego skoku wysokości w gęstym GPS, wyliczania dystansu bez wysokości, liniowego wzrostu kalorii ze skalowaniem trasy oraz braku dodatkowych kalorii aktywnych za postój.
+
+W przeglądarce, syntetyczny GPX 123 km / 1000 m podjazdu: rowerzysta 68 kg, rower 20 kg, bagaż 2 kg, trekking, 18 km/h, brak wiatru. Profil pokazuje 1000 m podjazdu, aktywne około 2540 kcal, całkowite około 3010 kcal. Informacja o kompletności danych jest widoczna po rozwinięciu Ustawień i dostępna w podpowiedzi kafelka kalorii.
+
+GPX bez wysokości pokazuje informację, że brakuje ich na 100% dystansu, oraz wskazówkę uzupełnienia profilu. Brak błędów JavaScript i poziomego przewijania w sprawdzonym widoku. Nie sprawdzano rzeczywistego wydatku energetycznego człowieka ani majowego przejazdu użytkownika — jego danych jeszcze nie otrzymano. Nie zmieniono stałej sprawności, oporów roweru ani sposobu naliczania spoczynku.
+
+Źródła i ograniczenia audytu zapisano w AUDYT-KALORII.md. Serwer podglądu i testowe przyciski są poza ZIP. Asystent nie opublikował wersji 3.10 na GitHub Pages.
+
+## Weryfikacja wcześniejszej wersji 3.9 — 26.10.2026
 
 Pełny zestaw testów obejmuje dodatkowo parser GPX, punkty kontrolne i ich zapis, lokalne łączenie odcinków, zachowanie nieedytowanych współrzędnych, pętle, brak sztucznych łączników, transakcyjne zatwierdzanie zmian oraz uzupełnianie wysokości. Testy sprawdzają także błąd i nieaktualną odpowiedź podczas edycji lub pobierania wysokości.
 

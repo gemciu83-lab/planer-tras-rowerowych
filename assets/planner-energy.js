@@ -14,9 +14,10 @@
  }}
  function estimate(cs,metrics,options={}){
   const s=settings(options),bike=bikes[s.type],mass=s.rider+s.bike+s.luggage,v=s.speed/3.6,cda=positions[s.position]||bike.cda;
-  let work=0,meters=0,windMeters=0,upwind=0,downwind=0,crosswind=0,windMin=Infinity,windMax=0;
+  let work=0,meters=0,heightMeters=0,windMeters=0,upwind=0,downwind=0,crosswind=0,windMin=Infinity,windMax=0;
   for(let i=0;i<metrics.meters.length;i++){
    const d=metrics.meters[i];if(!Number.isFinite(d)||d<.01)continue;
+   if(Number.isFinite(cs[i]?.[2])&&Number.isFinite(cs[i+1]?.[2]))heightMeters+=d;
    const wind=options.windAt?options.windAt(meters+d/2):{speed:s.windSpeed/3.6,direction:s.windDirection};
    if(!wind||!Number.isFinite(wind.speed)||wind.speed<0||!Number.isFinite(wind.direction))return {valid:false,reason:'wind'};
    windMin=Math.min(windMin,wind.speed);windMax=Math.max(windMax,wind.speed);
@@ -28,7 +29,7 @@
   }
   // 24% is an assumed NET efficiency. Add the resting component exactly once.
   const rideHours=meters/1000/s.speed,active=work/(.97*.24*4184),restRide=s.rider*rideHours,restStops=s.rider*s.stopMinutes/60;
-  return {valid:true,active,restRide,restStops,rest:restRide+restStops,total:active+restRide+restStops,rideHours,meters,mass,cda,windMeters,upwind,downwind,crosswind,windMin:Number.isFinite(windMin)?windMin:0,windMax};
+  return {valid:true,active,restRide,restStops,rest:restRide+restStops,total:active+restRide+restStops,work,averageCrankPower:rideHours>0?work/(.97*rideHours*3600):0,heightMeters,missingHeightMeters:Math.max(0,meters-heightMeters),rideHours,meters,mass,cda,windMeters,upwind,downwind,crosswind,windMin:Number.isFinite(windMin)?windMin:0,windMax};
  }
  function parseForecast(json,samples){
   const records=Array.isArray(json)?json:[json];if(records.length!==samples.length)throw Error('Niepełna prognoza dla miejsc na trasie.');

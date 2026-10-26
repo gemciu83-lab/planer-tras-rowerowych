@@ -11,7 +11,9 @@
   const median=cs.map((c,i)=>{
    if(!Number.isFinite(c[2]))return null;
    const neighbors=[cs[i-1]?.[2],c[2],cs[i+1]?.[2]].filter(Number.isFinite).sort((a,b)=>a-b);
-   return neighbors.length===3?neighbors[1]:c[2];
+   const closeNeighbors=i>0&&i<cs.length-1&&distances[i]-distances[i-1]<=15&&distances[i+1]-distances[i]<=15;
+   // Sparse GPX summits are genuine candidates, not isolated GPS spikes.
+   return neighbors.length===3&&closeNeighbors?neighbors[1]:c[2];
   });
   let segment=0;
   while(segment<cs.length){
