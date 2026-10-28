@@ -95,3 +95,19 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 @media(max-width:700px){.map-footer #mapRestTile{grid-column:span 3}.map-footer #mapRestFields label{flex:0 1 75px}.map-footer #mapRestTile #openRestPlanner{margin-left:auto}}
 
 .gpx-info{margin:10px 0 0;font-size:11px;line-height:1.5;color:#b9cfbf}#fetchGPXElevation{border-color:#8ba875;color:#d8eccc}
+/* 3.11: compact analysis and explicit energy assumptions. */
+.analysis-panel{padding:16px 24px;background:#182f31;border-top:1px solid #38504e;color:#e9f3e5}
+.analysis-panel summary{cursor:pointer;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.recording-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.recording-grid>div{padding:10px 12px;border:1px solid #3d5351;border-radius:9px;display:flex;flex-direction:column;gap:4px;background:#203737}
+.recording-grid span{font-size:11px;color:#b7c9c3}.recording-grid strong{font-size:16px;color:#d0f3ae}
+.review-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.review-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left;min-width:0;white-space:normal;padding:12px}
+.review-item span{font-size:12px;font-weight:400;color:#c4d4cf}
+.map-wind-summary{display:block;font:inherit;font-size:10px;min-height:22px;padding:3px 0 0;border:0;background:none;box-shadow:none;color:#bedaa5;text-align:left;width:100%;white-space:normal}
+.wind-section-form{display:grid;grid-template-columns:1fr 1fr .8fr auto;gap:8px;align-items:end;margin:10px 0}.wind-section-form label{margin:0;min-width:0;font-size:11px}.wind-section-form input,.wind-section-form select{margin-top:5px;padding:8px;width:100%}
+.wind-section-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #3b514b;font-size:12px}
+.release-control{display:flex;align-items:center;flex-direction:column;gap:3px;max-width:150px}.release-control button{white-space:nowrap;font-size:11px;padding:6px 9px}.release-control span{font-size:10px;color:#c4d4bf}
+.release-banner{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:10px 18px;background:#254437;color:#ecf6e5;border-bottom:1px solid #698860;font-size:13px}.release-banner[hidden]{display:none}
+.release-banner button{padding:7px 12px;font-size:12px}.release-banner button:last-child{padding:3px 7px}
+@media(max-width:700px){.recording-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.review-rows{grid-template-columns:1fr}.analysis-panel{padding:14px 12px}.wind-section-form{grid-template-columns:1fr 1fr}.release-control{max-width:100px}}

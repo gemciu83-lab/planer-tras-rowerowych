@@ -1,4 +1,5 @@
 'use strict';
+let manualWindSections=[],energyCalmCache=null;
 let energyForecast=null,energyRequest=null,energyRequestTrack=null,energyRequestKey=0,energyForecastSerial=0,energyCached=null,energyForecastMessage='';
 function energySettings(){return {rider:$('riderWeight').value,bike:$('bikeWeight').value,luggage:$('luggageWeight').value,speed:$('speed').value,type:$('bikeType').value,position:$('ridingPosition').value,windSpeed:$('windSpeed').value,windDirection:$('windDirection').value,stopMinutes:Math.max(0,Number($('pause').value)||0)+plannedStopsMinutes()}}
 function energyStops(){
@@ -7,12 +8,13 @@ function energyStops(){
 }
 function estimateTripEnergy(){
  const options=energySettings(),mode=$('windMode').value,departure=new Date($('departure').value).getTime();
- const events=mode==='forecast'?energyStops():[],signature=JSON.stringify([options,mode,departure,events,energyForecastSerial]);
+ const events=mode==='forecast'?energyStops():[],signature=JSON.stringify([options,mode,departure,events,energyForecastSerial,manualWindSections]);
  if(mode==='forecast'){
   if(!energyForecast||energyForecast.track!==track||Date.now()-energyForecast.fetchedAt>3600000)return {valid:false,reason:'forecast'};
   let at=0,minutes=0;
   options.windAt=meters=>{while(at<events.length&&events[at].meters<meters){minutes+=events[at++].minutes}return PlannerEnergy.forecastAt(energyForecast.records,meters,departure+meters/(Number(options.speed)/3.6)*1000+minutes*60000)};
  }
+ if(mode==='sections')options.windAt=meters=>PlannerAnalysis.windAt(manualWindSections,meters,{speed:Number(options.windSpeed)/3.6,direction:Number(options.windDirection)});
  if(energyCached?.track===track&&energyCached.signature===signature)return energyCached.result;
  const result=PlannerEnergy.estimate(track,PlannerCore.rideMetrics(track,distance),options);
  energyCached={track,signature,result};return result;
@@ -22,7 +24,7 @@ function updateEnergyDisplay(){
  if(energyRequest&&energyRequestTrack!==track){energyRequestKey++;energyRequest.abort();energyRequest=null;energyForecastMessage=''}
  const forecastMode=$('windMode').value==='forecast',validTrack=track.length>1,result=validTrack?estimateTripEnergy():null,valid=validTrack&&result.valid;
  $('windSpeed').disabled=$('windDirection').disabled=forecastMode;
- $('manualWindFields').hidden=forecastMode;
+ $('manualWindFields').hidden=forecastMode;$('windSectionsPanel').hidden=$('windMode').value!=='sections';
  $('fetchWind').disabled=!validTrack||mapDistancePending||!!previousRoute||!!energyRequest;
  $('fetchWind').textContent=energyRequest?'Pobieram prognozę…':'Pobierz wiatr dla trasy';
  $('calories').textContent=$('energyActive').textContent=valid?'≈ '+energyKcal(result.active):'— kcal';
@@ -34,7 +36,7 @@ function updateEnergyDisplay(){
  if(valid){
   const missing=result.missingHeightMeters||0,pct=Math.round(missing/result.meters*1000)/10;
   quality=missing>.01?'Brak wysokości na '+pct.toLocaleString('pl-PL')+'% dystansu. Te odcinki policzono bez podjazdów — uzupełnij profil.':'Wysokości dostępne wzdłuż całego śladu.';
-  if(!forecastMode&&Number($('windSpeed').value)===0)quality+=' Założono brak wiatru.';
+  if($('windMode').value==='manual'&&Number($('windSpeed').value)===0)quality+=' Założono brak wiatru.';
   quality+=' Stałe średnie tempo; rozpędzanie, zmiany rytmu i indywidualna reakcja na długą jazdę nie są odtwarzane.';
  }
  $('energyQuality').textContent=quality;$('mapCaloriesTile').title=quality;
@@ -43,7 +45,9 @@ function updateEnergyDisplay(){
  if(valid&&forecastMode)note+=' Wiatr na trasie: '+Math.round(result.windMin*3.6)+'–'+Math.round(result.windMax*3.6)+' km/h.';
  if(valid&&result.windMeters){const pct=m=>Math.round(m/result.meters*100),calm=result.meters-result.windMeters;note+=' Dystans: pod wiatr '+pct(result.upwind)+'%, z wiatrem '+pct(result.downwind)+'%, boczny '+pct(result.crosswind)+'%'+(pct(calm)>0?', cisza '+pct(calm)+'%':'')+'.'}
  if(energyForecastMessage)note+=' '+energyForecastMessage;
+ if($('windMode').value==='sections')note='Wiatr według '+manualWindSections.length+' odcinków. Za ostatnim odcinkiem: '+$('windSpeed').value+' km/h. '+(manualWindSections.at(-1)?.endKm>length(track)?'Część przedziałów wykracza poza metę. ':'')+(valid?'Kalorie obliczone dla rzeczywistych kierunków jazdy.':'');
  $('windStatus').textContent=note;
+ updateEnergyAssumptions(valid?result:null);
  $('calorieNote').textContent='Szacunkowe kalorie aktywne: praca potrzebna do jazdy, sprawność netto 24%, napęd 97%. Masa rowerzysty + roweru + bagażu; opór toczenia, powietrza i wysokości, o ile są dostępne. Kalorie całkowite dodają tylko raz wydatek spoczynkowy rowerzysty: około 1 kcal/kg/h przez jazdę i postoje. Stałe tempo, bez wspomagania. Wiatr zmienia kalorie, nie założone tempo ani czas przyjazdu. Prognoza wiatru na 10 m nie uwzględnia osłony lasów i zabudowy. Nie modelujemy rozpędzania, kadencji ani dodatkowej pracy organizmu podczas toczenia bez pedałowania. Wyniki orientacyjne, zaokrąglone do 10 kcal.';
 }
 async function fetchRouteWind(){
@@ -65,6 +69,28 @@ async function fetchRouteWind(){
  finally{clearTimeout(timer);if(energyRequest===request)energyRequest=null;updateEnergyDisplay()}
 }
 function initEnergyControls(){
- $('fetchWind').onclick=fetchRouteWind;
+ $('fetchWind').onclick=fetchRouteWind;initWindSections();
  for(const id of ['windMode','windSpeed','windDirection'])$(id).addEventListener('input',()=>{energyForecastMessage='';if(energyRequest){energyRequestKey++;energyRequest.abort();energyRequest=null}},true);
+}
+function renderWindSections(){
+ const host=$('windSectionRows');if(!host)return;host.replaceChildren();let start=0;
+ manualWindSections.forEach((s,i)=>{const row=document.createElement('div'),label=document.createElement('span'),remove=document.createElement('button');row.className='wind-section-row';label.textContent=start+'–'+s.endKm+' km · '+s.speed+' km/h · z '+s.direction+'°';remove.type='button';remove.className='small';remove.textContent='×';remove.setAttribute('aria-label','Usuń przedział wiatru '+(i+1));remove.onclick=()=>{checkpoint();cancelSectionForecast();manualWindSections=manualWindSections.filter((_,j)=>j!==i);renderWindSections();stats()};row.append(label,remove);host.append(row);start=s.endKm});
+}
+function cancelSectionForecast(){if(energyRequest){energyRequestKey++;energyRequest.abort();energyRequest=null}energyForecastMessage=''}
+function initWindSections(){
+ $('windSectionForm').onsubmit=e=>{e.preventDefault();const item={endKm:Number($('windSectionEnd').value),speed:Number($('windSectionSpeed').value),direction:Number($('windSectionDirection').value)},next=PlannerAnalysis.windSections([...manualWindSections,item]);
+  if(!next.length){$('windSectionStatus').textContent='Podaj rosnący kilometr końca oraz wiatr 0–120 km/h. Maksymalnie 30 przedziałów.';return}
+  checkpoint();cancelSectionForecast();manualWindSections=next;$('windMode').value='sections';$('windSectionStatus').textContent='Przedział dodany.';$('windSectionEnd').value=String(item.endKm+25);renderWindSections();stats();
+ };
+ $('mapWindSummary').onclick=e=>{e.stopPropagation();setTopMenu(true);$('energySettings').scrollIntoView({block:'start',behavior:'smooth'});$('windMode').focus({preventScroll:true})};
+ renderWindSections();
+}
+function updateEnergyAssumptions(result){
+ const mode=$('windMode').value,speed=Number($('windSpeed').value),label=mode==='forecast'?(result?'Wiatr: prognoza':'Brak prognozy'):mode==='sections'?'Wiatr: odcinki':speed>0?'Wiatr: '+speed+' km/h':'Bez wiatru';
+ $('mapWindSummary').textContent=label;$('mapWindSummary').title='Założenie kalorii: '+label+'. Kliknij, aby zmienić.';
+ const host=$('energyComparison');if(!result){host.textContent='';return}
+ const options={...energySettings(),windSpeed:0,windDirection:0},signature=JSON.stringify(options);
+ if(energyCalmCache?.track!==track||energyCalmCache.signature!==signature)energyCalmCache={track,signature,result:PlannerEnergy.estimate(track,PlannerCore.rideMetrics(track,distance),options)};
+ const calm=energyCalmCache.result,delta=result.active-calm.active;
+ host.textContent='Ta sama trasa bez wiatru: ≈ '+energyKcal(calm.active)+' aktywnych. Wpływ przyjętego wiatru: '+(delta>=0?'+':'−')+energyKcal(Math.abs(delta))+'. Porównanie scenariuszy, nie zakres dokładności pomiaru.';
 }

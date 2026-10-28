@@ -1,6 +1,70 @@
-# Planer tras rowerowych 3.10
+# Planer tras rowerowych 3.11
 
-Nowa wersja: poprawiono pomijanie prawdziwych podjazdów w rzadkim GPX. W ustawieniach kalorii pokazujemy też procent dystansu bez danych wysokości i wskazówkę porównywania kalorii aktywnych oraz całkowitych z zegarkiem. Model nie otrzymał mnożnika za długi dystans. Szczegóły, scenariusze 123 km i źródła są w AUDYT-KALORII.md.
+## Wgranie na GitHub Pages
+
+1. Rozpakuj ZIP.
+2. Do głównego katalogu repozytorium wgraj **index.html, version.json i cały folder assets**, zastępując poprzednie pliki. Nie wgrywaj samego ZIP ani folderu nadrzędnego.
+3. Zatwierdź zmiany i poczekaj na zakończenie wdrożenia Pages.
+4. Otwórz stronę. Przycisk w nagłówku i tytuł karty mają pokazać **3.11.0**. Przy pierwszym przejściu ze starszej wersji zapisz trasę przed odświeżeniem.
+
+Paczka jest statyczną stroną dla serwera HTTP/HTTPS, w tym GitHub Pages. Folder tests służy do lokalnej weryfikacji kodu.
+
+## Zapis GPX: czas i dystans
+
+Po imporcie pod mapą pojawia się panel **Zapis GPX**. Rozróżnia dystans urządzenia, sumę odległości między punktami, czas aktywności urządzenia, pełny czas zapisu oraz szacunkowy ruch i postoje.
+
+- Odczytywane są znaczniki czasu punktów i dostępne rozszerzenia totalDistance, totalTime, cumulativeClimb, cumulativeDecrease. Rozszerzenia nie są obowiązkową częścią GPX; brak danych jest pokazany wprost.
+- Szacunek ruchu używa okien 30 s i progu 3 km/h. Przerwy między próbkami ponad 5 min, cofnięty czas, brak czasu i prędkości ponad 100 km/h nie są przypisywane arbitralnie do ruchu lub postoju. Niepełność jest opisana. Nie jest to odtworzenie algorytmu automatycznej pauzy zegarka.
+- Import nie nadpisuje tempa, mas ani planowanych postojów. Przycisk **Ustaw tempo…** pozwala świadomie skopiować średnią prędkość z zapisu. Czas planowanej wyprawy nadal wynika z bieżącej geometrii, tempa i zaplanowanych przerw.
+- Po edycji geometrii panel pozostaje podsumowaniem oryginalnego nagrania, z wyraźnym oznaczeniem zmiany. Nie przypisujemy starych czasów nowym odcinkom.
+- Podsumowanie nagrania zachowuje się w ręcznym zapisie wyprawy i historii. Nie wysyłamy GPX do usługi analitycznej. Eksport śladu GPX nadal jest eksportem geometrii z wysokościami, bez generowania nowych znaczników czasu.
+
+## Wiatr i kalorie
+
+Na kafelku kalorii widać **Bez wiatru**, **Wiatr: … km/h**, **Wiatr: odcinki** lub stan prognozy. Kliknięcie podpisu otwiera ustawienia energii. Pokazujemy również porównanie z tą samą trasą bez wiatru; różnica nie jest przedziałem błędu pomiaru.
+
+W **Ustawienia → Wiatr i kalorie → Ręcznie — różne odcinki** dodasz np. wiatr do 60. kilometra, a potem inne warunki. Wiersze mają rosnący kilometr końca. Po ostatnim obowiązuje wiatr z głównych pól powyżej; pozostaw tam 0, jeśli dalej ma być cisza. Kierunek oznacza **skąd wieje**, a model uwzględnia rzeczywisty kierunek jazdy na każdym fragmencie. Usunięcie wiersza scala jego zakres z kolejnym lub z ustawieniem ogólnym. Maksymalnie 30 przedziałów.
+
+Przedziały zapisują się z wyprawą, działają z Cofnij/Ponów i nie wysyłają zapytań trasowania. Obecna prognoza nadal jest pobierana wyłącznie po kliknięciu. Zmiana przedziałów anuluje oczekujące pobieranie pogody, żeby spóźniona odpowiedź nie zmieniła wyboru.
+
+Nie dodano stałego mnożnika kalorii dla długich tras. Zachowano podział na aktywne i całkowite oraz dotychczasowe założenia modelu.
+
+## Odcinki do sprawdzenia
+
+Rozwiń panel pod mapą: najdłuższy podjazd, pozostałe podjazdy, trudniejsze nawierzchnie i drogi główne. Kliknięcie przybliża fragment mapy, wyróżnia go i ustawia zakres profilu. Przycisk **Usuń wyróżnienie z mapy** usuwa zaznaczenie.
+
+- Podjazdy: przynajmniej 200 m i 20 m w górę; nachylenie od 1%, z krótkimi łagodnymi przerwami do 100 m. Najdłuższy jest wyróżniony na początku listy.
+- Nawierzchnie: szuter, grunt, piasek i inne opisane nieasfaltowe rodzaje, od 100 m.
+- Drogi: klasy OSM trunk, primary, secondary i ich łącznice, od 100 m. Klasa nie jest pomiarem natężenia ruchu ani pewnym rozpoznaniem każdej administracyjnej DW. Opisy BRouter są rozciągane proporcjonalnie do geometrii, więc początki i końce tych odcinków są przybliżone.
+- Zwykły GPX nie zawiera opisów dróg i nawierzchni. Panel wskazuje pokrycie danych i nie przedstawia braku opisów jako gwarancji spokojnej trasy. Lista pokazuje maksymalnie 40 pozycji, z informacją o skróceniu.
+
+## Aktualizacje
+
+Przycisk **v3.11.0 ↻** sprawdza version.json na tej samej stronie. Sprawdzenie następuje także po starcie, co 15 min w widocznej karcie oraz po powrocie do karty, jeśli minęło 5 min. Nie ma automatycznego przeładowania ani Service Workera.
+
+Po wykryciu nowszej wersji **Zaktualizuj i zachowaj pracę**:
+
+1. Sprawdza SHA-256 strony i wszystkich plików aplikacji z manifestu. Niekompletne wdrożenie zatrzymuje aktualizację.
+2. Zachowuje bieżące punkty, ślad, parametry i metadane w pamięci sesji tej karty. Brak miejsca zatrzymuje przeładowanie.
+3. Otwiera nową wersję i przywraca tę kopię tylko z jednorazowym tokenem aktualizacji, ważnym 15 min. Nie przenosi historii Cofnij/Ponów ani pobranej prognozy pogody; prognozę należy pobrać ponownie.
+
+**Zwykłe uruchomienie lub odświeżenie nadal zaczyna bez poprzedniej trasy.** Przywrócenie dotyczy wyłącznie świadomie klikniętej aktualizacji. Aktualizowanie na serwerze nadal wymaga wgrania nowych plików przez właściciela repozytorium; przycisk nie publikuje kodu na GitHub.
+
+Po własnych zmianach plików uruchom **node tools/build-manifest.cjs**, aby wygenerować zgodny version.json. Starsza wersja 3.10 nie ma tego mechanizmu — pierwsze wgranie 3.11 trzeba odświeżyć ręcznie.
+
+## Obliczenia i płynność
+
+Przy co najmniej 5000 punktów profil, podjazdy, nachylenia, długości odcinków i kierunki są przygotowywane przez lokalny Web Worker. Wynik jest przypisany do konkretnego niezmiennego śladu i trafia do wspólnej pamięci obliczeń. Starsze zadanie nie może zastąpić nowszej trasy. Dotyczy importu, zatwierdzania routingu, lokalnej edycji GPX i ręcznego wczytywania zapisanej wyprawy.
+
+Ponowne przeliczanie kalorii korzysta z gotowych kierunków odcinków, a profil z gotowych odległości. Gdy Worker jest niedostępny lub zawiedzie, pozostają zwykłe obliczenia. Routing nadal korzysta z pamięci odcinków i respektuje ograniczenia serwera; tej zmiany nie należy traktować jako obietnicy szybszej odpowiedzi BRouter.
+
+Źródła techniczne: [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), [opisy odcinków BRouter](https://github.com/abrensch/brouter/blob/master/brouter-core/src/main/java/btools/router/MessageData.java).
+
+## Testy
+
+Uruchom **node tests/planner.test.cjs**. Opis wykonanej weryfikacji: TESTY.md.
+
+## Pozostała obsługa
 
 ## GPX: profil i edycja
 
@@ -77,7 +141,7 @@ Brakujące wartości uzupełniane są modelem terenu Copernicus DEM 90 m, z inte
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.10.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html, version.json oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.11.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -114,7 +178,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.10.0”.
+Rozpakuj paczkę. Wgraj `index.html`, `version.json`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.11.0”.
 
 ## Weryfikacja
 

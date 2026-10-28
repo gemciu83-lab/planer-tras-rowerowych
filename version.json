@@ -1,0 +1,91 @@
+{
+  "app": "planer-tras-rowerowych",
+  "version": "3.11.0",
+  "indexSHA": "b0cf37d91158b69df5dcc662eb819a6985ffdb6297186318e72c53351685cf01",
+  "assets": [
+    {
+      "path": "assets/app.js",
+      "sha256": "9baa4894043b6efd0931626e38cb67c8515d060bb99287ffabf1ca285bc007ca"
+    },
+    {
+      "path": "assets/leaflet.css",
+      "sha256": "5f236f11b6ca29a549c06be1c1c786ec53523fb39a1bae2f2ba61f6fef889edb"
+    },
+    {
+      "path": "assets/leaflet.js",
+      "sha256": "dc71f8a6880bc3ca1bd9fa8dc5f1af48c702dc510b0a78240a07c5feed7ce935"
+    },
+    {
+      "path": "assets/planner-analysis.js",
+      "sha256": "d25d6a07e7036de9a2b1d292a32571eea4c8b1851f1c278c48e07fd3cdabb236"
+    },
+    {
+      "path": "assets/planner-compute.js",
+      "sha256": "17c682dcbee7a201b119c4f9e79a40b9f22858dc390b2403dab7fb7f81934903"
+    },
+    {
+      "path": "assets/planner-core.js",
+      "sha256": "ecfdbd68e0a0971726cc3adc103ab3b93b92c3b99aa0aa6491bf7c6a7a8ae836"
+    },
+    {
+      "path": "assets/planner-dock.js",
+      "sha256": "ce2997751b5a32230242d66d75e8ed293bec51974278c269ee2da5c63f527709"
+    },
+    {
+      "path": "assets/planner-energy-ui.js",
+      "sha256": "9b1bca85bfb3e3e6ea7db60d249a3abda1e793680a16c0741c272be6448fb635"
+    },
+    {
+      "path": "assets/planner-energy.js",
+      "sha256": "f66dd994d47432d24ce866db6b589f070d1843fb686d67de6515a53ea7b19e6f"
+    },
+    {
+      "path": "assets/planner-features.js",
+      "sha256": "c4e4bff569d784a8a660f746c223d9f49073aa1e5a6b89fff6fce1d1f35b910b"
+    },
+    {
+      "path": "assets/planner-gpx-ui.js",
+      "sha256": "446a940021e5a200cf1439b9e657be70dbea48bf2dde90172d85a5d701ef7fde"
+    },
+    {
+      "path": "assets/planner-gpx.js",
+      "sha256": "204dec0b198b8ba03cf2d6792458d6412c24f9e0f6c840ea3382d809cbe3cc08"
+    },
+    {
+      "path": "assets/planner-network.js",
+      "sha256": "6bb5c4aec6be7c82b742269c6f781cc9eb67251cb32b7d699295f1cb054b90ca"
+    },
+    {
+      "path": "assets/planner-release.js",
+      "sha256": "8095b8460745a41c08f9b128bcd6133b14fc7f5d2b721b44812b38b3089d11c9"
+    },
+    {
+      "path": "assets/planner-rests.js",
+      "sha256": "23167797e5033c593d81f4094a7d3197e025848dc3e966e1fbe09a1ed5b15874"
+    },
+    {
+      "path": "assets/planner-review-ui.js",
+      "sha256": "94b6f3a3f0dd23f376a7934105591b450722e66333d1228eba3906a22ca77650"
+    },
+    {
+      "path": "assets/planner-selects.js",
+      "sha256": "59fffa46ba5d39007fc2df959ac7cd4c3c73f6c7e0a737c8603ded7ce7085153"
+    },
+    {
+      "path": "assets/planner-trip-ui.js",
+      "sha256": "f31d3d03ce648253d95cc0a96ec7497672ba7d5e4554db59c976a2d4cf05a0fc"
+    },
+    {
+      "path": "assets/planner-trip.js",
+      "sha256": "5bd1eb256e126b1ebc5c99f524686a2fa7de4f0091616a3e2875ea663cf9b57f"
+    },
+    {
+      "path": "assets/planner-worker.js",
+      "sha256": "c65708f0eaaa17012021d122c0b4fa734609a83822fca2b3260764d8acd6ecff"
+    },
+    {
+      "path": "assets/planner.css",
+      "sha256": "60d7d194b6ce5fd9b0356979facdabc457519f32f50ebc9ba506fb2e37b7e32d"
+    }
+  ]
+}

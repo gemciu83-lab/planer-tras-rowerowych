@@ -16,7 +16,9 @@
    const raw=n.getElementsByTagNameNS('*','ele')[0]?.textContent.trim(),height=Number(raw);
    return raw&&Number.isFinite(height)?[lon,lat,height]:[lon,lat];
   });
-  return {track,name:doc.getElementsByTagNameNS('*','name')[0]?.textContent.slice(0,100)||''};
+  const times=nodes.map(n=>{const raw=n.getElementsByTagNameNS('*','time')[0]?.textContent.trim();return raw&&/^\d{4}-\d\d-\d\dT/.test(raw)&&Number.isFinite(Date.parse(raw))?Date.parse(raw):null});
+  const extensions={};for(const name of ['totalDistance','totalTime','cumulativeClimb','cumulativeDecrease']){const raw=doc.getElementsByTagNameNS('*',name)[0]?.textContent.trim();if(raw&&Number.isFinite(Number(raw)))extensions[name]=Number(raw)}
+  return {track,recording:root.PlannerAnalysis?.recording(track,times,extensions)||null,name:doc.getElementsByTagNameNS('*','name')[0]?.textContent.slice(0,100)||''};
  }
  function controls(track){
   const ds=meters(track),total=ds.at(-1),step=Math.min(5000,Math.max(250,total/20)),indices=[0];let next=step;

@@ -21,7 +21,7 @@
    const wind=options.windAt?options.windAt(meters+d/2):{speed:s.windSpeed/3.6,direction:s.windDirection};
    if(!wind||!Number.isFinite(wind.speed)||wind.speed<0||!Number.isFinite(wind.direction))return {valid:false,reason:'wind'};
    windMin=Math.min(windMin,wind.speed);windMax=Math.max(windMax,wind.speed);
-   const angle=wind.direction*rad-bearing(cs[i],cs[i+1]),along=wind.speed*Math.cos(angle),side=wind.speed*Math.sin(angle),relativeAlong=v+along;
+   const angle=wind.direction*rad-(metrics.bearings?.[i]??bearing(cs[i],cs[i+1])),along=wind.speed*Math.cos(angle),side=wind.speed*Math.sin(angle),relativeAlong=v+along;
    const air=.5*1.225*cda*Math.hypot(relativeAlong,side)*relativeAlong;
    work+=Math.max(0,(mass*9.81*bike.crr+air)*d+mass*9.81*(Number.isFinite(metrics.rise[i])?metrics.rise[i]:0));
    if(wind.speed>=.5){windMeters+=d;if(along>Math.abs(side)*.5)upwind+=d;else if(along < -Math.abs(side)*.5)downwind+=d;else crosswind+=d}

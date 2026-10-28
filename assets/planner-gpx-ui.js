@@ -1,7 +1,8 @@
 'use strict';
+let gpxRecording=null;
 let gpxImportIndices=[],gpxElevationSource='',gpxEditTask=null,gpxElevationTask=null,gpxImportSequence=0;
 function restoreGPXModel(snapshot){
- gpxElevationSource=snapshot.elevationSource||'';
+ gpxElevationSource=snapshot.elevationSource||'';gpxRecording=typeof PlannerAnalysis!=='undefined'?PlannerAnalysis.sanitizeRecording(snapshot.recording):null;
  if(routeType!=='import'||track.length<2){gpxImportIndices=[];return}
  if(PlannerGPX.validIndices(snapshot.importIndices,points,track)){gpxImportIndices=snapshot.importIndices.slice();return}
  const stops=getPointStops(),model=PlannerGPX.controls(track);points=model.points;gpxImportIndices=model.indices;
@@ -20,7 +21,7 @@ function updateGPXControls(){
  if(!info.textContent)info.hidden=true;
 }
 function finishImportedEdit(result,plan,extra={}){
- checkpoint();
+ checkpoint();if(gpxRecording)gpxRecording={...gpxRecording,modified:true};
  if(plan?.entries)for(const entry of plan.entries)if(entry.previous){pointStopTimes.set(entry.point,pointStopTimes.get(entry.previous)||0);const name=pointNames.get(PlannerCore.pointKey(entry.previous));if(name)pointNames.set(PlannerCore.pointKey(entry.point),name)}
  points=result.points;track=result.track;gpxImportIndices=result.indices;routeType='import';surfaceData=null;previousRoute=null;mapDistancePending=false;
  if(extra.coordinate){const point=points.find(p=>p[0]===extra.coordinate[0]&&p[1]===extra.coordinate[1]);if(point){if(extra.name)pointNames.set(PlannerCore.pointKey(point),extra.name);if(extra.stopMinutes)pointStopTimes.set(point,extra.stopMinutes)}}
@@ -38,7 +39,7 @@ async function editImportedGPX(kind,index,c,extra={}){
  try{
   const direct=$('profile').value==='direct',feature=direct?null:await fastRouteFeature(plan.request,requestController.signal),segment=direct?plan.request:feature.geometry.coordinates;
   if(task.track!==track||task.revision!==revision||requestController.signal.aborted)return;
-  const result=PlannerGPX.merge(plan,segment);gpxEditTask=null;mapDistancePending=false;
+  const result=PlannerGPX.merge(plan,segment);if(typeof PlannerCompute!=='undefined')await PlannerCompute.prepare(result.track);if(task.track!==track||task.revision!==revision||requestController.signal.aborted)return;gpxEditTask=null;mapDistancePending=false;
   finishImportedEdit(result,plan,{...extra,coordinate:c});
  }catch(error){
   if(task.track===track&&task.revision===revision){mapDistancePending=false;renderPoints();status((error.name==='AbortError'?'Zmiana anulowana lub przekroczono czas.':error.message||'Nie udało się zmienić odcinka.')+' Wczytany ślad GPX i jego punkty pozostały bez zmian.',true)}
@@ -61,14 +62,15 @@ function dragImportedLine(d){
 }
 function reverseImportedGPX(){
  if(routeType!=='import'||track.length<2)return false;
- checkpoint();const n=track.length;points.reverse();track=track.slice().reverse();gpxImportIndices=gpxImportIndices.slice().reverse().map(i=>n-1-i);revision++;mapDistancePending=false;renderPoints();status('Odwrócono cały ślad GPX bez ponownego wyznaczania drogi.');return true;
+ checkpoint();if(gpxRecording)gpxRecording={...gpxRecording,modified:true};const n=track.length;points.reverse();track=track.slice().reverse();gpxImportIndices=gpxImportIndices.slice().reverse().map(i=>n-1-i);revision++;mapDistancePending=false;renderPoints();status('Odwrócono cały ślad GPX bez ponownego wyznaczania drogi.');return true;
 }
 async function importGPXFile(file){
- if(!file)return;const sequence=++gpxImportSequence;
+ if(!file)return;const sequence=++gpxImportSequence,startingRevision=revision;
  try{
   if(file.size>10000000)throw Error('GPX jest większy niż 10 MB.');
   const doc=new DOMParser().parseFromString(await file.text(),'application/xml'),parsed=PlannerGPX.parse(doc);if(sequence!==gpxImportSequence)return;
-  const model=PlannerGPX.controls(parsed.track);checkpoint();stopGPS();stopFollow();gpxEditTask?.controller.abort();gpxElevationTask?.controller.abort();
+  if(typeof PlannerCompute!=='undefined')await PlannerCompute.prepare(parsed.track);if(sequence!==gpxImportSequence||revision!==startingRevision){status('Import pominięty: trasa została zmieniona podczas wczytywania.');return}
+  const model=PlannerGPX.controls(parsed.track);checkpoint();gpxRecording=parsed.recording||null;stopGPS();stopFollow();gpxEditTask?.controller.abort();gpxElevationTask?.controller.abort();
   controller?.abort();clearTimeout(autoRouteTimer);routingRecalcRequested=false;revision++;
   clearRouteBreaks();restorePointStops([]);points=model.points;track=parsed.track;gpxImportIndices=model.indices;gpxElevationSource='gpx';surfaceData=null;routeType='import';previousRoute=null;mapDistancePending=false;
   $('name').value=parsed.name||file.name;renderPoints();map?.fitBounds(routeLayer.getBounds(),mapDockFitOptions());
@@ -93,7 +95,7 @@ async function fetchGPXHeights(){
    batch.forEach((index,i)=>samples.push({index,height:data.elevation[i]}));
   }
   if(requestController.signal.aborted||track!==original)return;
-  const result=PlannerGPX.applyElevations(original,samples);checkpoint();gpxElevationSource=original.some(c=>Number.isFinite(c[2]))?'mixed':'dem';track=result;gpxElevationTask=null;renderPoints();status('Uzupełniono profil wysokości. Geometria i kilometraż GPX pozostały bez zmian; wysokości terenu są przybliżone.');
+  const result=PlannerGPX.applyElevations(original,samples);if(typeof PlannerCompute!=='undefined')await PlannerCompute.prepare(result);if(requestController.signal.aborted||track!==original)return;checkpoint();gpxElevationSource=original.some(c=>Number.isFinite(c[2]))?'mixed':'dem';track=result;gpxElevationTask=null;renderPoints();status('Uzupełniono profil wysokości. Geometria i kilometraż GPX pozostały bez zmian; wysokości terenu są przybliżone.');
  }catch(error){if(track===original)status((error.name==='AbortError'?'Pobieranie wysokości anulowane lub przekroczono czas.':error.message||'Nie udało się pobrać wysokości.')+' Ślad i dane z pliku pozostały bez zmian.',true)}
  finally{clearTimeout(timer);if(gpxElevationTask===task)gpxElevationTask=null;updateGPXControls()}
 }

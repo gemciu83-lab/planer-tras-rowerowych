@@ -29,14 +29,14 @@
   }
   let ascent=0,anchor=null;
   for(const c of out){if(!Number.isFinite(c[2])){anchor=null;continue}if(anchor===null){anchor=c[2];continue}const delta=c[2]-anchor;if(Math.abs(delta)>=3){if(delta>0)ascent+=delta;anchor=c[2]}}
-  const model={coordinates:out,ascent};elevationCache.set(cs,model);return model;
+  const model={coordinates:out,ascent,distances:Float64Array.from(distances)};elevationCache.set(cs,model);return model;
  }
  const rideCache=new WeakMap();
  function rideMetrics(cs,distance){
   if(rideCache.has(cs))return rideCache.get(cs);
-  const smooth=elevationModel(cs,distance).coordinates,n=Math.max(0,cs.length-1),meters=new Float64Array(n),rise=new Float64Array(n);
-  for(let i=0;i<n;i++){meters[i]=distance(cs[i],cs[i+1])*1000;rise[i]=Number.isFinite(smooth[i][2])&&Number.isFinite(smooth[i+1][2])?smooth[i+1][2]-smooth[i][2]:0}
-  const result={meters,rise};rideCache.set(cs,result);return result;
+  const height=elevationModel(cs,distance),smooth=height.coordinates,n=Math.max(0,cs.length-1),meters=new Float64Array(n),rise=new Float64Array(n),bearings=new Float64Array(n);
+  for(let i=0;i<n;i++){meters[i]=height.distances[i+1]-height.distances[i];const rad=Math.PI/180,p=cs[i][1]*rad,q=cs[i+1][1]*rad,d=(cs[i+1][0]-cs[i][0])*rad;bearings[i]=Math.atan2(Math.sin(d)*Math.cos(q),Math.cos(p)*Math.sin(q)-Math.sin(p)*Math.cos(q)*Math.cos(d));rise[i]=Number.isFinite(smooth[i][2])&&Number.isFinite(smooth[i+1][2])?smooth[i+1][2]-smooth[i][2]:0}
+  const result={meters,rise,bearings};rideCache.set(cs,result);return result;
  }
  function pointKey(c){return c[0].toFixed(6)+','+c[1].toFixed(6)}
  function sanitizePointLabels(ps,labels){const out={};if(!labels||typeof labels!=='object')return out;for(const p of ps){const k=pointKey(p),v=labels[k];if(typeof v==='string'&&v.trim())out[k]=v.trim().slice(0,120)}return out}
@@ -58,18 +58,18 @@
   if(!['trekking','fastbike','mtb','direct'].includes(settings.profile))settings.profile='trekking';
   if(!['trekking','gravel','road','mtb'].includes(settings.bikeType))settings.bikeType='trekking';
   if(!['auto','upright','touring','tucked'].includes(settings.ridingPosition))settings.ridingPosition='auto';
-  if(!['manual','forecast'].includes(settings.windMode))settings.windMode='manual';
+  if(!['manual','forecast','sections'].includes(settings.windMode))settings.windMode='manual';
   settings.windDirection=String((Math.round(Number(settings.windDirection)/45)*45)%360);
   const routeType=['trekking','fastbike','mtb','direct','import'].includes(value.routeType)?value.routeType:'';
   const importIndices=value.routeType==='import'&&Array.isArray(value.importIndices)&&value.importIndices.length===value.points.length&&value.importIndices[0]===0&&value.importIndices.at(-1)===value.track.length-1&&value.importIndices.every((n,i)=>Number.isInteger(n)&&n>=0&&n<value.track.length&&(!i||n>=value.importIndices[i-1]))?value.importIndices.slice():null;
-  return {importIndices,elevationSource:['gpx','dem','mixed'].includes(value.elevationSource)?value.elevationSource:'',points:value.points.map(c=>c[2]==='via'?[c[0],c[1],'via']:[c[0],c[1]]),track:value.track.map(c=>Number.isFinite(c[2])?[c[0],c[1],c[2]]:[c[0],c[1]]),routeType,settings,pointStops:root.PlannerTrip?.stops(value.points,value.pointStops)||[],routingPreferences:root.PlannerTrip?.preferences(value.routingPreferences)||{},routeBreaks:root.PlannerTrip?.routeBreaks(value.routeBreaks)||[],restSettings:root.PlannerTrip?.restSettings(value.restSettings)||{},pointLabels:sanitizePointLabels(value.points,value.pointLabels),surfaceData:sanitizeSurfaces(value.surfaceData),view:value.view};
+  return {recording:root.PlannerAnalysis?.sanitizeRecording(value.recording)||null,windSections:root.PlannerAnalysis?.windSections(value.windSections)||[],importIndices,elevationSource:['gpx','dem','mixed'].includes(value.elevationSource)?value.elevationSource:'',points:value.points.map(c=>c[2]==='via'?[c[0],c[1],'via']:[c[0],c[1]]),track:value.track.map(c=>Number.isFinite(c[2])?[c[0],c[1],c[2]]:[c[0],c[1]]),routeType,settings,pointStops:root.PlannerTrip?.stops(value.points,value.pointStops)||[],routingPreferences:root.PlannerTrip?.preferences(value.routingPreferences)||{},routeBreaks:root.PlannerTrip?.routeBreaks(value.routeBreaks)||[],restSettings:root.PlannerTrip?.restSettings(value.restSettings)||{},pointLabels:sanitizePointLabels(value.points,value.pointLabels),surfaceData:sanitizeSurfaces(value.surfaceData),view:value.view};
  }
  const terrainCache=new WeakMap();
  function gradeColor(grade){return !Number.isFinite(grade)?'#7b8794':grade<=-8?'#1556bf':grade<=-3?'#1689d5':grade< -1?'#17a3a5':grade<=1?'#596879':grade<3?'#d4a109':grade<6?'#ef7b21':grade<10?'#df3d36':'#9d2054'}
  function terrainModel(cs,distance){
   if(terrainCache.has(cs))return terrainCache.get(cs);
-  const coords=elevationModel(cs,distance).coordinates,n=coords.length,distances=new Float64Array(n),invalid=new Uint32Array(n+1),grades=new Array(Math.max(0,n-1)).fill(null);
-  for(let i=0;i<n;i++){if(i)distances[i]=distances[i-1]+distance(cs[i-1],cs[i])*1000;invalid[i+1]=invalid[i]+(Number.isFinite(coords[i][2])?0:1)}
+  const height=elevationModel(cs,distance),coords=height.coordinates,n=coords.length,distances=height.distances,invalid=new Uint32Array(n+1),grades=new Array(Math.max(0,n-1)).fill(null);
+  for(let i=0;i<n;i++){invalid[i+1]=invalid[i]+(Number.isFinite(coords[i][2])?0:1)}
   let left=0,right=0;
   for(let i=0;i<n-1;i++){const center=(distances[i]+distances[i+1])/2;while(left<i&&distances[left+1]<=center-40)left++;right=Math.max(right,i+1);while(right<n-1&&distances[right]<center+40)right++;const meters=distances[right]-distances[left];if(meters>=10&&invalid[right+1]===invalid[left])grades[i]=(coords[right][2]-coords[left][2])/meters*100}
   const runs=[],total=n?distances[n-1]:0,block=Math.max(40,total/2000);let previousBucket=-1,currentColor=null;
@@ -80,8 +80,8 @@
 
  const surfaceKinds={asphalt:{label:'Asfalt',color:'#596f89'},gravel:{label:'Szuter',color:'#c4a26c'},ground:{label:'Grunt / trawa',color:'#8d694d'},sand:{label:'Piasek',color:'#e4c479'},paved:{label:'Inne utwardzone',color:'#8c9ca7'},other:{label:'Inne nawierzchnie',color:'#9a82ab'},unknown:{label:'Brak danych',color:'#48515b'}};
  function surfaceKind(tags){const match=String(tags||'').match(/(?:^|\s)surface=([^\s]+)/);if(!match)return 'unknown';const v=match[1];return v==='asphalt'?'asphalt':['gravel','fine_gravel','compacted','pebblestone'].includes(v)?'gravel':['ground','dirt','earth','grass','mud','clay','grass_paver'].includes(v)?'ground':v==='sand'?'sand':['paved','concrete','concrete:lanes','concrete:plates','paving_stones','sett','cobblestone','unhewn_cobblestone','bricks'].includes(v)?'paved':['unpaved','unsealed','unknown',''].includes(v)?'unknown':'other'}
- function sanitizeSurfaces(data){if(!data||!Array.isArray(data.parts)||data.parts.length>150000)return null;const parts=[];for(const p of data.parts){if(!p||!Object.hasOwn(surfaceKinds,p.kind)||!Number.isFinite(p.meters)||p.meters<=0||p.meters>5000000)return null;parts.push({kind:p.kind,meters:p.meters})}return parts.length?{parts}:null}
- function surfaceModel(cs,messages,distance){let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i])*1000;if(!total)return null;const parts=[];if(Array.isArray(messages)&&messages.length>1){const row=r=>Array.isArray(r)?r:String(r).split('\t'),head=row(messages[0]),di=head.indexOf('Distance'),ti=head.indexOf('WayTags');if(di>=0&&ti>=0)for(let i=1;i<messages.length;i++){const r=row(messages[i]),meters=Number(r[di]);if(!Number.isFinite(meters)||meters<=0)continue;const kind=surfaceKind(r[ti]),prev=parts.at(-1);if(prev?.kind===kind)prev.meters+=meters;else parts.push({kind,meters})}}
+ function sanitizeSurfaces(data){if(!data||!Array.isArray(data.parts)||data.parts.length>150000)return null;const parts=[];for(const p of data.parts){if(!p||!Object.hasOwn(surfaceKinds,p.kind)||!Number.isFinite(p.meters)||p.meters<=0||p.meters>5000000)return null;parts.push({kind:p.kind,meters:p.meters,...(typeof p.roadClass==='string'&&/^[a-z_]{1,30}$/.test(p.roadClass)?{roadClass:p.roadClass}:{}),...(typeof p.ref==='string'?{ref:p.ref.slice(0,40)}:{})})}return parts.length?{parts}:null}
+ function surfaceModel(cs,messages,distance){let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i])*1000;if(!total)return null;const parts=[];if(Array.isArray(messages)&&messages.length>1){const row=r=>Array.isArray(r)?r:String(r).split('\t'),head=row(messages[0]),di=head.indexOf('Distance'),ti=head.indexOf('WayTags');if(di>=0&&ti>=0)for(let i=1;i<messages.length;i++){const r=row(messages[i]),meters=Number(r[di]);if(!Number.isFinite(meters)||meters<=0)continue;const kind=surfaceKind(r[ti]),tags=String(r[ti]),roadClass=tags.match(/(?:^|\s)highway=([^\s]+)/)?.[1]||'',ref=tags.match(/(?:^|\s)ref=([^\s]+)/)?.[1]?.slice(0,40)||'',prev=parts.at(-1);if(prev?.kind===kind&&prev.roadClass===roadClass&&prev.ref===ref)prev.meters+=meters;else parts.push({kind,meters,roadClass,ref})}}
   const sum=parts.reduce((n,p)=>n+p.meters,0);if(!sum)return {parts:[{kind:'unknown',meters:total}]};for(const p of parts)p.meters=p.meters/sum*total;return {parts};
  }
  const surfaceIndexCache=new WeakMap();
@@ -90,5 +90,6 @@
  function destination(start,km,bearing){const rad=Math.PI/180,lat=start[1]*rad,lon=start[0]*rad,a=km/6371,b=bearing*rad,p=Math.asin(Math.sin(lat)*Math.cos(a)+Math.cos(lat)*Math.sin(a)*Math.cos(b)),q=lon+Math.atan2(Math.sin(b)*Math.sin(a)*Math.cos(lat),Math.cos(a)-Math.sin(lat)*Math.sin(p));return [((q/rad+540)%360)-180,p/rad]}
  function loopWaypoints(start,targetKm,bearing,radius){const r=radius??targetKm/(4*Math.SQRT2*1.2),center=destination(start,r,bearing),ps=[start.slice(0,2)];for(let i=1;i<=3;i++)ps.push(destination(center,r,bearing+180+i*90));ps.push(start.slice(0,2));return ps}
 
- root.PlannerCore={coordinatesValid,pointKey,sanitizePointLabels,chooseLoopVariants,elevationModel,rideMetrics,sanitizeTrip,gradeColor,terrainModel,terrainAt,surfaceKinds,surfaceKind,sanitizeSurfaces,surfaceModel,surfaceAt,arrivalTime,destination,loopWaypoints};
+ function seed(cs,data){if(data.elevation?.coordinates?.length!==cs.length||data.terrain?.coordinates?.length!==cs.length||data.metrics?.meters?.length!==Math.max(0,cs.length-1))return; elevationCache.set(cs,data.elevation);rideCache.set(cs,data.metrics);terrainCache.set(cs,data.terrain)}
+ root.PlannerCore={cachedLength:cs=>terrainCache.get(cs)?.total/1000,seed,coordinatesValid,pointKey,sanitizePointLabels,chooseLoopVariants,elevationModel,rideMetrics,sanitizeTrip,gradeColor,terrainModel,terrainAt,surfaceKinds,surfaceKind,sanitizeSurfaces,surfaceModel,surfaceAt,arrivalTime,destination,loopWaypoints};
 })(typeof globalThis!=='undefined'?globalThis:this);
