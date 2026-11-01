@@ -4,7 +4,7 @@ const mapSelectControls=[];
 function closeMapSelects(){for(const control of mapSelectControls)control.close(false)}
 function syncMapSelects(){for(const control of mapSelectControls)control.sync()}
 function initMapSelects(){
- for(const id of ['mapProfile','mapBikeType']){
+ for(const id of ['mapProfile','mapBikeType','mapWalkingTerrain']){
   const select=document.getElementById(id),tile=select.parentElement,label=tile.querySelector('label');
   const trigger=document.createElement('button'),value=document.createElement('span'),list=document.createElement('div');
   trigger.type='button';trigger.id=id+'Button';trigger.className='map-select-button';

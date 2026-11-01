@@ -4,7 +4,7 @@
 let mapDistancePending=false,previousRoute=null,pngExporting=false;
 let tripReady=false,historyMuted=false,draftTimer=null,lastInputCheckpoint=null;
 let historyCurrent=null,historyPast=[],historyFuture=[];
-const tripFields=['name','profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection','departure'];
+const tripFields=['name','profile','speed','pause','riderWeight','bikeWeight','luggageWeight','bikeType','ridingPosition','windMode','windSpeed','windDirection','departure','walkingTerrain'];
 function updateMapDistance(km=length(track)){const valid=track.length>1,pending=mapDistancePending;$('mapDistanceValue').textContent=valid?km.toLocaleString('pl-PL',{minimumFractionDigits:1,maximumFractionDigits:1}):pending?'…':'—';$('mapDistanceStatus').textContent=pending?'Wyznaczanie trasy…':valid?'Dystans trasy':points.length>1?($('autoRouting').checked?'Brak wyznaczonej trasy':'Kliknij „Wyznacz trasę”'):'Dodaj start i metę';$('mapDistanceBadge').classList.toggle('distance-pending',pending);$('mapDistanceBadge').setAttribute('aria-busy',String(pending));}
 
 let mapInfoTimer=null,mapInfoCollapsed=false;
@@ -58,7 +58,7 @@ function status(text,error=false){$('status').textContent=text;setMapInfo(text,e
 function distance(a,b){const rad=Math.PI/180,dlat=(b[1]-a[1])*rad,dlon=(b[0]-a[0])*rad,t=Math.sin(dlat/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dlon/2)**2;return 6371*2*Math.atan2(Math.sqrt(t),Math.sqrt(Math.max(0,1-t)))}
 const distanceCache=new WeakMap();function length(cs){if(cs===points){let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i]);return total}if(distanceCache.has(cs))return distanceCache.get(cs);const cached=PlannerCore.cachedLength(cs);if(Number.isFinite(cached)){distanceCache.set(cs,cached);return cached}let total=0;for(let i=1;i<cs.length;i++)total+=distance(cs[i-1],cs[i]);distanceCache.set(cs,total);return total}
 function time(h){let m=Math.round(h*60);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
-function stats(){updateTripPlan();updatePlannerExtras();refreshRouteHover();const km=length(track);updateMapDistance(km);const speed=Math.min(60,Math.max(3,Number($('speed').value)||16)),pause=Math.min(1440,Math.max(0,Number($('pause').value)||0));$('distance').innerHTML=track.length>1?km.toLocaleString('pl-PL',{maximumFractionDigits:1})+' <small>km</small>':'— <small>km</small>';$('ride').textContent=track.length>1?time(km/speed):'—';$('total').textContent=track.length>1?time(km/speed+(pause+plannedStopsMinutes())/60):'—';let elevation=track.length>1&&track.every(c=>Number.isFinite(c[2])),up=0;if(elevation)up=PlannerCore.elevationModel(track,distance).ascent;$('up').innerHTML=(elevation?Math.round(up):'—')+' <small>m</small>';$('gpx').disabled=track.length<2;$('save').disabled=!points.length;$('save').textContent=track.length>1?'Zapisz trasę':'Zapisz punkty';$('route').disabled=points.length<2||mapDistancePending;$('route').textContent=mapDistancePending?'Wyznaczanie…':'Wyznacz trasę ↗';$('cancelRoute').disabled=!mapDistancePending&&!loopGenerating;$('saveMapPNG').disabled=pngExporting||mapDistancePending||!!previousRoute;updateExtraStats();if(typeof updateReviewDisplay==='function')updateReviewDisplay();if(typeof updateRecordingDisplay==='function')updateRecordingDisplay();$('mapRideValue').textContent=track.length>1?time(km/speed):'—';$('mapCaloriesValue').textContent=$('calories').textContent;syncMapDock();for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight'],['mapLuggageWeight','luggageWeight']]){if(document.activeElement!==$(quick))$(quick).value=$(source).value;}commitTrip();updateExportButtons();updateRoutingAvailability();}
+function stats(){if(typeof syncWalkingUI==='function')syncWalkingUI();updateTripPlan();updatePlannerExtras();refreshRouteHover();const km=length(track);updateMapDistance(km);const speed=Math.min($('profile').value==='walking'?8:60,Math.max($('profile').value==='walking'?1:3,Number($('speed').value)||($('profile').value==='walking'?5:16))),pause=Math.min(1440,Math.max(0,Number($('pause').value)||0));$('distance').innerHTML=track.length>1?km.toLocaleString('pl-PL',{maximumFractionDigits:1})+' <small>km</small>':'— <small>km</small>';$('ride').textContent=track.length>1?time(km/speed):'—';$('total').textContent=track.length>1?time(km/speed+(pause+plannedStopsMinutes())/60):'—';let elevation=track.length>1&&track.every(c=>Number.isFinite(c[2])),up=0;if(elevation)up=PlannerCore.elevationModel(track,distance).ascent;$('up').innerHTML=(elevation?Math.round(up):'—')+' <small>m</small>';$('gpx').disabled=track.length<2;$('save').disabled=!points.length;$('save').textContent=track.length>1?'Zapisz trasę':'Zapisz punkty';$('route').disabled=points.length<2||mapDistancePending;$('route').textContent=mapDistancePending?'Wyznaczanie…':'Wyznacz trasę ↗';$('cancelRoute').disabled=!mapDistancePending&&!loopGenerating;$('saveMapPNG').disabled=pngExporting||mapDistancePending||!!previousRoute;updateExtraStats();if(typeof updateReviewDisplay==='function')updateReviewDisplay();if(typeof updateRecordingDisplay==='function')updateRecordingDisplay();$('mapRideValue').textContent=track.length>1?time(km/speed):'—';$('mapCaloriesValue').textContent=$('calories').textContent;syncMapDock();for(const [quick,source] of [['mapSpeed','speed'],['mapRiderWeight','riderWeight'],['mapBikeWeight','bikeWeight'],['mapLuggageWeight','luggageWeight']]){if(document.activeElement!==$(quick))$(quick).value=$(source).value;}commitTrip();updateExportButtons();updateRoutingAvailability();}
 let routeLayer,draftLayer,autoRouteTimer=null,locationMarker=null,accuracyCircle=null;
 function draw(){
  if(!map)return;
@@ -197,7 +197,7 @@ window.addEventListener('pagehide',()=>stopGPS());
 function updateClock(){const now=new Date(),dateFormat=new Intl.DateTimeFormat('pl-PL',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'Europe/Warsaw'}),parts=new Intl.DateTimeFormat('pl-PL',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Europe/Warsaw'}).formatToParts(now),value=type=>parts.find(p=>p.type===type)?.value||'00';$('currentDate').textContent=dateFormat.format(now);$('currentTime').textContent=value('hour')+':'+value('minute');$('currentSeconds').textContent=':'+value('second');$('liveDateTime').setAttribute('datetime',now.toISOString())}
 $('locate').onclick=()=>locate(false);
 
-$('undo').onclick=undoTrip;$('clear').onclick=clearTrip;$('loop').onclick=()=>{if(points.length>1&&distance(points[0],points.at(-1))>.001)add([...points[0]])};$('profile').onchange=()=>{checkpoint();invalidate()};try{$('autoRouting').checked=localStorage.getItem('rowerem-routing-auto-v2')!=='false'}catch{}
+$('undo').onclick=undoTrip;$('clear').onclick=clearTrip;$('loop').onclick=()=>{if(points.length>1&&distance(points[0],points.at(-1))>.001)add([...points[0]])};$('profile').onchange=()=>{checkpoint();if(typeof changeWalkingProfile==='function')changeWalkingProfile();invalidate()};try{$('autoRouting').checked=localStorage.getItem('rowerem-routing-auto-v2')!=='false'}catch{}
 $('autoRouting').onchange=()=>{try{localStorage.setItem('rowerem-routing-auto-v2',String($('autoRouting').checked))}catch{}invalidate($('autoRouting').checked)};
 $('speed').oninput=stats;$('pause').oninput=stats;
 const routeResultCache=new Map(),routeLegCache=new Map();
@@ -214,7 +214,7 @@ function updateRoutingAvailability(){
  $('mapCalculate').textContent=left>0?'Odczekaj '+left+' s':mapDistancePending?'Obliczam…':'Wyznacz trasę';
 }
 setInterval(()=>{if(routingAutoPaused)updateRoutingAvailability()},1000);
-function routingParameters(ps,profile=$('profile').value){const params=new URLSearchParams({lonlats:ps.map(c=>c.slice(0,2).join(',')).join('|'),profile,alternativeidx:'0',format:'geojson'});for(const [key,value] of Object.entries(PlannerTrip.routingOptions(getRoutingPreferences(),profile)))params.set(key,value);return params}
+function routingParameters(ps,profile=$('profile').value){const params=new URLSearchParams({lonlats:ps.map(c=>c.slice(0,2).join(',')).join('|'),profile:profile==='walking'?'hiking-mountain':profile,alternativeidx:'0',format:'geojson'});for(const [key,value] of Object.entries(PlannerTrip.routingOptions(getRoutingPreferences(),profile)))params.set(key,value);return params}
 function cachedFeature(cache,key){const entry=cache.get(key);if(!entry)return null;if(Date.now()-entry.time>900000){cache.delete(key);return null}cache.delete(key);cache.set(key,entry);return entry.feature}
 function cacheFeature(cache,key,feature,limit){cache.delete(key);cache.set(key,{feature,time:Date.now()});while(cache.size>limit)cache.delete(cache.keys().next().value);let vertices=0;for(const value of cache.values())vertices+=value.feature.geometry.coordinates.length;while(vertices>180000&&cache.size>1){const first=cache.keys().next().value;vertices-=cache.get(first).feature.geometry.coordinates.length;cache.delete(first)}}
 // Split only when the encoded request is too long, never at a waypoint count.
@@ -317,7 +317,7 @@ $('route').onclick=async(auto=false)=>{
 $('mapCalculate').onclick=()=>$('route').onclick(false);
 let searchId=0,searchController=null;$('searchform').onsubmit=async e=>{e.preventDefault();const query=$('search').value.trim();if(!query)return;const id=++searchId;searchController?.abort();searchController=new AbortController();const thisSearch=searchController;const searchTimeout=setTimeout(()=>thisSearch.abort(),15000);$('results').replaceChildren();status('Szukam miejscowości…');try{const r=await fetch('https://photon.komoot.io/api/?'+new URLSearchParams({q:query,limit:5,lat:map?.getCenter().lat||51.405,lon:map?.getCenter().lng||19.703}),{signal:thisSearch.signal});if(!r.ok)throw Error();const data=await r.json();if(id!==searchId)return;if(!data.features?.length){status('Brak wyników. Spróbuj wpisać pełniejszy adres.',true);return}data.features.filter(f=>f?.geometry?.type==='Point'&&validCoordinates([f.geometry.coordinates])).forEach(f=>{const p=f.properties,b=document.createElement('button');b.type='button';b.textContent=[p.name,p.street,p.city,p.country].filter(Boolean).join(', ')||'Punkt na mapie';b.onclick=()=>{map?.setView([f.geometry.coordinates[1],f.geometry.coordinates[0]],15);add(f.geometry.coordinates.slice(0,2),b.textContent);$('results').replaceChildren()};$('results').append(b)});status('Wybierz wynik, aby dodać punkt trasy.')}catch{if(id===searchId)status('Wyszukiwanie chwilowo niedostępne. Dodaj punkt kliknięciem na mapie.',true)}finally{clearTimeout(searchTimeout)}};
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-$('gpx').onclick=()=>{if(track.length<2)return;const name=$('name').value.trim()||'Moja trasa';const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rowerem" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>'+esc(name)+'</name></metadata><trk><name>'+esc(name)+'</name><trkseg>'+track.map(c=>'<trkpt lat="'+c[1]+'" lon="'+c[0]+'">'+(Number.isFinite(c[2])?'<ele>'+c[2]+'</ele>':'')+'</trkpt>').join('')+'</trkseg></trk></gpx>';download(xml,'trasa-rowerowa.gpx','application/gpx+xml')};
+$('gpx').onclick=()=>{if(track.length<2)return;const name=$('name').value.trim()||'Moja trasa';const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rowerem" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>'+esc(name)+'</name></metadata><trk><name>'+esc(name)+'</name><trkseg>'+track.map(c=>'<trkpt lat="'+c[1]+'" lon="'+c[0]+'">'+(Number.isFinite(c[2])?'<ele>'+c[2]+'</ele>':'')+'</trkpt>').join('')+'</trkseg></trk></gpx>';download(xml,$('profile').value==='walking'?'spacer.gpx':'trasa-rowerowa.gpx','application/gpx+xml')};
 $('import').onclick=()=>$('file').click();$('file').onchange=()=>importGPXFile($('file').files[0]);
 function validCoordinates(cs){return Array.isArray(cs)&&cs.length<=150000&&cs.every(c=>Array.isArray(c)&&Number.isFinite(c[0])&&Number.isFinite(c[1])&&Math.abs(c[0])<=180&&Math.abs(c[1])<=90)}
 try{const data=JSON.parse(localStorage.getItem('rowerem-routes-v1')||'[]');if(Array.isArray(data))saved=data.filter(s=>s&&typeof s.name==='string'&&PlannerCore.coordinatesValid(s.points,Infinity)&&validCoordinates(s.track)&&(s.track.length===0||s.track.length>1))}catch{}
@@ -373,7 +373,7 @@ const exportSection=$('gpx').closest('.section');
 $('headerActions').append(exportSection.querySelector('.tools'),$('file'));
 exportSection.remove();
 const topSettings=$('topSettings');
-topSettings.append(document.querySelector('.settings-intro'),$('points').closest('.section'),$('riderWeight').closest('.section'),$('energySettings'),$('speed').closest('.section'));
+topSettings.append(document.querySelector('.settings-intro'),$('points').closest('.section'),$('riderWeight').closest('.section'),$('walkingSettings'),$('energySettings'),$('speed').closest('.section'));
 $('topSummary').append(document.querySelector('.stats'),document.querySelector('.quick-tools'));
 function setTopMenu(open){$('topMenu').hidden=!open;$('menuToggle').setAttribute('aria-expanded',String(open));$('menuToggle').textContent=open?'Ustawienia ▴':'Ustawienia ▾';map.invalidateSize({pan:false});}
 $('menuToggle').onclick=()=>setTopMenu($('topMenu').hidden);
@@ -388,7 +388,7 @@ for(const id of ['mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile']){
 
 const mapReadings=$('mapReadings');
 for(const id of ['mapDistanceBadge','mapCaloriesTile','mapTimeTile','mapCalculate'])$('mapReadoutStack').append($(id));
-for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile','mapBikeTypeTile'])$('mapParameters').append($(id));
+for(const id of ['mapProfileTile','mapSpeedTile','mapRiderTile','mapBikeTile','mapLuggageTile','mapBikeTypeTile','walkingTerrainTile'])$('mapParameters').append($(id));
 mapReadings.append($('hideMapReadings'));document.querySelector('.map-top').append($('mapReadoutStack'));
 document.querySelector('.map-wrap').append($('showMapReadings'));
 $('hideMapReadings').setAttribute('aria-label','Schowaj cały panel parametrów');$('hideMapReadings').title='Schowaj panel (P)';
@@ -406,7 +406,8 @@ function positionMapActions(){
  mapFooter.style.top=footerTop+'px';
  help.style.top=Math.max(70,footerTop-Math.max(32,help.offsetHeight)-8)+'px';
 }
-const dockObserver=new ResizeObserver(()=>{positionMapActions();map.invalidateSize({pan:false})});
+let dockResizeFrame=null;
+const dockObserver=new ResizeObserver(()=>{if(dockResizeFrame!==null)return;dockResizeFrame=requestAnimationFrame(()=>{dockResizeFrame=null;positionMapActions();map.invalidateSize({pan:false})})});
 for(const element of [$('map'),mapFooter,mapReadings,$('mapBottomActions'),$('mapHelp')])dockObserver.observe(element);
 positionMapActions();L.DomEvent.disableClickPropagation(mapFooter);L.DomEvent.disableScrollPropagation(mapFooter);
 L.DomEvent.disableClickPropagation($('mapBottomActions'));
@@ -496,7 +497,7 @@ function readRiderPreference(){
  return '70';
 }
 function initializeFreshTrip(){
- const defaults={profile:'trekking',speed:'16',pause:'0',riderWeight:readRiderPreference(),bikeWeight:'22',luggageWeight:'2',bikeType:'trekking',ridingPosition:'auto',windMode:'manual',windSpeed:'0',windDirection:'0'};
+ const defaults={walkingTerrain:'trail',profile:'trekking',speed:'16',pause:'0',riderWeight:readRiderPreference(),bikeWeight:'22',luggageWeight:'2',bikeType:'trekking',ridingPosition:'auto',windMode:'manual',windSpeed:'0',windDirection:'0'};
  for(const [id,value] of Object.entries(defaults))$(id).value=value;
  restoreRoutingPreferences();restoreRestSettings();
  clearRouteBreaks();gpxRecording=null;manualWindSections=[];points=[];track=[];routeType='';surfaceData=null;previousRoute=null;mapDistancePending=false;
@@ -526,3 +527,5 @@ initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls()
 
 
 initReviewControls();initReleaseControls();
+
+initWalkingControls();

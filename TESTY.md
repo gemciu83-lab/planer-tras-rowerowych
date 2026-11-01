@@ -1,3 +1,21 @@
+# Weryfikacja wersji 3.12 — 1.11.2026
+
+Polecenie: node tests/planner.test.cjs. Pełny zestaw obejmuje dotychczasowe regresje i nowe tests/walking.test.cjs.
+
+Sprawdzono: pieszy profil zapytania BRouter i jego parametry, przedział tempa 1–8 km/h, zapis profilu Spacer i rodzaju terenu, kalorie osoby i plecaka bez masy roweru, jednokrotne naliczanie spoczynku oraz wpływ terenu i podjazdu. Test 2 km pętli używa profilu walking, zwraca trzy propozycje i nie zastępuje bieżącej trasy podczas wyszukiwania.
+
+W przeglądarce:
+
+- Przycisk Spacer ustawia 5 km/h, propozycje postojów co 5 km i pętlę 5 km. Znika masa i rodzaj roweru; widoczne są Osoba, Plecak i Teren.
+- Rzeczywisty BRouter: jedno zapytanie po publicznych, syntetycznych współrzędnych wyznaczyło spacer około 0,8 km (31 punktów), z wysokościami i opisami nawierzchni. Nie testowano dostępności każdego leśnego przejścia w terenie.
+- Tempo 2,5 km/h i teren Utwardzone ścieżki zmieniły czas i kalorie. Zapis i ręczne wczytanie przywróciły te ustawienia oraz postoje co 5 km. Powrót do roweru przywrócił 16 km/h i propozycje co 25 km.
+- Zwykłe odświeżenie nadal zaczyna bez trasy. Poprzedni spacer jest dostępny do ręcznego wczytania.
+- Widoki 1366 i 390 px bez poziomego przewijania. Sprawdzono ciemne menu terenu oraz chowanie i przywracanie dolnego panelu. Po scaleniu reakcji ResizeObserver w requestAnimationFrame nie wystąpiło ostrzeżenie o pętli zmiany rozmiaru w końcowym teście.
+
+Przyciski podglądu, atrapy GPS i kontrolowane odpowiedzi nie są częścią ZIP. To paczka do samodzielnego wgrania; asystent nie publikuje wersji na GitHub Pages.
+
+## Historia testów poprzedniej wersji
+
 # Weryfikacja wersji 3.11 — 28.10.2026
 
 Polecenie: node tests/planner.test.cjs. Obejmuje wcześniejsze regresje oraz nowe analizy, Worker i aktualizacje.

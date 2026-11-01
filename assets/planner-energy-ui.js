@@ -7,6 +7,11 @@ function energyStops(){
  return events.filter(e=>Number.isFinite(e.meters)&&e.minutes>0).sort((a,b)=>a.meters-b.meters);
 }
 function estimateTripEnergy(){
+ if(typeof isWalking==='function'&&isWalking()){
+  const options={...energySettings(),walkingTerrain:$('walkingTerrain').value},signature='walking:'+JSON.stringify(options);
+  if(energyCached?.track===track&&energyCached.signature===signature)return energyCached.result;
+  const result=PlannerWalking.estimate(track,PlannerCore.rideMetrics(track,distance),routeTerrain().grades,options);energyCached={track,signature,result};return result;
+ }
  const options=energySettings(),mode=$('windMode').value,departure=new Date($('departure').value).getTime();
  const events=mode==='forecast'?energyStops():[],signature=JSON.stringify([options,mode,departure,events,energyForecastSerial,manualWindSections]);
  if(mode==='forecast'){
@@ -21,6 +26,7 @@ function estimateTripEnergy(){
 }
 function energyKcal(n){return (Math.round(n/10)*10).toLocaleString('pl-PL')+' kcal'}
 function updateEnergyDisplay(){
+ if(typeof isWalking==='function'&&isWalking()){updateWalkingEnergyDisplay();return}
  if(energyRequest&&energyRequestTrack!==track){energyRequestKey++;energyRequest.abort();energyRequest=null;energyForecastMessage=''}
  const forecastMode=$('windMode').value==='forecast',validTrack=track.length>1,result=validTrack?estimateTripEnergy():null,valid=validTrack&&result.valid;
  $('windSpeed').disabled=$('windDirection').disabled=forecastMode;
@@ -82,7 +88,7 @@ function initWindSections(){
   if(!next.length){$('windSectionStatus').textContent='Podaj rosnący kilometr końca oraz wiatr 0–120 km/h. Maksymalnie 30 przedziałów.';return}
   checkpoint();cancelSectionForecast();manualWindSections=next;$('windMode').value='sections';$('windSectionStatus').textContent='Przedział dodany.';$('windSectionEnd').value=String(item.endKm+25);renderWindSections();stats();
  };
- $('mapWindSummary').onclick=e=>{e.stopPropagation();setTopMenu(true);$('energySettings').scrollIntoView({block:'start',behavior:'smooth'});$('windMode').focus({preventScroll:true})};
+ $('mapWindSummary').onclick=e=>{e.stopPropagation();setTopMenu(true);if(typeof isWalking==='function'&&isWalking()){$('walkingSettings').scrollIntoView({block:'start',behavior:'smooth'});return}$('energySettings').scrollIntoView({block:'start',behavior:'smooth'});$('windMode').focus({preventScroll:true})};
  renderWindSections();
 }
 function updateEnergyAssumptions(result){

@@ -3,7 +3,7 @@ let reviewCache=null,reviewHighlight=null,recordingDisplayKey=null;
 const formatKm=n=>(n/1000).toLocaleString('pl-PL',{maximumFractionDigits:2})+' km';
 function secondsLabel(n){if(!Number.isFinite(n))return 'Brak danych';const seconds=Math.round(n);return Math.floor(seconds/3600)+' h '+String(Math.floor(seconds%3600/60)).padStart(2,'0')+' min '+String(seconds%60).padStart(2,'0')+' s'}
 function updateRecordingDisplay(){
- const r=routeType==='import'?gpxRecording:null,key=r?JSON.stringify([r,length(track),mapDistancePending]):'';
+ const r=routeType==='import'?gpxRecording:null,key=r?JSON.stringify([r,length(track),mapDistancePending,$('profile').value]):'';
  if(key===recordingDisplayKey)return;recordingDisplayKey=key;
  $('recordingPanel').hidden=!r;if(!r)return;
  $('recordingStatus').textContent=r.modified?'Dane z oryginalnego pliku — przebieg był edytowany.':'Dane z pliku GPX · niezależne od parametrów planowanej jazdy.';
@@ -18,8 +18,8 @@ function updateRecordingDisplay(){
  if(r.modified)notes.push('Podsumowanie nagrania dotyczy oryginału; zmienionej trasie nie przypisujemy dawnych czasów.');
  $('recordingNotes').textContent=notes.join(' ');
  const seconds=r.deviceSeconds||r.estimatedMovingSeconds,meters=r.deviceMeters||length(track)*1000,pace=seconds>0?meters/seconds*3.6:0;
- $('useGPXPace').disabled=r.modified||r.incomplete&&!r.deviceSeconds||pace<3||pace>60||mapDistancePending;
- $('useGPXPace').textContent=pace>=3&&pace<=60?'Ustaw tempo '+pace.toLocaleString('pl-PL',{maximumFractionDigits:1})+' km/h':'Brak tempa do zastosowania';
+ $('useGPXPace').disabled=r.modified||r.incomplete&&!r.deviceSeconds||pace<($('profile').value==='walking'?1:3)||pace>($('profile').value==='walking'?8:60)||mapDistancePending;
+ $('useGPXPace').textContent=pace>=($('profile').value==='walking'?1:3)&&pace<=($('profile').value==='walking'?8:60)?'Ustaw tempo '+pace.toLocaleString('pl-PL',{maximumFractionDigits:1})+' km/h':'Brak tempa do zastosowania';
 }
 function updateReviewDisplay(){
  if(reviewCache?.track===track&&reviewCache.surface===surfaceData&&reviewCache.pending===mapDistancePending)return;

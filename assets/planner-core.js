@@ -55,12 +55,13 @@
   for(const [key,[min,max,fallback]] of Object.entries(fieldLimits)){const n=Number(settings[key]);settings[key]=String(Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback)}
   settings.departure=typeof settings.departure==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(settings.departure)&&Number.isFinite(new Date(settings.departure).getTime())?settings.departure:'';
   settings.name=typeof settings.name==='string'?settings.name.slice(0,100):'Moja rowerowa wyprawa';
-  if(!['trekking','fastbike','mtb','direct'].includes(settings.profile))settings.profile='trekking';
+  if(!['trekking','fastbike','mtb','direct','walking'].includes(settings.profile))settings.profile='trekking';
   if(!['trekking','gravel','road','mtb'].includes(settings.bikeType))settings.bikeType='trekking';
   if(!['auto','upright','touring','tucked'].includes(settings.ridingPosition))settings.ridingPosition='auto';
   if(!['manual','forecast','sections'].includes(settings.windMode))settings.windMode='manual';
   settings.windDirection=String((Math.round(Number(settings.windDirection)/45)*45)%360);
-  const routeType=['trekking','fastbike','mtb','direct','import'].includes(value.routeType)?value.routeType:'';
+  settings.walkingTerrain=settings.walkingTerrain==='firm'?'firm':'trail';if(settings.profile==='walking'){const v=Number(value.settings?.speed);settings.speed=String(Number.isFinite(v)?Math.max(1,Math.min(8,v)):5)}
+  const routeType=['trekking','fastbike','mtb','direct','walking','import'].includes(value.routeType)?value.routeType:'';
   const importIndices=value.routeType==='import'&&Array.isArray(value.importIndices)&&value.importIndices.length===value.points.length&&value.importIndices[0]===0&&value.importIndices.at(-1)===value.track.length-1&&value.importIndices.every((n,i)=>Number.isInteger(n)&&n>=0&&n<value.track.length&&(!i||n>=value.importIndices[i-1]))?value.importIndices.slice():null;
   return {recording:root.PlannerAnalysis?.sanitizeRecording(value.recording)||null,windSections:root.PlannerAnalysis?.windSections(value.windSections)||[],importIndices,elevationSource:['gpx','dem','mixed'].includes(value.elevationSource)?value.elevationSource:'',points:value.points.map(c=>c[2]==='via'?[c[0],c[1],'via']:[c[0],c[1]]),track:value.track.map(c=>Number.isFinite(c[2])?[c[0],c[1],c[2]]:[c[0],c[1]]),routeType,settings,pointStops:root.PlannerTrip?.stops(value.points,value.pointStops)||[],routingPreferences:root.PlannerTrip?.preferences(value.routingPreferences)||{},routeBreaks:root.PlannerTrip?.routeBreaks(value.routeBreaks)||[],restSettings:root.PlannerTrip?.restSettings(value.restSettings)||{},pointLabels:sanitizePointLabels(value.points,value.pointLabels),surfaceData:sanitizeSurfaces(value.surfaceData),view:value.view};
  }
@@ -86,7 +87,7 @@
  }
  const surfaceIndexCache=new WeakMap();
  function surfaceAt(data,meters){if(!data?.parts?.length)return 'unknown';let ends=surfaceIndexCache.get(data);if(!ends){let sum=0;ends=data.parts.map(p=>(sum+=p.meters));surfaceIndexCache.set(data,ends)}let lo=0,hi=ends.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(meters<ends[mid])hi=mid;else lo=mid+1}return data.parts[lo].kind}
- function arrivalTime(departure,meters,speed){const start=new Date(departure).getTime(),v=Number(speed);return Number.isFinite(start)&&Number.isFinite(meters)&&meters>=0&&Number.isFinite(v)&&v>=3&&v<=60?new Date(start+meters/1000/v*3600000):null}
+ function arrivalTime(departure,meters,speed){const start=new Date(departure).getTime(),v=Number(speed);return Number.isFinite(start)&&Number.isFinite(meters)&&meters>=0&&Number.isFinite(v)&&v>=1&&v<=60?new Date(start+meters/1000/v*3600000):null}
  function destination(start,km,bearing){const rad=Math.PI/180,lat=start[1]*rad,lon=start[0]*rad,a=km/6371,b=bearing*rad,p=Math.asin(Math.sin(lat)*Math.cos(a)+Math.cos(lat)*Math.sin(a)*Math.cos(b)),q=lon+Math.atan2(Math.sin(b)*Math.sin(a)*Math.cos(lat),Math.cos(a)-Math.sin(lat)*Math.sin(p));return [((q/rad+540)%360)-180,p/rad]}
  function loopWaypoints(start,targetKm,bearing,radius){const r=radius??targetKm/(4*Math.SQRT2*1.2),center=destination(start,r,bearing),ps=[start.slice(0,2)];for(let i=1;i<=3;i++)ps.push(destination(center,r,bearing+180+i*90));ps.push(start.slice(0,2));return ps}
 

@@ -111,3 +111,6 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .release-banner{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:10px 18px;background:#254437;color:#ecf6e5;border-bottom:1px solid #698860;font-size:13px}.release-banner[hidden]{display:none}
 .release-banner button{padding:7px 12px;font-size:12px}.release-banner button:last-child{padding:3px 7px}
 @media(max-width:700px){.recording-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.review-rows{grid-template-columns:1fr}.analysis-panel{padding:14px 12px}.wind-section-form{grid-template-columns:1fr 1fr}.release-control{max-width:100px}}
+
+/* Spacer keeps the same compact footer; bicycle-only tiles disappear. */
+#walkingToggle{white-space:nowrap}#walkingToggle[aria-pressed="true"]{background:#426948;border-color:#a9d087;color:#efffe8}#walkingTerrainTile{flex:1.5;min-width:140px}.walking-settings[hidden],#walkingTerrainTile[hidden]{display:none!important}

@@ -3,7 +3,7 @@
  'use strict';
  function preferences(value={}){if(!value||typeof value!=='object')value={};return {surface:['balanced','paved'].includes(value.surface)?value.surface:'balanced',avoidRegional:value.avoidRegional===true,cycleRoutes:value.cycleRoutes===true,localRoads:value.localRoads===true}}
  function routingOptions(value,profile){
-  const p=preferences(value);if(profile!=='trekking')return {};
+  const p=preferences(value);if(profile==='walking')return {'profile:consider_forest':'1','profile:consider_noise':'1','profile:SAC_scale_limit':'1','profile:SAC_scale_preferred':'1','profile:SAC_access_penalty':'100000'};if(profile!=='trekking')return {};
   const out={};
   if(p.avoidRegional||p.localRoads)out['profile:avoid_unsafe']='1';
   if(p.avoidRegional)out['profile:consider_traffic']='1';
