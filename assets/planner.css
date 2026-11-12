@@ -119,3 +119,37 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 @media (max-width: 600px) {
   .map-top .map-buttons #mapStyle { width: min(168px, 48vw); }
 }
+
+.coordinates-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #536b62;
+  border-radius: 9px;
+  background: #203536;
+  color: var(--ink);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.coordinates-toggle input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.map-coordinate-tooltip {
+  position: absolute;
+  z-index: 660;
+  max-width: calc(100% - 8px);
+  padding: 5px 8px;
+  border: 1px solid #b8e5ce66;
+  border-radius: 7px;
+  background: #11272c;
+  color: #e4ebe5;
+  box-shadow: 0 2px 8px #0004;
+  font: 600 12px/1.35 ui-monospace, monospace;
+  white-space: nowrap;
+  pointer-events: none;
+}

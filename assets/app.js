@@ -555,18 +555,19 @@ setTimeout(()=>{if(!new URL(location.href).searchParams.has('restoreUpdate'))loc
 
 
 // Remember presentation preferences independently of the route and its undo history.
-function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
+function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
 try{
  const prefs=JSON.parse(localStorage.getItem('rowerem-view-v1')||'null');
  if(prefs){
   if(Object.hasOwn(styleDefinitions,prefs.mapStyle)&&prefs.mapStyle!==$('mapStyle').value){$('mapStyle').value=prefs.mapStyle;switchMapStyle(prefs.mapStyle)}
+  $('showCoordinates').checked=prefs.showCoordinates===true;
   if(typeof prefs.slopeColors==='boolean')$('slopeColors').checked=prefs.slopeColors;
   if(typeof prefs.slopeLabels==='boolean')$('slopeLabels').checked=prefs.slopeLabels&&$('slopeColors').checked;
   setMapDockOpen(typeof prefs.dockOpen==='boolean'?prefs.dockOpen:prefs.readings!==false);
   terrainVisible=null;renderRouteTerrain();
  }
 }catch{}
-for(const id of ['mapStyle','slopeColors','slopeLabels'])$(id).addEventListener('change',saveViewPreferences);
+for(const id of ['mapStyle','slopeColors','slopeLabels','showCoordinates'])$(id).addEventListener('change',saveViewPreferences);
 
 
 initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls();initMapDock();initMapSelects();initGPXControls();
@@ -575,3 +576,5 @@ initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls()
 initReviewControls();initReleaseControls();
 
 initWalkingControls();
+
+initCoordinateHover(map, $('showCoordinates'));

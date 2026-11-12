@@ -1,4 +1,8 @@
-# Planer tras rowerowych 3.13
+# Planer tras rowerowych 3.14
+
+## Współrzędne pod kursorem
+
+Zaznacz **Współrzędne** w górnym menu, aby zobaczyć w dymku szerokość i długość geograficzną punktu pod kursorem. Planer zapamięta wybór w przeglądarce.
 
 ## Warstwy mapy
 
@@ -40,7 +44,7 @@ Aktywne kcal = (MET − 1) × (masa osoby + plecaka) × godziny. Użycie masy pl
 1. Rozpakuj ZIP.
 2. Do głównego katalogu repozytorium wgraj **index.html, version.json i cały folder assets**, zastępując poprzednie pliki. Nie wgrywaj samego ZIP ani folderu nadrzędnego.
 3. Zatwierdź zmiany i poczekaj na zakończenie wdrożenia Pages.
-4. Otwórz stronę. Przycisk w nagłówku i tytuł karty mają pokazać **3.13.0**. Przy pierwszym przejściu ze starszej wersji zapisz trasę przed odświeżeniem.
+4. Otwórz stronę. Przycisk w nagłówku i tytuł karty mają pokazać **3.14.0**. Przy pierwszym przejściu ze starszej wersji zapisz trasę przed odświeżeniem.
 
 Paczka jest statyczną stroną dla serwera HTTP/HTTPS, w tym GitHub Pages. Folder tests służy do lokalnej weryfikacji kodu.
 
@@ -75,7 +79,7 @@ Rozwiń panel pod mapą: najdłuższy podjazd, pozostałe podjazdy, trudniejsze 
 
 ## Aktualizacje
 
-Przycisk **v3.13.0 ↻** sprawdza version.json na tej samej stronie. Sprawdzenie następuje także po starcie, co 15 min w widocznej karcie oraz po powrocie do karty, jeśli minęło 5 min. Nie ma automatycznego przeładowania ani Service Workera.
+Przycisk **v3.14.0 ↻** sprawdza version.json na tej samej stronie. Sprawdzenie następuje także po starcie, co 15 min w widocznej karcie oraz po powrocie do karty, jeśli minęło 5 min. Nie ma automatycznego przeładowania ani Service Workera.
 
 Po wykryciu nowszej wersji **Zaktualizuj i zachowaj pracę**:
 
@@ -176,7 +180,7 @@ Brakujące wartości uzupełniane są modelem terenu Copernicus DEM 90 m, z inte
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html, version.json oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.13.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html, version.json oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.14.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -213,7 +217,7 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, `version.json`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.13.0”.
+Rozpakuj paczkę. Wgraj `index.html`, `version.json`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.14.0”.
 
 ## Weryfikacja
 
