@@ -430,9 +430,6 @@ $('mapInfoClose').onclick=()=>{clearTimeout(mapInfoTimer);collapseMapInfo()};
 // Startup localization runs after draft recovery below.
 
 // Move existing controls: their handlers, values and element IDs remain intact.
-const exportSection=$('gpx').closest('.section');
-$('headerActions').append(exportSection.querySelector('.tools'),$('file'));
-exportSection.remove();
 const topSettings=$('topSettings');
 topSettings.append(document.querySelector('.settings-intro'),$('points').closest('.section'),$('riderWeight').closest('.section'),$('walkingSettings'),$('energySettings'),$('speed').closest('.section'));
 $('topSummary').append(document.querySelector('.stats'),document.querySelector('.quick-tools'));
