@@ -114,3 +114,8 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 
 /* Spacer keeps the same compact footer; bicycle-only tiles disappear. */
 #walkingToggle{white-space:nowrap}#walkingToggle[aria-pressed="true"]{background:#426948;border-color:#a9d087;color:#efffe8}#walkingTerrainTile{flex:1.5;min-width:140px}.walking-settings[hidden],#walkingTerrainTile[hidden]{display:none!important}
+
+.map-top .map-buttons #mapStyle { width: 190px; }
+@media (max-width: 600px) {
+  .map-top .map-buttons #mapStyle { width: min(168px, 48vw); }
+}

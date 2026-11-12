@@ -100,31 +100,77 @@ const mapNotice=document.createElement('div');
 mapNotice.className='map-notice';mapNotice.setAttribute('role','status');mapNotice.hidden=true;
 mapNotice.innerHTML='<span class="map-notice-text"></span><button class="map-notice-retry" type="button">Ponów</button><button class="map-notice-close" type="button" aria-label="Zamknij powiadomienie o mapie" title="Zamknij">×</button>';
 $('map').parentElement.append(mapNotice);
-const missingTiles=new Set();
+const missingTiles=new Map();
 let mapNoticeDismissed=false;
 function updateMapNotice(){mapNotice.hidden=mapNoticeDismissed||!missingTiles.size;mapNotice.firstElementChild.textContent=navigator.onLine?'Niektóre fragmenty mapy nie wczytały się. Ponawiam automatycznie.':'Brak internetu. Mapa uzupełni się po odzyskaniu połączenia.';}
-const ResilientTiles=L.TileLayer.extend({
- createTile(coords,done){
-  const tile=document.createElement('img');tile.alt='';tile.setAttribute('role','presentation');tile.referrerPolicy='strict-origin-when-cross-origin';
-  const urls=this.options.urls.map(url=>L.Util.template(url,{z:coords.z,y:coords.y,x:coords.x,s:'abc'[Math.abs(coords.x+coords.y)%3]}));
-  let attempt=0,timer,finished=false;
-  const clean=()=>{clearTimeout(timer);tile.onload=null;tile.onerror=null;};
-  tile.cancelLoad=()=>{finished=true;clean();missingTiles.delete(tile);updateMapNotice();};
-  const next=()=>{
-   clean();if(finished)return;
-   if(attempt>=urls.length){finished=true;missingTiles.add(tile);updateMapNotice();tile.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';done(null,tile);return;}
-   tile.onload=()=>{clean();finished=true;missingTiles.delete(tile);updateMapNotice();done(null,tile);};
-   tile.onerror=next;timer=setTimeout(next,8000);tile.src=urls[attempt++];
-  };next();return tile;
- }
+const ResilientTiles = L.TileLayer.extend({
+  getTileUrl(coords) {
+    return this.options.tileUrl ? this.options.tileUrl(coords) : L.TileLayer.prototype.getTileUrl.call(this, coords);
+  },
+  createTile(coords, done) {
+    const tile = document.createElement('img');
+    tile.alt = '';
+    tile.setAttribute('role', 'presentation');
+    tile.referrerPolicy = 'strict-origin-when-cross-origin';
+
+    const clean = () => {
+      clearTimeout(timeout);
+      tile.onload = null;
+      tile.onerror = null;
+    };
+    const fail = () => {
+      clean();
+      missingTiles.set(tile, this);
+      tile.src = L.Util.emptyImageUrl;
+      updateMapNotice();
+      done(null, tile);
+    };
+    const timeout = setTimeout(fail, 12000);
+    tile.cancelLoad = () => {
+      clean();
+      if (missingTiles.delete(tile)) updateMapNotice();
+    };
+    tile.onload = () => {
+      clean();
+      done(null, tile);
+    };
+    tile.onerror = fail;
+    tile.src = this.getTileUrl(coords);
+    return tile;
+  }
 });
-const esri='https://server.arcgisonline.com/ArcGIS/rest/services/';
-const styleDefinitions={normal:{urls:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'},satellite:{urls:[esri+'World_Imagery/MapServer/tile/{z}/{y}/{x}'],attribution:'Imagery © Esri, Maxar, Earthstar Geographics and GIS User Community'},terrain:{urls:[esri+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],attribution:'Tiles © Esri · Esri, HERE, Garmin, Intermap, USGS, FAO, NPS and GIS User Community'},cycle:{urls:['https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png'],attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://www.cyclosm.org/">CyclOSM</a> · tiles OpenStreetMap France'}};
-let baseMap;
-function switchMapStyle(style){const localOSM=style==='normal'&&location.protocol==='file:';$('osmLocalNotice').hidden=!localOSM;if(baseMap){map.removeLayer(baseMap);baseMap=null}missingTiles.clear();updateMapNotice();if(localOSM)return;const def=styleDefinitions[style]||styleDefinitions.normal;if(baseMap)map.removeLayer(baseMap);missingTiles.clear();baseMap=new ResilientTiles('',{...def,maxZoom:19,maxNativeZoom:style==='cycle'?19:19,keepBuffer:3}).addTo(map);baseMap.on('tileunload',e=>e.tile.cancelLoad?.());updateMapNotice();}
-switchMapStyle('normal');$('mapStyle').onchange=()=>switchMapStyle($('mapStyle').value);
-baseMap?.on('tileunload',e=>e.tile.cancelLoad?.());
-function retryMap(){if(missingTiles.size){missingTiles.clear();baseMap?.redraw();updateMapNotice();}}
+
+let mapLayers = [];
+function switchMapStyle(style) {
+  for (const layer of mapLayers) map.removeLayer(layer);
+  mapLayers = [];
+  missingTiles.clear();
+  mapNoticeDismissed = false;
+
+  const selected = Object.hasOwn(styleDefinitions, style) ? style : 'normal';
+  const localOSM = location.protocol === 'file:' && ['normal', 'forest'].includes(selected);
+  $('osmLocalNotice').hidden = !localOSM;
+  if (!localOSM) {
+    mapLayers = styleDefinitions[selected].map(({ url, ...options }, index) => {
+      const layer = new ResilientTiles(url || '', {
+        maxZoom: 19, maxNativeZoom: 19, keepBuffer: 2, zIndex: index + 1, ...options
+      });
+      layer.on('tileunload', event => event.tile.cancelLoad?.());
+      return layer.addTo(map);
+    });
+  }
+  updateMapNotice();
+}
+
+switchMapStyle('normal');
+$('mapStyle').onchange = () => switchMapStyle($('mapStyle').value);
+
+function retryMap() {
+  const failedLayers = new Set(missingTiles.values());
+  missingTiles.clear();
+  for (const layer of mapLayers) if (failedLayers.has(layer)) layer.redraw();
+  updateMapNotice();
+}
 mapNotice.querySelector('.map-notice-retry').onclick=retryMap;
 mapNotice.querySelector('.map-notice-close').onclick=()=>{mapNoticeDismissed=true;mapNotice.hidden=true;};
 L.DomEvent.disableClickPropagation(mapNotice);
