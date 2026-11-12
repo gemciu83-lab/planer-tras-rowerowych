@@ -12,7 +12,7 @@ function updateGPXControls(){
  if(gpxEditTask&&(gpxEditTask.track!==track||gpxEditTask.revision!==revision))gpxEditTask.controller.abort();
  if(gpxElevationTask&&(gpxElevationTask.track!==track||!!gpxEditTask))gpxElevationTask.controller.abort();
  const button=$('fetchGPXElevation'),info=$('gpxInfo');if(!button||!info)return;
- const missing=track.filter(c=>!Number.isFinite(c[2])).length,available=track.length>1;
+ const missing=track.filter(c=>!Number.isFinite(c[2])).length,available=track.length>1&&!(typeof manualProfileTrack!=='undefined'&&manualProfileTrack);
  button.hidden=!available||(!missing&&!gpxElevationTask);button.disabled=mapDistancePending&&!gpxElevationTask;
  button.textContent=gpxElevationTask?'Anuluj wysokości':'Pobierz wysokości';
  button.title='Uzupełnij braki modelem terenu Copernicus 90 m. Po kliknięciu do Open-Meteo wysyłane jest do 600 próbek współrzędnych z trasy.';
@@ -78,25 +78,41 @@ async function importGPXFile(file){
  }catch(error){status(error.message||'Nieprawidłowy plik GPX.',true)}
  finally{$('file').value=''}
 }
-async function fetchGPXHeights(){
- if(gpxElevationTask){gpxElevationTask.controller.abort();return}
+async function requestTerrainHeights(original,signal,progress,isCurrent=()=>true){
+ const indices=PlannerGPX.elevationSamples(original),samples=[];
+ if(!indices.length)return original;
+ const check=()=>{signal.throwIfAborted();if(!isCurrent())throw new DOMException('Ślad został zmieniony.','AbortError')};
+ for(let offset=0;offset<indices.length;offset+=100){
+  check();
+  const batch=indices.slice(offset,offset+100),params=new URLSearchParams({latitude:batch.map(i=>original[i][1].toFixed(5)).join(','),longitude:batch.map(i=>original[i][0].toFixed(5)).join(',')});
+  progress?.(Math.min(offset+100,indices.length),indices.length);
+  const batchRequest=new AbortController(),abort=()=>batchRequest.abort();
+  signal.addEventListener('abort',abort,{once:true});const timeout=setTimeout(abort,20000);
+  let data;
+  try{
+   const response=await fetch('https://api.open-meteo.com/v1/elevation?'+params,{signal:batchRequest.signal});
+   check();
+   if(!response.ok)throw Error('Wysokości niedostępne (HTTP '+response.status+'). Spróbuj później.');
+   data=await response.json();
+  }finally{clearTimeout(timeout);signal.removeEventListener('abort',abort)}
+  if(!Array.isArray(data.elevation)||data.elevation.length!==batch.length||data.elevation.some(n=>typeof n!=='number'||!Number.isFinite(n)))throw Error('Serwer nie zwrócił kompletnych danych wysokości.');
+  batch.forEach((index,i)=>samples.push({index,height:data.elevation[i]}));
+ }
+ check();
+ return PlannerGPX.applyElevations(original,samples);
+}
+async function fetchGPXHeights(automatic=false){
+ automatic=automatic===true;
+ if(gpxElevationTask){if(automatic&&gpxElevationTask.track===track)return;gpxElevationTask.controller.abort();if(!automatic)return}
  if(track.length<2||mapDistancePending)return;
  const original=track,indices=PlannerGPX.elevationSamples(original);if(!indices.length)return;
- const requestController=new AbortController(),task={track:original,controller:requestController};gpxElevationTask=task;updateGPXControls();const samples=[];
+ const requestController=new AbortController(),task={track:original,controller:requestController};gpxElevationTask=task;updateGPXControls();
  const timer=setTimeout(()=>requestController.abort(),120000);
  try{
-  for(let offset=0;offset<indices.length;offset+=100){
-   if(requestController.signal.aborted||track!==original)return;
-   const batch=indices.slice(offset,offset+100),params=new URLSearchParams({latitude:batch.map(i=>original[i][1].toFixed(5)).join(','),longitude:batch.map(i=>original[i][0].toFixed(5)).join(',')});
-   $('gpxInfo').textContent='Pobieranie wysokości: '+Math.min(offset+100,indices.length)+' / '+indices.length+' próbek · Open-Meteo / Copernicus';
-   const timeout=setTimeout(()=>requestController.abort(),20000);let response,data;
-   try{response=await fetch('https://api.open-meteo.com/v1/elevation?'+params,{signal:requestController.signal});if(!response.ok)throw Error('Wysokości niedostępne (HTTP '+response.status+'). Spróbuj później.');data=await response.json()}finally{clearTimeout(timeout)}
-   if(!Array.isArray(data.elevation)||data.elevation.length!==batch.length||data.elevation.some(n=>typeof n!=='number'||!Number.isFinite(n)))throw Error('Serwer nie zwrócił kompletnych danych wysokości.');
-   batch.forEach((index,i)=>samples.push({index,height:data.elevation[i]}));
-  }
+  const result=await requestTerrainHeights(original,requestController.signal,(done,total)=>{$('gpxInfo').textContent='Pobieranie wysokości: '+done+' / '+total+' próbek · Open-Meteo / Copernicus'},()=>track===original);
   if(requestController.signal.aborted||track!==original)return;
-  const result=PlannerGPX.applyElevations(original,samples);if(typeof PlannerCompute!=='undefined')await PlannerCompute.prepare(result);if(requestController.signal.aborted||track!==original)return;checkpoint();gpxElevationSource=original.some(c=>Number.isFinite(c[2]))?'mixed':'dem';track=result;gpxElevationTask=null;renderPoints();status('Uzupełniono profil wysokości. Geometria i kilometraż GPX pozostały bez zmian; wysokości terenu są przybliżone.');
- }catch(error){if(track===original)status((error.name==='AbortError'?'Pobieranie wysokości anulowane lub przekroczono czas.':error.message||'Nie udało się pobrać wysokości.')+' Ślad i dane z pliku pozostały bez zmian.',true)}
+  if(typeof PlannerCompute!=='undefined')await PlannerCompute.prepare(result);if(requestController.signal.aborted||track!==original)return;if(!automatic)checkpoint();gpxElevationSource=original.some(c=>Number.isFinite(c[2]))?'mixed':'dem';track=result;gpxElevationTask=null;renderPoints();status('Uzupełniono profil wysokości. Przebieg i kilometraż śladu pozostały bez zmian. Wysokości terenu są przybliżone.');
+ }catch(error){if(track===original)status((error.name==='AbortError'||error.name==='TimeoutError'?'Pobieranie wysokości anulowane lub przekroczono czas.':error.message||'Nie udało się pobrać wysokości.')+' Ślad pozostał bez zmian.',true)}
  finally{clearTimeout(timer);if(gpxElevationTask===task)gpxElevationTask=null;updateGPXControls()}
 }
 function initGPXControls(){$('fetchGPXElevation').onclick=fetchGPXHeights;updateGPXControls()}

@@ -1,0 +1,41 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const assets=__dirname+'/../assets/',env=vm.createContext({DOMException});
+for(const name of ['planner-hybrid','planner-hybrid-ui','planner-core','planner-gpx'])vm.runInContext(fs.readFileSync(assets+name+'.js','utf8'),env);
+const H=env.PlannerHybrid,C=env.PlannerCore,G=env.PlannerGPX;
+const plain=o=>JSON.parse(JSON.stringify(o)),distance=(a,b)=>100*Math.hypot(a[0]-b[0],a[1]-b[1]);
+const points=[[19,51],[19.01,51],[19.02,51.003],[19.03,51.003],[19.04,51.005],[19.05,51.005]];
+const bends=[[19.033,51.006],[19.035,51.007]];
+const manual=[{edge:3,via:bends}];
+async function tests(){
+ const options={distance,surface:C.surfaceModel,signal:new AbortController().signal},calls=[];
+ const result=await H.build(H.plan(points,manual),{...options,fetchRoad:async ps=>{
+  calls.push(ps);const coordinates=ps.map(c=>[...c,200]);coordinates[coordinates.length===4?3:0][0]+=.0002;
+  return {geometry:{coordinates},properties:{messages:[['Distance','WayTags'],['100','highway=residential surface=asphalt']]}};
+ }});
+ assert.deepEqual(plain(calls),[points.slice(0,4),points.slice(4)]);
+ const indices=[points[3],...bends,points[4]].map(p=>result.track.findIndex(c=>c[0]===p[0]&&c[1]===p[1]));
+ assert(indices[0]>0&&indices.every((n,i)=>i===0||n>indices[i-1]));
+ assert(result.track.every((p,i)=>!i||distance(p,result.track[i-1])>0));
+ assert.deepEqual(plain(result.surfaceData.parts.map(p=>p.kind)),['asphalt','unknown','unknown','unknown','asphalt']);
+ const km=result.track.reduce((sum,c,i)=>i?sum+distance(result.track[i-1],c):sum,0);
+ assert(Math.abs(result.surfaceData.parts.reduce((sum,c)=>sum+c.meters,0)-1000*km)<1e-6);
+ const enriched=G.applyElevations(result.track,G.elevationSamples(result.track).map((index,i)=>({index,height:150+i})));
+ assert.deepEqual(plain(enriched.map(c=>c.slice(0,2))),plain(result.track.map(c=>c.slice(0,2))));
+ assert(enriched.every(c=>Number.isFinite(c[2])));
+ await assert.rejects(H.build(H.plan(points,manual),{...options,fetchRoad:async ps=>({geometry:{coordinates:ps.map(c=>[c[0]+.02,c[1],200])}})}),/250 m/);
+ const cancelled=new AbortController();cancelled.abort();await assert.rejects(H.build(H.plan(points,manual),{...options,signal:cancelled.signal,fetchRoad:()=>assert.fail('Unexpected network request')}),{name:'AbortError'});
+ const only=await H.build(H.plan(points.slice(3,5),[{edge:0,via:bends}]),{...options,fetchRoad:()=>assert.fail('Manual section must not route')});
+ assert(only.track.length>4);
+ env.input=points;env.sections=manual;
+ const run=s=>vm.runInContext(s,env);
+ run('let points=input.map(c=>c.slice());restoreHybridSections(sections);');
+ const saved=C.sanitizeTrip({points,track:result.track,settings:{profile:'walking'},hybridSections:[...manual,{edge:60,via:[]}]});
+ assert.deepEqual(plain(saved.hybridSections),manual);
+ run('const newPoint=[19.032,51.004];moveHybridAnchor(points[3],newPoint);points[3]=newPoint;points.reverse()');
+ assert.deepEqual(plain(run('captureHybridSections()')),[{edge:1,via:bends.slice().reverse()}]);
+ run('points.splice(2,1);pruneHybridSections()');
+ assert.deepEqual(plain(run('captureHybridSections()')),[]);
+ console.log('PASS: hybrid joins only road runs, preserves every manual vertex, accounts for joins and surfaces, keeps geometry during elevation enrichment, and preserves/reverses valid saved section metadata');
+}
+tests().catch(e=>{console.error(e);process.exitCode=1});

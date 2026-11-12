@@ -154,7 +154,7 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
   pointer-events: none;
 }
 
-#manualPathToggle[aria-expanded="true"] {
+#manualPathToggle[aria-expanded="true"], #hybridToggle[aria-expanded="true"] {
   background: #422b54;
   border-color: #b994d3;
   color: #f2ddff;
@@ -174,9 +174,9 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 }
 .manual-path-heading h2 { margin: 0; font-size: 15px; }
 .manual-path-heading p { margin: 0; color: #e4d4ec; font-size: 12px; }
-#manualPathInfo { color: #e4c3fb; font-size: 12px; font-variant-numeric: tabular-nums; }
+#manualPathInfo, #hybridInfo, #manualPathProfileStatus { color: #e4c3fb; font-size: 12px; font-variant-numeric: tabular-nums; }
 .manual-path-actions { margin-top: 8px; gap: 6px; }
 .manual-path-actions button { padding: 6px 10px; font-size: 12px; }
-#manualPathMode { background: #49375c; border-color: #ac89c4; color: #f5e6ff; }
+#manualPathMode, #manualPathProfile, #hybridBegin, #hybridFinish { background: #49375c; border-color: #ac89c4; color: #f5e6ff; }
 #map.is-drawing-manual { cursor: crosshair; }
 #map.is-drawing-manual .leaflet-interactive { pointer-events: none; }

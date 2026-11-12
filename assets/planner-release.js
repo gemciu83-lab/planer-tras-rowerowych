@@ -1,7 +1,7 @@
 /* Same-origin update checks; no service worker or automatic reload. */
 (function(root){
  'use strict';
- const version='3.15.0',app='planer-tras-rowerowych',key='rowerem-update-recovery-v1';
+ const version='3.16.0',app='planer-tras-rowerowych',key='rowerem-update-recovery-v1';
  function compare(a,b){const valid=v=>typeof v==='string'&&/^\d{1,4}\.\d{1,4}\.\d{1,4}$/.test(v);if(!valid(a)||!valid(b))return null;const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++)if(x[i]!==y[i])return x[i]>y[i]?1:-1;return 0}
  function manifest(value){
   if(!value||value.app!==app||compare(value.version,version)===null||!/^[a-f0-9]{64}$/.test(value.indexSHA||'')||!Array.isArray(value.assets)||value.assets.length<5||value.assets.length>50)return null;

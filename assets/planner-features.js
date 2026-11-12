@@ -66,7 +66,7 @@ function handlePlannerMapClick(e){
  start.type=stop.type=cancel.type='button';start.textContent='Ustaw start S';stop.textContent=points.length?'Dodaj przystanek / metę':'Dodaj jako start S';cancel.textContent='Anuluj';
  start.onclick=()=>{
   const closed=points.length>2&&distance(points[0],points.at(-1))<.001;
-  if(typeof moveImportedWaypoint==='function'&&moveImportedWaypoint(0,c)){map.closePopup();return}checkpoint();stopGPS();if(points.length)points[0]=c;else points.push(c);if(closed)points[points.length-1]=c.slice();map.closePopup();invalidate();renderPoints();
+  if(typeof moveImportedWaypoint==='function'&&moveImportedWaypoint(0,c)){map.closePopup();return}checkpoint();stopGPS();const change=(i,next)=>{if(typeof moveHybridAnchor==='function')moveHybridAnchor(points[i],next);points[i]=next};if(points.length)change(0,c);else points.push(c);if(closed)change(points.length-1,c.slice());map.closePopup();invalidate();renderPoints();
  };
  stop.onclick=()=>{if(!points.length)stopGPS();map.closePopup();add(c)};cancel.onclick=()=>map.closePopup();content.append(start,stop,cancel);
  L.popup({closeButton:false,autoPan:true,className:'touch-action-popup'}).setLatLng(e.latlng).setContent(content).openOn(map);
@@ -132,7 +132,7 @@ function renderLoopCards(){
 }
 
 let savedLoadGeneration=0;
-function savedSnapshot(record){if(!record)return null;const cache=savedSnapshot.cache||(savedSnapshot.cache=new WeakMap());if(cache.has(record))return cache.get(record);const result=PlannerCore.sanitizeTrip({recording:record.recording,windSections:record.windSections,points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,routeBreaks:record.routeBreaks,restSettings:record.restSettings,surfaceData:record.surfaceData,importIndices:record.importIndices,elevationSource:record.elevationSource,settings:{walkingTerrain:record.walkingTerrain,name:record.name,profile:record.profile||record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,luggageWeight:record.luggageWeight,bikeType:record.bikeType,ridingPosition:record.ridingPosition,windMode:record.windMode,windSpeed:record.windSpeed,windDirection:record.windDirection,departure:record.departure}});cache.set(record,result);return result}
+function savedSnapshot(record){if(!record)return null;const cache=savedSnapshot.cache||(savedSnapshot.cache=new WeakMap());if(cache.has(record))return cache.get(record);const result=PlannerCore.sanitizeTrip({hybridSections:record.hybridSections,recording:record.recording,windSections:record.windSections,points:record.points,track:record.track,routeType:record.type,pointLabels:record.pointLabels,pointStops:record.pointStops,routingPreferences:record.routingPreferences,routeBreaks:record.routeBreaks,restSettings:record.restSettings,surfaceData:record.surfaceData,importIndices:record.importIndices,elevationSource:record.elevationSource,settings:{walkingTerrain:record.walkingTerrain,name:record.name,profile:record.profile||record.type,speed:record.speed,pause:record.pause,riderWeight:record.riderWeight,bikeWeight:record.bikeWeight,luggageWeight:record.luggageWeight,bikeType:record.bikeType,ridingPosition:record.ridingPosition,windMode:record.windMode,windSpeed:record.windSpeed,windDirection:record.windDirection,departure:record.departure}});cache.set(record,result);return result}
 function renderSavedCards(){
  const host=$('saved');host.replaceChildren();let count=0;
  saved.forEach(record=>{
@@ -152,17 +152,18 @@ function renderSavedCards(){
 }
 function saveCurrentTrip(){
  if(!points.length)return;if(saved.length>=20){status('Limit 20 wypraw. Usuń zbędną lub wyeksportuj GPX.',true);return}
- saved.push({recording:typeof gpxRecording!=='undefined'&&routeType==='import'?gpxRecording:null,windSections:typeof manualWindSections!=='undefined'?manualWindSections:[],name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),walkingTerrain:typeof isWalking==='function'?$('walkingTerrain').value:'trail',points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),routeBreaks:getRouteBreaks(),restSettings:getRestSettings(),track:track.map(c=>c.slice()),surfaceData,importIndices:typeof gpxImportIndices!=='undefined'&&routeType==='import'?gpxImportIndices.slice():null,elevationSource:typeof gpxElevationSource!=='undefined'?gpxElevationSource:'',profile:$('profile').value,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),luggageWeight:Number($('luggageWeight').value),bikeType:$('bikeType').value,ridingPosition:$('ridingPosition').value,windMode:$('windMode').value,windSpeed:Number($('windSpeed').value),windDirection:Number($('windDirection').value)});
+ saved.push({hybridSections:captureHybridSections(),recording:typeof gpxRecording!=='undefined'&&routeType==='import'?gpxRecording:null,windSections:typeof manualWindSections!=='undefined'?manualWindSections:[],name:$('name').value.trim()||'Moja wyprawa',createdAt:new Date().toISOString(),walkingTerrain:typeof isWalking==='function'?$('walkingTerrain').value:'trail',points:points.map(c=>c.slice()),pointLabels:getPointLabels(),pointStops:getPointStops(),routingPreferences:getRoutingPreferences(),routeBreaks:getRouteBreaks(),restSettings:getRestSettings(),track:track.map(c=>c.slice()),surfaceData,importIndices:typeof gpxImportIndices!=='undefined'&&routeType==='import'?gpxImportIndices.slice():null,elevationSource:typeof gpxElevationSource!=='undefined'?gpxElevationSource:'',profile:$('profile').value,departure:$('departure').value,type:track.length>1?routeType:$('profile').value,speed:Number($('speed').value),pause:Number($('pause').value),riderWeight:Number($('riderWeight').value),bikeWeight:Number($('bikeWeight').value),luggageWeight:Number($('luggageWeight').value),bikeType:$('bikeType').value,ridingPosition:$('ridingPosition').value,windMode:$('windMode').value,windSpeed:Number($('windSpeed').value),windDirection:Number($('windDirection').value)});
  if(persist()){showSaved();status(track.length>1?'Wyprawa zapisana. Znajdziesz ją w „Moich zapisanych wyprawach”.':'Zapisano punkty wyprawy. Wczytasz je ręcznie z „Moich zapisanych wypraw”.')}else saved.pop();
 }
 
 function updateExportButtons(){
  const hasHeights=track.length>1&&track.some(c=>Number.isFinite(c[2])),blocked=pngExporting||mapDistancePending||!!previousRoute;
- $('saveProfilePNG').disabled=blocked||!hasHeights;$('saveCombinedPNG').disabled=blocked||!hasHeights;
+ $('saveProfilePNG').disabled=manualProfileTrack?pngExporting||!manualProfileTrack.some(c=>Number.isFinite(c[2])):blocked||!hasHeights;
+ $('saveCombinedPNG').disabled=blocked||!hasHeights||!!manualProfileTrack;
 }
 async function renderProfileCanvas(){
- if(track.length<2||!elevationData.some(p=>p.y!==null))throw Error('Brak wysokości. Wgraj GPX z wysokościami lub wyznacz trasę po drogach.');
- const title=$('name').value.trim()||'Moja wyprawa',subtitle='Zakres '+viewStart.toFixed(1)+'–'+viewEnd.toFixed(1)+' km · cała trasa: '+$('ride').textContent+' · '+$('calories').textContent;
+ if(!elevationData.some(p=>p.y!==null))throw Error('Brak danych wysokości do zapisania.');
+ const title=manualProfileTrack?'Własna ścieżka':$('name').value.trim()||'Moja wyprawa',subtitle='Zakres '+viewStart.toFixed(1)+'-'+viewEnd.toFixed(1)+' km · '+(manualProfileTrack?'wysokości przybliżone':'cała trasa: '+$('ride').textContent+' · '+$('calories').textContent);
  const svg=$('elevationChart').cloneNode(true);svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('width','1600');svg.setAttribute('height','320');svg.querySelector('#profileCursor')?.remove();
  const style=document.createElementNS('http://www.w3.org/2000/svg','style');style.textContent='text{fill:#b8c8ba;font-family:system-ui,sans-serif}line{stroke:#4b5b4e}path{stroke:#b8ed9e}';svg.prepend(style);
  const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml;charset=utf-8'}));
@@ -171,16 +172,16 @@ async function renderProfileCanvas(){
  }finally{URL.revokeObjectURL(url)}
 }
 async function exportTripImage(kind){
- if(pngExporting)return;pngExporting=true;$('saveMapPNG').disabled=true;updateExportButtons();const stamp=track,routeRevision=revision;
+ if(pngExporting)return;pngExporting=true;$('saveMapPNG').disabled=true;updateExportButtons();const stamp=track,routeRevision=revision,sketch=kind==='profile'?manualProfileTrack:null;
  try{
-  if(mapDistancePending||previousRoute)throw Error('Najpierw wyznacz aktualną trasę.');
+  if(!sketch&&(mapDistancePending||previousRoute))throw Error('Najpierw wyznacz aktualną trasę.');
   let result,profile;if(kind!=='map')profile=await renderProfileCanvas();
   if(kind==='profile')result=profile;
   else{
    const mapCanvas=await renderMapCanvas();result=mapCanvas;
    if(kind==='combined'){const width=Math.max(mapCanvas.width,profile.width),mapHeight=Math.round(mapCanvas.height*width/mapCanvas.width),profileHeight=Math.round(profile.height*width/profile.width);result=document.createElement('canvas');result.width=width;result.height=mapHeight+profileHeight;const ctx=result.getContext('2d');ctx.drawImage(mapCanvas,0,0,width,mapHeight);ctx.drawImage(profile,0,mapHeight,width,profileHeight)}
   }
-  if(track!==stamp||revision!==routeRevision)throw Error('Trasa zmieniła się podczas zapisu. Ponów eksport.');
+  if(sketch?manualProfileTrack!==sketch:track!==stamp||revision!==routeRevision)throw Error('Trasa zmieniła się podczas zapisu. Ponów eksport.');
   const blob=await new Promise(resolve=>result.toBlob(resolve,'image/png'));if(!blob)throw Error('Nie udało się utworzyć PNG.');download(blob,kind==='profile'?'profil-wysokosci.png':kind==='combined'?'mapa-i-profil.png':'mapa-trasy.png','image/png');status('Zapisano '+(kind==='profile'?'profil wysokości':kind==='combined'?'mapę i profil':'mapę')+' do PNG.');
  }catch(error){status(error.message||'Nie udało się zapisać PNG.',true);expandMapInfo()}
  finally{pngExporting=false;$('saveMapPNG').disabled=mapDistancePending||!!previousRoute;updateExportButtons()}

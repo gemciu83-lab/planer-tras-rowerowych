@@ -11,17 +11,21 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
   const gpx = get('manualPathGpx');
   const csv = get('manualPathCsv');
   const info = get('manualPathInfo');
+  const profile = get('manualPathProfile');
+  const profileStatus = get('manualPathProfileStatus');
   const pane = map.createPane('manualPath');
   pane.style.zIndex = '430';
   pane.style.pointerEvents = 'none';
   const options = { pane: 'manualPath', interactive: false };
   const outline = L.polyline([], { ...options, color: '#fff', weight: 8, opacity: .95 });
   const line = L.polyline([], { ...options, color: '#792bbe', weight: 4, opacity: 1 });
-  const layer = L.layerGroup([outline, line]);
+  const hit = L.polyline([], { ...options, interactive: true, bubblingMouseEvents: false, opacity: 0, weight: 20 });
+  const layer = L.layerGroup([outline, line, hit]);
   const pins = [];
   let drawing = false;
   let restoreDoubleClick = false;
   let points = [];
+  let geometry = [], heightTrack = null, heightRequest = null, tip = null;
   try {
     const stored = JSON.parse(localStorage.getItem(key));
     if (Array.isArray(stored)) points = stored.filter(point => Array.isArray(point) &&
@@ -37,6 +41,7 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
     for (const pin of pins.splice(0)) layer.removeLayer(pin);
     outline.setLatLngs(points);
     line.setLatLngs(points);
+    hit.setLatLngs(points);
     for (const point of points) addPin(point);
   }
 
@@ -45,10 +50,14 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
     const distance = points.reduce((sum, point, i) => i ? sum + map.distance(points[i - 1], point) : sum, 0);
     info.textContent = `${count} pkt · ${(distance / 1000).toLocaleString('pl-PL', { maximumFractionDigits: 2 })} km`;
     undo.disabled = clear.disabled = fit.disabled = csv.disabled = count === 0;
-    gpx.disabled = count < 2;
+    profile.disabled = gpx.disabled = count < 2;
   }
 
   function save() {
+    heightRequest?.abort();heightRequest=null;heightTrack=null;geometry=[];
+    profileStatus.textContent='';profile.textContent='Profil wysokości ścieżki';
+    tip?.remove();tip=null;
+    if(manualProfileTrack)setManualProfile(null);
     try { localStorage.setItem(key, JSON.stringify(points)); } catch { /* Export still works. */ }
     refresh();
   }
@@ -59,6 +68,7 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
     map.getContainer().classList.toggle('is-drawing-manual', active);
     mode.textContent = active ? 'Zakończ rysowanie' : 'Rysuj dalej';
     if (active) {
+      tip?.remove();tip=null;
       onDrawingStart();
       map.closePopup();
       restoreDoubleClick = map.doubleClickZoom.enabled();
@@ -66,14 +76,18 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
     } else if (restoreDoubleClick) map.doubleClickZoom.enable();
   }
 
-  toggle.addEventListener('click', () => {
-    const open = panel.hidden;
+  function openPanel(open) {
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
     if (open) layer.addTo(map);
-    else layer.remove();
+    else {
+      layer.remove();tip?.remove();tip=null;
+      heightRequest?.abort();heightRequest=null;profileStatus.textContent='';profile.textContent='Profil wysokości ścieżki';
+      if(manualProfileTrack)setManualProfile(null);
+    }
     setDrawing(open);
-  });
+  }
+  toggle.addEventListener('click', () => openPanel(panel.hidden));
   mode.addEventListener('click', () => setDrawing(!drawing));
   undo.addEventListener('click', () => {
     if (!points.length) return;
@@ -81,6 +95,7 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
     layer.removeLayer(pins.pop());
     outline.setLatLngs(points);
     line.setLatLngs(points);
+    hit.setLatLngs(points);
     save();
   });
   clear.addEventListener('click', () => {
@@ -92,9 +107,38 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
   fit.addEventListener('click', () => {
     if (points.length) map.fitBounds(line.getBounds(), { padding: [45, 45], maxZoom: 17 });
   });
+  function getGeometry(){return geometry.length?geometry:(geometry=PlannerHybrid.densify(points.map(([lat,lng])=>[lng,lat]),distance))}
+  profile.addEventListener('click', async () => {
+    if(heightRequest){heightRequest.abort();return}
+    if(points.length<2)return;
+    setDrawing(false);
+    const coords=getGeometry();if(coords.length<2){profileStatus.textContent='Wskaż dwa różne miejsca.';return}
+    const show=cs=>{setManualProfile(cs);get('profileCard').scrollIntoView({block:'nearest'});};
+    if(heightTrack){show(heightTrack);return}
+    const request=heightRequest=new AbortController();
+    profile.textContent='Anuluj wysokości';
+    show(coords);
+    try{
+      const result=await requestTerrainHeights(coords,request.signal,(n,total)=>{profileStatus.textContent=`Pobieranie wysokości: ${n} / ${total} próbek`;});
+      if(heightRequest!==request||request.signal.aborted)return;
+      heightTrack=result;setManualProfile(result);profileStatus.textContent='Wysokości przybliżone · Open-Meteo / Copernicus';
+    }catch(error){if(heightRequest===request)profileStatus.textContent=request.signal.aborted?'Anulowano pobieranie.':error.message||'Wysokości niedostępne.'}
+    finally{if(heightRequest===request){heightRequest=null;profile.textContent='Profil wysokości ścieżki'}}
+  });
+  hit.on('mousemove click',e=>{
+    if(drawing)return;
+    if(e.type==='click'&&e.originalEvent)L.DomEvent.stop(e.originalEvent);
+    const cs=heightTrack||getGeometry();if(cs.length<2)return;
+    const near=nearestTrackPosition(e.latlng,cs),data=PlannerCore.terrainAt(PlannerCore.terrainModel(cs,distance),near.index,near.fraction);
+    const body=document.createElement('span');
+    body.textContent=`${(data.meters/1000).toFixed(2)} km · ${Number.isFinite(data.elevation)?Math.round(data.elevation)+' m n.p.m.':'brak wysokości'}${Number.isFinite(data.grade)?' · '+gradeText(data.grade):''}`;
+    if(!tip)tip=L.tooltip({direction:'top',offset:[0,-8],className:'route-data-tooltip',interactive:false});
+    tip.setLatLng(near.latlng).setContent(body).addTo(map);
+  });
+  hit.on('mouseout',()=>{tip?.remove();tip=null});
   gpx.addEventListener('click', () => {
     if (points.length < 2) return;
-    const track = points.map(([lat, lng]) => `      <trkpt lat="${lat.toFixed(6)}" lon="${lng.toFixed(6)}"/>`).join('\n');
+    const track = (heightTrack||points.map(([lat,lng])=>[lng,lat])).map(([lng, lat, ele]) => `      <trkpt lat="${lat.toFixed(6)}" lon="${lng.toFixed(6)}">${Number.isFinite(ele)?`<ele>${ele.toFixed(1)}</ele>`:''}</trkpt>`).join('\n');
     downloadFile(`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Planer tras" xmlns="http://www.topografix.com/GPX/1/1">\n  <trk>\n    <name>Ścieżka własna</name>\n    <trkseg>\n${track}\n    </trkseg>\n  </trk>\n</gpx>\n`, 'sciezka-wlasna.gpx', 'application/gpx+xml;charset=utf-8');
   });
   csv.addEventListener('click', () => {
@@ -106,6 +150,7 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
   refresh();
 
   return {
+    close(){if(!panel.hidden)openPanel(false)},
     get drawing() { return drawing; },
     addFromMap(latlng) {
       if (!drawing) return false;
@@ -115,6 +160,7 @@ function initManualPath(map, get, downloadFile, onDrawingStart) {
         points.push(point);
         outline.addLatLng(point);
         line.addLatLng(point);
+        hit.addLatLng(point);
         addPin(point);
         save();
       }
