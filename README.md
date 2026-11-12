@@ -1,4 +1,4 @@
-# Planer tras rowerowych 3.14
+# Planer tras rowerowych 3.15
 
 ## Współrzędne pod kursorem
 
@@ -44,7 +44,7 @@ Aktywne kcal = (MET − 1) × (masa osoby + plecaka) × godziny. Użycie masy pl
 1. Rozpakuj ZIP.
 2. Do głównego katalogu repozytorium wgraj **index.html, version.json i cały folder assets**, zastępując poprzednie pliki. Nie wgrywaj samego ZIP ani folderu nadrzędnego.
 3. Zatwierdź zmiany i poczekaj na zakończenie wdrożenia Pages.
-4. Otwórz stronę. Przycisk w nagłówku i tytuł karty mają pokazać **3.14.0**. Przy pierwszym przejściu ze starszej wersji zapisz trasę przed odświeżeniem.
+4. Otwórz stronę. Przycisk w nagłówku i tytuł karty mają pokazać **3.15.0**. Przy pierwszym przejściu ze starszej wersji zapisz trasę przed odświeżeniem.
 
 Paczka jest statyczną stroną dla serwera HTTP/HTTPS, w tym GitHub Pages. Folder tests służy do lokalnej weryfikacji kodu.
 
@@ -79,7 +79,7 @@ Rozwiń panel pod mapą: najdłuższy podjazd, pozostałe podjazdy, trudniejsze 
 
 ## Aktualizacje
 
-Przycisk **v3.14.0 ↻** sprawdza version.json na tej samej stronie. Sprawdzenie następuje także po starcie, co 15 min w widocznej karcie oraz po powrocie do karty, jeśli minęło 5 min. Nie ma automatycznego przeładowania ani Service Workera.
+Przycisk **v3.15.0 ↻** sprawdza version.json na tej samej stronie. Sprawdzenie następuje także po starcie, co 15 min w widocznej karcie oraz po powrocie do karty, jeśli minęło 5 min. Nie ma automatycznego przeładowania ani Service Workera.
 
 Po wykryciu nowszej wersji **Zaktualizuj i zachowaj pracę**:
 
@@ -180,7 +180,7 @@ Brakujące wartości uzupełniane są modelem terenu Copernicus DEM 90 m, z inte
 
 ## Wgranie na GitHub Pages
 
-Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html, version.json oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.14.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
+Najpierw zapisz bieżącą trasę. Rozpakuj ZIP i wgraj do głównego katalogu repozytorium **index.html, version.json oraz cały folder assets**, zastępując poprzednią wersję. Pliki tests, README.md i TESTY.md można również zachować w repozytorium. Paczka nie zawiera lokalnych atrap GPS/pogody ani serwera testowego. W tytule strony i metadanych znajduje się numer **3.15.0**. Sama zmiana końcówki adresu nie podmienia plików aplikacji. Po opublikowaniu nowych plików otwórz stronę w nowej karcie; wycieczkę wczytaj ręcznie.
 
 ## Nowość: przerwy na mapie
 
@@ -217,9 +217,15 @@ Dokumentacja źródeł:
 
 ## Wgranie na GitHub Pages
 
-Rozpakuj paczkę. Wgraj `index.html`, `version.json`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.14.0”.
+Rozpakuj paczkę. Wgraj `index.html`, `version.json`, cały folder `assets`, folder `tests` i ten README do głównego katalogu repozytorium `gemciu83-lab/planer-tras-rowerowych`, zastępując istniejące pliki. Nie wgrywaj samego ZIP-a ani dodatkowego folderu nadrzędnego. Zatwierdź zmianę przyciskiem Commit changes i poczekaj na zakończenie wdrożenia Pages. Tytuł karty nowej wersji to „Planer tras rowerowych 3.15.0”.
 
 ## Weryfikacja
 
 Testy lokalne (Node.js): `node tests/planner.test.cjs`. Obejmują dotychczasowe zachowanie trasowania i nowe preferencje, walidację postojów, kolejność godzin przyjazdu, zgodność starszych zapisów, projekcję miejsc na trasę, dodawanie przystanków oraz zachowanie czasów podczas przesuwania, odwracania i usuwania punktów. Zewnętrzne serwery mogą okresowo odmawiać lub opóźniać odpowiedzi; testy lokalne nie gwarantują ich dostępności.
 
+
+## Własna ścieżka poza drogami z mapy
+
+Kliknij **Rysuj ścieżkę** w nagłówku i zaznacz kolejne punkty, w tym zakręty. Na fioletowej nakładce każdy odcinek jest prosty, a licznik pokazuje długość narysowanego śladu. Kliknij **Zakończ rysowanie**, aby wrócić do zwykłego planowania. Przycisk w nagłówku chowa i ponownie pokazuje nakładkę. Szkic zostaje zapisany w przeglądarce, niezależnie od zwykłej trasy.
+
+**GPX do nawigacji** pobiera ślad od dwóch punktów. **Współrzędne CSV** pobierają ponumerowaną listę punktów w kolejności dodania (szerokość i długość w stopniach dziesiętnych).

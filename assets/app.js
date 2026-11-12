@@ -178,7 +178,8 @@ L.DomEvent.disableScrollPropagation(mapNotice);
 window.addEventListener('online',retryMap);window.addEventListener('offline',updateMapNotice);
 setInterval(()=>{if(navigator.onLine&&!document.hidden)retryMap();},30000);
 new ResizeObserver(()=>map.invalidateSize({pan:false})).observe($('map'));
-routeLayer=L.polyline([],{color:'#247454',weight:5}).addTo(map);draftLayer=L.polyline([],{color:'#7a8a75',weight:3,dashArray:'5 9'}).addTo(map);routeHitLayer=L.polyline([],{color:'#247454',weight:24,opacity:0,bubblingMouseEvents:false,className:'route-drag-line'}).addTo(map);initRouteTerrain();routeHitLayer.on('mousedown',beginLineDrag);routeHitLayer.on('click',e=>{if(e.originalEvent)L.DomEvent.stop(e.originalEvent);if(isTouchMap(e))handlePlannerMapClick(e)});map.on('click',e=>{if(!routeDrag&&Date.now()-lastLineDrag>400)handlePlannerMapClick(e)});
+const manualPath=initManualPath(map,$,download,clearRouteInspection);
+routeLayer=L.polyline([],{color:'#247454',weight:5}).addTo(map);draftLayer=L.polyline([],{color:'#7a8a75',weight:3,dashArray:'5 9'}).addTo(map);routeHitLayer=L.polyline([],{color:'#247454',weight:24,opacity:0,bubblingMouseEvents:false,className:'route-drag-line'}).addTo(map);initRouteTerrain();routeHitLayer.on('mousedown',e=>{if(!manualPath.drawing)beginLineDrag(e)});routeHitLayer.on('click',e=>{if(e.originalEvent)L.DomEvent.stop(e.originalEvent);if(!manualPath.addFromMap(e.latlng)&&isTouchMap(e))handlePlannerMapClick(e)});map.on('click',e=>{if(manualPath.addFromMap(e.latlng))return;if(!routeDrag&&Date.now()-lastLineDrag>400)handlePlannerMapClick(e)});
 
 let gpsSession=null;
 function stopGPS(session=gpsSession){if(!session)return;session.cancelled=true;if(session.watchId!==null)navigator.geolocation.clearWatch?.(session.watchId);clearTimeout(session.deadline);if(gpsSession===session)gpsSession=null;$('locate').classList.remove('is-locating');$('locate').setAttribute('aria-busy','false')}

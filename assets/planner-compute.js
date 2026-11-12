@@ -8,7 +8,7 @@
   if(pending.has(track))return pending.get(track);
   const promise=new Promise(resolve=>{
    try{
-    if(!worker){worker=new Worker('assets/planner-worker.js?v=3.14.0');worker.onerror=fail;worker.onmessage=({data})=>{const job=jobs.get(data.id);if(!job)return;jobs.delete(data.id);clearTimeout(job.timer);if(!data.error){root.PlannerCore.seed(job.track,data);root.PlannerCompute.last={mode:'worker',points:job.track.length,milliseconds:data.milliseconds}}job.resolve(!data.error)}}
+    if(!worker){worker=new Worker('assets/planner-worker.js?v=3.15.0');worker.onerror=fail;worker.onmessage=({data})=>{const job=jobs.get(data.id);if(!job)return;jobs.delete(data.id);clearTimeout(job.timer);if(!data.error){root.PlannerCore.seed(job.track,data);root.PlannerCompute.last={mode:'worker',points:job.track.length,milliseconds:data.milliseconds}}job.resolve(!data.error)}}
     const key=++id;jobs.set(key,{track,resolve,timer:setTimeout(fail,20000)});worker.postMessage({id:key,track});
    }catch{fail();resolve(false)}
   });pending.set(track,promise);return promise;
