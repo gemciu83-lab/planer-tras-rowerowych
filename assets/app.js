@@ -147,7 +147,7 @@ function addMapTileLayer({ url, ...options }, zIndex) {
   const layer = new ResilientTiles(url || '', {
     maxZoom: 19, maxNativeZoom: 19, keepBuffer: 2, zIndex, ...options
   });
-  layer.on('tileunload', event => event.tile.cancelLoad?.());
+  layer.on('tileunload tileabort', event => event.tile.cancelLoad?.());
   return layer.addTo(map);
 }
 function switchMapStyle(style) {
@@ -337,6 +337,16 @@ async function fastRouteFeature(ps,signal){
  cacheFeature(routeResultCache,fullKey,feature,12);return feature;
 }
 
+function routeTimeoutMs(requestPoints, parts, profile) {
+  if (profile === 'direct') return 60000;
+  const roadRuns = parts.length ? parts.filter(part => part.road).map(part => part.coordinates) : [requestPoints];
+  // Separate road runs in a hybrid route are sent in sequence, even if each URL is short.
+  const requests = roadRuns.reduce((total, run) => {
+    const bytes = routingParameters(run, profile).toString().length;
+    return total + Math.max(1, Math.ceil(bytes / routingMaxURLLength));
+  }, 0);
+  return 60000 * Math.max(1, requests);
+}
 
 $('route').onclick=async(auto=false)=>{
  if(typeof gpxEditTask!=='undefined'&&gpxEditTask){status('Poczekaj na zakończenie edycji fragmentu GPX.');return}
@@ -354,7 +364,7 @@ $('route').onclick=async(auto=false)=>{
  if(track.length>1)previousRoute={track,routeType};track=[];surfaceData=null;routeType='';mapDistancePending=true;
  const startedRouting=performance.now(),snapshot=++revision;controller?.abort();const requestController=controller=new AbortController();
  draw();stats();status('Wyznaczam trasę…');let timedOut=false;
- const timeout=setTimeout(()=>{timedOut=true;requestController.abort()},60000*Math.max(1,Math.ceil(routingParameters(requestPoints).toString().length/routingMaxURLLength)));
+ const timeout=setTimeout(()=>{timedOut=true;requestController.abort()},routeTimeoutMs(requestPoints,parts,profile));
  try{
   let result,feature=null,mixedSurface=null;
   if(manual.length){

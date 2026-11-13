@@ -30,6 +30,10 @@ function mock(env,calls,onCall){env.fetch=async url=>{
 };}
 const points=Array.from({length:601},(_,i)=>[19+i*.001,51]);
 async function tests(){
+ const hybridTimeout=context();
+ assert.equal(vm.runInContext("routeTimeoutMs([[19,51],[20,51]], [{road:true,coordinates:[[19,51],[19.1,51]]},{road:false},{road:true,coordinates:[[19.9,51],[20,51]]}], 'trekking')",hybridTimeout.ctx),120000);
+ assert.equal(vm.runInContext("routeTimeoutMs([[19,51],[20,51]], [{road:false}], 'trekking')",hybridTimeout.ctx),60000);
+ console.log('PASS: hybrid routing timeout covers each serialized road run');
  const html=fs.readFileSync(root+'/index.html','utf8');
  assert.match(html,/id="autoRouting" type="checkbox" checked/);
  const init=app.match(/try\{\$\('autoRouting'\)\.checked=localStorage\.getItem\('rowerem-routing-auto-v2'\)!=='false'\}catch\{\}/)?.[0];

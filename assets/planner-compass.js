@@ -2,7 +2,9 @@
 
 function initMapCompass(button, message) {
   const needle = button.querySelector('.compass-needle');
+  const defaultTitle = button.title;
   let active = false, starting = false, timer = null;
+  const unavailable = 'Brak odczytu kompasu. Północ mapy jest u góry.';
 
   function stop(text) {
     active = false;
@@ -10,7 +12,7 @@ function initMapCompass(button, message) {
     window.removeEventListener('deviceorientationabsolute', update);
     window.removeEventListener('deviceorientation', update);
     button.setAttribute('aria-pressed', 'false');
-    button.title = 'Północ mapy jest u góry. Dotknij, aby włączyć kompas telefonu.';
+    button.title = defaultTitle;
     needle.hidden = true;
     message.textContent = text;
   }
@@ -23,12 +25,21 @@ function initMapCompass(button, message) {
       heading = event.webkitCompassHeading;
     } else if (event.absolute && Number.isFinite(event.alpha)) {
       if (Math.abs(event.beta ?? 0) > 75 || Math.abs(event.gamma ?? 0) > 75) {
+        clearTimeout(timer);
         needle.hidden = true;
+        button.title = 'Trzymaj telefon bardziej poziomo. Dotknij, aby wyłączyć kompas.';
         message.textContent = 'Trzymaj telefon bardziej poziomo.';
         return;
       }
       heading = -event.alpha;
-    } else return;
+    } else {
+      if (!needle.hidden && (event.type === 'deviceorientationabsolute' || event.webkitCompassAccuracy < 0)) {
+        needle.hidden = true;
+        button.title = defaultTitle;
+        message.textContent = unavailable;
+      }
+      return;
+    }
 
     clearTimeout(timer);
     const screenAngle = screen.orientation?.angle ?? window.orientation ?? 0;
@@ -59,11 +70,14 @@ function initMapCompass(button, message) {
       message.textContent = 'Ustalam kierunek telefonu…';
       window.addEventListener('deviceorientationabsolute', update);
       window.addEventListener('deviceorientation', update);
-      timer = setTimeout(() => stop('Brak odczytu kompasu. Północ mapy jest u góry.'), 7000);
+      timer = setTimeout(() => stop(unavailable), 7000);
     } catch {
       stop('Kompas telefonu niedostępny. Północ mapy jest u góry.');
     } finally {
       starting = false;
     }
   };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && active) stop('');
+  });
 }

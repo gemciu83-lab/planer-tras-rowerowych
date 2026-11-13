@@ -1,11 +1,11 @@
 {
   "app": "planer-tras-rowerowych",
-  "version": "3.19.0",
-  "indexSHA": "0fefdaf344e3b969d5e45c2ce3b3227b9fdc90ae7664d40fedabd1e6e99b1d34",
+  "version": "3.20.0",
+  "indexSHA": "00a4179d3841c87385487607a7a52ee7f1819694d97b4a7f1d73e47747283c46",
   "assets": [
     {
       "path": "assets/app.js",
-      "sha256": "f9e0bcbd6c2e432a5df03f8885ec00d8ae60cb2526ade4764b0c2a606b01b98b"
+      "sha256": "5feeec0981293943edb8f39c5b33cea322a2510e805c386d62005a36af1d95eb"
     },
     {
       "path": "assets/leaflet.css",
@@ -21,11 +21,11 @@
     },
     {
       "path": "assets/planner-compass.js",
-      "sha256": "474821c29a1b0e7a5476bd55fd1bc6404f996f8d14a410d769aa0c536b662b1c"
+      "sha256": "cadb58fb8408d154867e1b7e10262ee0ecdee0ab04605a4e8d6a66db0f28f133"
     },
     {
       "path": "assets/planner-compute.js",
-      "sha256": "d29ef9ac48a84a88be8f81fd2175471974dbba9c3574323b0f67f21e17df620e"
+      "sha256": "940001f449a865113aaa54580356f743fd3eef70352a3f814fb70b2f2050bb03"
     },
     {
       "path": "assets/planner-coordinates.js",
@@ -81,7 +81,7 @@
     },
     {
       "path": "assets/planner-release.js",
-      "sha256": "43d256adb095343fd8355aa358d95cc59cff83454a772228ebcdfa44e87a29db"
+      "sha256": "d794741f147aac40dc7d83c310db8fa4ba1b01db8af96694afa4370578cfc450"
     },
     {
       "path": "assets/planner-rests.js",
@@ -97,7 +97,7 @@
     },
     {
       "path": "assets/planner-trip-ui.js",
-      "sha256": "565a868932a5354c0c92a42e31b00e9e42bd87449c318e6c2d4c94e6983e4c36"
+      "sha256": "5cb91df4b75f906dc0f61073a2cd2277d048a604dc7d9628b9c20c8d8543ab46"
     },
     {
       "path": "assets/planner-trip.js",
@@ -113,7 +113,7 @@
     },
     {
       "path": "assets/planner-worker.js",
-      "sha256": "b0b58cba07fbac261341a8b61641c3b270817f688e1c977118f58b5109689b1c"
+      "sha256": "c847827ae1d56563d8d712e2f9b9e06db7187eb7a64307665b5ab9dc8af96c52"
     },
     {
       "path": "assets/planner.css",
