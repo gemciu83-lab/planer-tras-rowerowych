@@ -1,11 +1,11 @@
 {
   "app": "planer-tras-rowerowych",
-  "version": "3.18.0",
-  "indexSHA": "5d71a395f8f7001b1f1a9a16bf5582016463d5fe2e605ff888e58880852ba710",
+  "version": "3.19.0",
+  "indexSHA": "0fefdaf344e3b969d5e45c2ce3b3227b9fdc90ae7664d40fedabd1e6e99b1d34",
   "assets": [
     {
       "path": "assets/app.js",
-      "sha256": "0617c2aea77548eb1a25d0d6be1f4561c23b31bbcb608c8939a0b08624b4e4cc"
+      "sha256": "f9e0bcbd6c2e432a5df03f8885ec00d8ae60cb2526ade4764b0c2a606b01b98b"
     },
     {
       "path": "assets/leaflet.css",
@@ -25,7 +25,7 @@
     },
     {
       "path": "assets/planner-compute.js",
-      "sha256": "175bea1f9a20d11ea63d2027016c0035bba1342554baca4ad3e1aeca57b6185b"
+      "sha256": "d29ef9ac48a84a88be8f81fd2175471974dbba9c3574323b0f67f21e17df620e"
     },
     {
       "path": "assets/planner-coordinates.js",
@@ -73,7 +73,7 @@
     },
     {
       "path": "assets/planner-maps.js",
-      "sha256": "2ff99236da33d0c2dbcdd89219cb540957052e6a5162127d0384273ecec1adcb"
+      "sha256": "d8de317dc309f5fac8b91ec2295fa81e5a85512325db4fe46d3f7ac539aa560a"
     },
     {
       "path": "assets/planner-network.js",
@@ -81,7 +81,7 @@
     },
     {
       "path": "assets/planner-release.js",
-      "sha256": "e24a51a8387c36f0ed7c8ee7b28fd3c1726f7103fb031adfc11770cff0be0732"
+      "sha256": "43d256adb095343fd8355aa358d95cc59cff83454a772228ebcdfa44e87a29db"
     },
     {
       "path": "assets/planner-rests.js",
@@ -113,11 +113,11 @@
     },
     {
       "path": "assets/planner-worker.js",
-      "sha256": "2d8e01de3495b01abec139b9778974626c57035700d9ee8041f7089c00eb764b"
+      "sha256": "b0b58cba07fbac261341a8b61641c3b270817f688e1c977118f58b5109689b1c"
     },
     {
       "path": "assets/planner.css",
-      "sha256": "1ea7e439649b04e243c5c984e6d63694ff30b867b0bc08c06dfe7894324ccfad"
+      "sha256": "ea7264fbaf187f750615175b1359205e835032f5447070595b41083c5d44bf36"
     }
   ]
 }

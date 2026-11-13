@@ -206,19 +206,9 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 #mapCompassMessage:empty { display: none; }
 @media (max-width: 600px) { .map-compass { left: 10px; } }
 @media print { .map-compass, .map-coordinate-tooltip { display: none !important; } }
-.fire-access-control {
+#fireAccessHint {
   order: 1;
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-.fire-access-control label, #fireAccessHint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
+  pointer-events: none;
   padding: 6px 8px;
   border: 1px solid #536b62;
   border-radius: 8px;
@@ -226,9 +216,6 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
   color: #e4ebe5;
   font-size: 11px;
 }
-.fire-access-control label { cursor: pointer; }
-.fire-access-control input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
-.fire-access-control small { color: #c0ef9e; }
 .map-top #mapReadoutStack { order: 2; }
 
 #manualPathToggle[aria-expanded="true"], #hybridToggle[aria-expanded="true"] {

@@ -1,6 +1,6 @@
 'use strict';
 
-const { styles: styleDefinitions, fireAccess: fireAccessOverlay } = (() => {
+const styleDefinitions = (() => {
   const osmCredit = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   const osm = { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: osmCredit };
   const esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
@@ -55,7 +55,7 @@ const { styles: styleDefinitions, fireAccess: fireAccessOverlay } = (() => {
 
   const fireAccess = { ...forestOverlay('WFS_BDL_dojazdy_pozarowe', '22'), minZoom: 10, maxNativeZoom: 17,
     attribution: '© <a href="https://bdl.lasy.gov.pl/portal/uslugi-ogc">Bank Danych o Lasach · Dojazdy pożarowe</a>' };
-  const styles = {
+  return {
     normal: [osm],
     walking: [topographic, forestOverlay('WMS_BDL_Mapa_turystyczna', '6,8,18,20,21,22')],
     cycle: [{
@@ -64,6 +64,7 @@ const { styles: styleDefinitions, fireAccess: fireAccessOverlay } = (() => {
     }],
     topographic: [topographic],
     forest: [osm, forestOverlay('WMS_BDL', '1,3,5')],
+    fireAccess: [osm, fireAccess],
     terrain: [{
       url: `${esri}World_Topo_Map/MapServer/tile/{z}/{y}/{x}`,
       attribution: `Tiles © Esri, HERE, Garmin, Intermap, USGS, FAO, NPS · ${osmCredit}`
@@ -75,5 +76,4 @@ const { styles: styleDefinitions, fireAccess: fireAccessOverlay } = (() => {
       attribution: `Nazwy i granice © Esri, HERE, Garmin · ${osmCredit}`
     }]
   };
-  return { styles, fireAccess };
 })();

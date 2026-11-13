@@ -7,15 +7,15 @@ function env(){
 }
 async function main(){
  const e=env(),R=e.ctx.PlannerRelease;
- assert.equal(R.compare('3.18.0','3.9.0'),1);assert.equal(R.compare('3.18.0','3.18.0'),0);assert.equal(R.compare('3.x.0','3.18.0'),null);
- const hash=async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),page=Buffer.from('<meta name="planner-version" content="3.19.0">'),asset=Buffer.from('future-release');
- const manifest={app:R.app,version:'3.19.0',indexSHA:await hash(page),assets:['app.js','planner-core.js','planner.css','planner-release.js','planner-worker.js'].map(n=>({path:'assets/'+n,sha256:''}))};for(const a of manifest.assets)a.sha256=await hash(asset);
+ assert.equal(R.compare('3.19.0','3.9.0'),1);assert.equal(R.compare('3.19.0','3.19.0'),0);assert.equal(R.compare('3.x.0','3.19.0'),null);
+ const hash=async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),page=Buffer.from('<meta name="planner-version" content="3.20.0">'),asset=Buffer.from('future-release');
+ const manifest={app:R.app,version:'3.20.0',indexSHA:await hash(page),assets:['app.js','planner-core.js','planner.css','planner-release.js','planner-worker.js'].map(n=>({path:'assets/'+n,sha256:''}))};for(const a of manifest.assets)a.sha256=await hash(asset);
  assert(R.manifest(manifest));assert.equal(R.manifest({...manifest,app:'other'}),null);assert.equal(R.manifest({...manifest,assets:[{path:'https://evil.example/a.js',sha256:'a'.repeat(64)}]}),null);
- const snapshot={points:[[19,51]],settings:{}};assert(R.recovery({version:'3.18.0',token:'a',time:1000,snapshot},'a',2000));assert.equal(R.recovery({version:'3.18.0',token:'a',time:1000,snapshot},'b',2000),null);assert.equal(R.recovery({version:'3.18.0',token:'a',time:1000,snapshot},'a',1000000),null);
+ const snapshot={points:[[19,51]],settings:{}};assert(R.recovery({version:'3.19.0',token:'a',time:1000,snapshot},'a',2000));assert.equal(R.recovery({version:'3.19.0',token:'a',time:1000,snapshot},'b',2000),null);assert.equal(R.recovery({version:'3.19.0',token:'a',time:1000,snapshot},'a',1000000),null);
  let partial=true;e.ctx.fetch=async(url)=>{e.requests.push(String(url));const u=new URL(url);return {ok:true,json:async()=>manifest,arrayBuffer:async()=>Uint8Array.from(u.pathname.endsWith('index.html')?page:partial?Buffer.from('old-release'):asset).buffer}};
  await e.run('checkRelease(true)');assert.equal(e.$('releaseBanner').hidden,false);assert.equal(e.reloads.length,0);
  await e.run('applyRelease()');assert.equal(e.reloads.length,0);assert.equal(e.store.size,0);assert(e.$('releaseMessage').textContent.includes('niespójne'));
- partial=false;await e.run('applyRelease()');assert.equal(e.reloads.length,1);const url=new URL(e.reloads[0]),payload=JSON.parse(e.store.get(R.key));assert.equal(url.searchParams.get('restoreUpdate'),payload.token);assert.equal(payload.version,'3.19.0');assert.equal(payload.snapshot.points.length,2);
+ partial=false;await e.run('applyRelease()');assert.equal(e.reloads.length,1);const url=new URL(e.reloads[0]),payload=JSON.parse(e.store.get(R.key));assert.equal(url.searchParams.get('restoreUpdate'),payload.token);assert.equal(payload.version,'3.20.0');assert.equal(payload.snapshot.points.length,2);
  const blocked=env();blocked.ctx.fetch=e.ctx.fetch;blocked.ctx.sessionStorage.setItem=()=>{throw Error('quota')};await blocked.run('checkRelease(true)');await blocked.run('applyRelease()');assert.equal(blocked.reloads.length,0);assert(blocked.$('releaseMessage').textContent.includes('Brak miejsca'));
  console.log('PASS: semantic version checks, malformed manifest rejection, explicit token/expiry recovery, partial publication cannot reload, verified update saves work, storage failure preserves current tab');
 }

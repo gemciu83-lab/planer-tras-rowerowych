@@ -156,28 +156,21 @@ function switchMapStyle(style) {
   mapNoticeDismissed = false;
 
   const selected = Object.hasOwn(styleDefinitions, style) ? style : 'normal';
-  const localOSM = location.protocol === 'file:' && ['normal', 'forest'].includes(selected);
+  const localOSM = location.protocol === 'file:' && ['normal', 'forest', 'fireAccess'].includes(selected);
   $('osmLocalNotice').hidden = !localOSM;
   if (!localOSM) {
     mapLayers = styleDefinitions[selected].map((options, index) => addMapTileLayer(options, index + 1));
   }
+  updateFireAccessHint(selected);
   updateMapNotice();
 }
 
 switchMapStyle('normal');
 $('mapStyle').onchange = () => switchMapStyle($('mapStyle').value);
-let fireAccessLayer = null;
-function updateFireAccessLayer() {
-  if ($('fireAccessToggle').checked) {
-    if (!fireAccessLayer) fireAccessLayer = addMapTileLayer(fireAccessOverlay, 20);
-  } else if (fireAccessLayer) {
-    fireAccessLayer.remove();
-    fireAccessLayer = null;
-  }
-  $('fireAccessHint').hidden = !$('fireAccessToggle').checked || map.getZoom() >= fireAccessOverlay.minZoom;
+function updateFireAccessHint(style = $('mapStyle').value) {
+  $('fireAccessHint').hidden = style !== 'fireAccess' || map.getZoom() >= styleDefinitions.fireAccess[1].minZoom;
 }
-$('fireAccessToggle').addEventListener('change', updateFireAccessLayer);
-map.on('zoomend', updateFireAccessLayer);
+map.on('zoomend', () => updateFireAccessHint());
 
 function retryMap() {
   const failedLayers = new Set(missingTiles.values());
@@ -581,21 +574,20 @@ setTimeout(()=>{if(!new URL(location.href).searchParams.has('restoreUpdate'))loc
 
 
 // Remember presentation preferences independently of the route and its undo history.
-function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,fireAccess:$('fireAccessToggle').checked,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
+function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
 try{
  const prefs=JSON.parse(localStorage.getItem('rowerem-view-v1')||'null');
  if(prefs){
-  if(Object.hasOwn(styleDefinitions,prefs.mapStyle)&&prefs.mapStyle!==$('mapStyle').value){$('mapStyle').value=prefs.mapStyle;switchMapStyle(prefs.mapStyle)}
+  const savedStyle=prefs.fireAccess===true?'fireAccess':prefs.mapStyle;
+  if(Object.hasOwn(styleDefinitions,savedStyle)&&savedStyle!==$('mapStyle').value){$('mapStyle').value=savedStyle;switchMapStyle(savedStyle)}
   $('showCoordinates').checked=prefs.showCoordinates===true;
-  $('fireAccessToggle').checked=prefs.fireAccess===true;
-  updateFireAccessLayer();
   if(typeof prefs.slopeColors==='boolean')$('slopeColors').checked=prefs.slopeColors;
   if(typeof prefs.slopeLabels==='boolean')$('slopeLabels').checked=prefs.slopeLabels&&$('slopeColors').checked;
   setMapDockOpen(typeof prefs.dockOpen==='boolean'?prefs.dockOpen:prefs.readings!==false);
   terrainVisible=null;renderRouteTerrain();
  }
 }catch{}
-for(const id of ['mapStyle','fireAccessToggle','slopeColors','slopeLabels','showCoordinates'])$(id).addEventListener('change',saveViewPreferences);
+for(const id of ['mapStyle','slopeColors','slopeLabels','showCoordinates'])$(id).addEventListener('change',saveViewPreferences);
 
 
 initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls();initMapDock();initMapSelects();initGPXControls();
