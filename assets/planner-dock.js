@@ -10,7 +10,11 @@ function setMapDockOpen(open,remember=false,focus=false){
  panel.hidden=!open;show.hidden=open;
  show.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-expanded',String(open));
  if(focus)(open?(document.getElementById?.('mapProfileButton')||$('mapProfile')):show).focus({preventScroll:true});
- positionMapActions();if(remember)saveViewPreferences();
+ positionMapActions();
+ if(remember){
+  if(typeof activeDockPreference==='function')dockPreferences[activeDockPreference()]=open;
+  saveViewPreferences();
+ }
 }
 function syncMapDock(){for(const [quick,source] of [['mapProfile','profile'],['mapBikeType','bikeType']])if(document.activeElement!==$(quick))$(quick).value=$(source).value;if(typeof syncMapSelects==='function')syncMapSelects()}
 function initMapDock(){

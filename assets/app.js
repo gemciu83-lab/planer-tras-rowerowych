@@ -437,7 +437,6 @@ window.addEventListener('pagehide',stopFollow);
 $('fitRoute').onclick=()=>{const cs=track.length>1?track:points;if(cs.length)map.fitBounds(L.latLngBounds(cs.map(c=>[c[1],c[0]])),{...mapDockFitOptions(),maxZoom:17});else status('Dodaj punkty, aby dopasować widok mapy.')};
 $('reverseRoute').onclick=()=>{if(points.length<2)return;if(typeof reverseImportedGPX==='function'&&reverseImportedGPX())return;checkpoint();points.reverse();invalidate();renderPoints()};
 $('cancelRoute').onclick=()=>{routingRecalcRequested=false;if(loopGenerating){cancelLoopSearch();stats();status('Szukanie propozycji pętli przerwane.');return}if(!mapDistancePending)return;if(loopGenerating)$('loopResult').textContent='Szukanie pętli przerwane.';revision++;controller?.abort();clearTimeout(autoRouteTimer);mapDistancePending=false;draw();stats();status('Wyznaczanie anulowane. Punkty i poprzedni przebieg zostały zachowane.')};
-$('mapFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('map').parentElement.requestFullscreen()}catch{status('Pełny ekran jest niedostępny w tej przeglądarce.',true)}};
 L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
 
 $('mapInfoClose').onclick=()=>{clearTimeout(mapInfoTimer);collapseMapInfo()};
@@ -473,9 +472,11 @@ const mapFooter=$('mapFooter');mapFooter.append(mapReadings,$('showMapReadings')
 function positionMapActions(){
  const mapNode=$('map'),help=$('mapHelp');
  const footerHeight=mapFooter.offsetHeight;
- const minHeight=Math.max(window.innerWidth<=600?650:620,footerHeight+230)+'px';
+ const mapSection=mapNode.parentElement;
+ const expanded=document.fullscreenElement===mapSection||mapSection.classList.contains('phone-map-expanded');
+ const minHeight=(expanded?0:Math.max(phoneLayout.matches?320:620,footerHeight+(phoneLayout.matches?205:230)))+'px';
  if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
- const footerTop=Math.max(70,mapNode.offsetHeight-footerHeight-28);
+ const footerTop=Math.max(70,mapNode.offsetHeight-footerHeight-(phoneLayout.matches?36:28));
  mapFooter.style.top=footerTop+'px';
  const helpTop=Math.max(70,footerTop-Math.max(32,help.offsetHeight)-8);
  help.style.top=helpTop+'px';
@@ -584,7 +585,7 @@ setTimeout(()=>{if(!new URL(location.href).searchParams.has('restoreUpdate'))loc
 
 
 // Remember presentation preferences independently of the route and its undo history.
-function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
+function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,dockOpen:dockPreferences.desktop,phoneDockOpen:dockPreferences.phone}))}catch{}}
 try{
  const prefs=JSON.parse(localStorage.getItem('rowerem-view-v1')||'null');
  if(prefs){
@@ -593,7 +594,7 @@ try{
   $('showCoordinates').checked=prefs.showCoordinates===true;
   if(typeof prefs.slopeColors==='boolean')$('slopeColors').checked=prefs.slopeColors;
   if(typeof prefs.slopeLabels==='boolean')$('slopeLabels').checked=prefs.slopeLabels&&$('slopeColors').checked;
-  setMapDockOpen(typeof prefs.dockOpen==='boolean'?prefs.dockOpen:prefs.readings!==false);
+  restoreDockPreferences(prefs);
   terrainVisible=null;renderRouteTerrain();
  }
 }catch{}
@@ -609,3 +610,4 @@ initWalkingControls();
 
 initMapCoordinates(map, $('showCoordinates'));
 initMapCompass($('mapCompassToggle'), $('mapCompassMessage'));
+initPhoneLayout();
