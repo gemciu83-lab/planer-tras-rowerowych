@@ -153,6 +153,83 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
   white-space: nowrap;
   pointer-events: none;
 }
+.map-coordinate-tooltip input {
+  display: block;
+  width: 23ch;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.map-coordinate-elevation { display: block; margin-top: 3px; color: #c5e4bc; }
+.map-coordinate-tooltip.is-pinned { padding: 9px; pointer-events: auto; }
+.map-coordinate-actions { display: flex; gap: 6px; margin-top: 7px; }
+.map-coordinate-actions button { min-height: 34px; padding: 4px 10px; font: 600 12px system-ui; }
+.map-coordinate-actions button:last-child { margin-left: auto; }
+.map-compass { position: absolute; left: 20px; top: 70px; z-index: 500; }
+#mapCompassToggle {
+  display: block;
+  position: relative;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border-radius: 50%;
+  background: #132b2fee;
+  color: #e6efe9;
+  font: 700 10px/1 system-ui;
+  box-shadow: 0 2px 7px #0004;
+}
+#mapCompassToggle:hover { background: #294641; }
+#mapCompassToggle span { position: absolute; }
+.compass-north, .compass-south { left: 50%; transform: translateX(-50%); }
+.compass-east, .compass-west { top: 50%; transform: translateY(-50%); }
+.compass-north { top: 4px; color: #ffc2ad; }
+.compass-south { bottom: 4px; }
+.compass-west { left: 4px; }
+.compass-east { right: 4px; }
+.compass-needle { inset: 15px; background: #c0ef9e; clip-path: polygon(50% 0, 77% 95%, 50% 73%, 23% 95%); }
+#mapCompassMessage {
+  position: absolute;
+  left: 64px;
+  top: 0;
+  width: max-content;
+  max-width: 160px;
+  padding: 6px 8px;
+  border: 1px solid #536b62;
+  border-radius: 7px;
+  background: #132b2f;
+  color: #e4ebe5;
+  font-size: 11px;
+}
+#mapCompassMessage:empty { display: none; }
+@media (max-width: 600px) { .map-compass { left: 10px; } }
+@media print { .map-compass, .map-coordinate-tooltip { display: none !important; } }
+.fire-access-control {
+  order: 1;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.fire-access-control label, #fireAccessHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid #536b62;
+  border-radius: 8px;
+  background: #132b2f;
+  color: #e4ebe5;
+  font-size: 11px;
+}
+.fire-access-control label { cursor: pointer; }
+.fire-access-control input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.fire-access-control small { color: #c0ef9e; }
+.map-top #mapReadoutStack { order: 2; }
 
 #manualPathToggle[aria-expanded="true"], #hybridToggle[aria-expanded="true"] {
   background: #422b54;

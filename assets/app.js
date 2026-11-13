@@ -143,29 +143,41 @@ const ResilientTiles = L.TileLayer.extend({
 });
 
 let mapLayers = [];
+function addMapTileLayer({ url, ...options }, zIndex) {
+  const layer = new ResilientTiles(url || '', {
+    maxZoom: 19, maxNativeZoom: 19, keepBuffer: 2, zIndex, ...options
+  });
+  layer.on('tileunload', event => event.tile.cancelLoad?.());
+  return layer.addTo(map);
+}
 function switchMapStyle(style) {
   for (const layer of mapLayers) map.removeLayer(layer);
   mapLayers = [];
-  missingTiles.clear();
   mapNoticeDismissed = false;
 
   const selected = Object.hasOwn(styleDefinitions, style) ? style : 'normal';
   const localOSM = location.protocol === 'file:' && ['normal', 'forest'].includes(selected);
   $('osmLocalNotice').hidden = !localOSM;
   if (!localOSM) {
-    mapLayers = styleDefinitions[selected].map(({ url, ...options }, index) => {
-      const layer = new ResilientTiles(url || '', {
-        maxZoom: 19, maxNativeZoom: 19, keepBuffer: 2, zIndex: index + 1, ...options
-      });
-      layer.on('tileunload', event => event.tile.cancelLoad?.());
-      return layer.addTo(map);
-    });
+    mapLayers = styleDefinitions[selected].map((options, index) => addMapTileLayer(options, index + 1));
   }
   updateMapNotice();
 }
 
 switchMapStyle('normal');
 $('mapStyle').onchange = () => switchMapStyle($('mapStyle').value);
+let fireAccessLayer = null;
+function updateFireAccessLayer() {
+  if ($('fireAccessToggle').checked) {
+    if (!fireAccessLayer) fireAccessLayer = addMapTileLayer(fireAccessOverlay, 20);
+  } else if (fireAccessLayer) {
+    fireAccessLayer.remove();
+    fireAccessLayer = null;
+  }
+  $('fireAccessHint').hidden = !$('fireAccessToggle').checked || map.getZoom() >= fireAccessOverlay.minZoom;
+}
+$('fireAccessToggle').addEventListener('change', updateFireAccessLayer);
+map.on('zoomend', updateFireAccessLayer);
 
 function retryMap() {
   const failedLayers = new Set(missingTiles.values());
@@ -462,7 +474,9 @@ function positionMapActions(){
  if(mapNode.style.minHeight!==minHeight)mapNode.style.minHeight=minHeight;
  const footerTop=Math.max(70,mapNode.offsetHeight-footerHeight-28);
  mapFooter.style.top=footerTop+'px';
- help.style.top=Math.max(70,footerTop-Math.max(32,help.offsetHeight)-8)+'px';
+ const helpTop=Math.max(70,footerTop-Math.max(32,help.offsetHeight)-8);
+ help.style.top=helpTop+'px';
+ $('mapCompass').style.top=Math.max(70,helpTop-66)+'px';
 }
 let dockResizeFrame=null;
 const dockObserver=new ResizeObserver(()=>{if(dockResizeFrame!==null)return;dockResizeFrame=requestAnimationFrame(()=>{dockResizeFrame=null;positionMapActions();map.invalidateSize({pan:false})})});
@@ -567,19 +581,21 @@ setTimeout(()=>{if(!new URL(location.href).searchParams.has('restoreUpdate'))loc
 
 
 // Remember presentation preferences independently of the route and its undo history.
-function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
+function saveViewPreferences(){try{localStorage.setItem('rowerem-view-v1',JSON.stringify({mapStyle:$('mapStyle').value,fireAccess:$('fireAccessToggle').checked,showCoordinates:$('showCoordinates').checked,slopeColors:$('slopeColors').checked,slopeLabels:$('slopeLabels').checked,readings:!mapReadings.hidden,dockOpen:!mapReadings.hidden}))}catch{}}
 try{
  const prefs=JSON.parse(localStorage.getItem('rowerem-view-v1')||'null');
  if(prefs){
   if(Object.hasOwn(styleDefinitions,prefs.mapStyle)&&prefs.mapStyle!==$('mapStyle').value){$('mapStyle').value=prefs.mapStyle;switchMapStyle(prefs.mapStyle)}
   $('showCoordinates').checked=prefs.showCoordinates===true;
+  $('fireAccessToggle').checked=prefs.fireAccess===true;
+  updateFireAccessLayer();
   if(typeof prefs.slopeColors==='boolean')$('slopeColors').checked=prefs.slopeColors;
   if(typeof prefs.slopeLabels==='boolean')$('slopeLabels').checked=prefs.slopeLabels&&$('slopeColors').checked;
   setMapDockOpen(typeof prefs.dockOpen==='boolean'?prefs.dockOpen:prefs.readings!==false);
   terrainVisible=null;renderRouteTerrain();
  }
 }catch{}
-for(const id of ['mapStyle','slopeColors','slopeLabels','showCoordinates'])$(id).addEventListener('change',saveViewPreferences);
+for(const id of ['mapStyle','fireAccessToggle','slopeColors','slopeLabels','showCoordinates'])$(id).addEventListener('change',saveViewPreferences);
 
 
 initPlannerFeatures();initTripPlanning();initRestPlanning();initEnergyControls();initMapDock();initMapSelects();initGPXControls();
@@ -589,4 +605,5 @@ initReviewControls();initReleaseControls();
 
 initWalkingControls();
 
-initCoordinateHover(map, $('showCoordinates'));
+initMapCoordinates(map, $('showCoordinates'));
+initMapCompass($('mapCompassToggle'), $('mapCompassMessage'));
