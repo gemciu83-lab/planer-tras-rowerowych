@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Pozycja na żywo · Planer tras</title>
+  <link rel="stylesheet" href="assets/leaflet.css">
+  <link rel="stylesheet" href="assets/planner.css?v=3.22.0">
+</head>
+<body class="live-viewer">
+  <main>
+    <h1>Pozycja na żywo</h1>
+    <p id="viewerStatus" role="status">Sprawdzam link…</p>
+    <p id="viewerDetails" hidden></p>
+    <button id="viewerCenter" type="button" hidden>Pokaż pozycję na mapie</button>
+    <div id="viewerMap" aria-label="Mapa udostępnionej pozycji" hidden></div>
+  </main>
+  <script src="assets/leaflet.js"></script>
+  <script src="assets/planner-live-config.js?v=3.22.0"></script>
+  <script src="assets/planner-live.js?v=3.22.0"></script>
+  <script src="assets/planner-live-viewer.js?v=3.22.0"></script>
+</body>
+</html>

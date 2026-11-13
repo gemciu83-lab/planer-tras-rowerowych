@@ -384,6 +384,16 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .phone-layout .map-wrap:fullscreen > :is(.analysis-panel, #phoneCoordinatesHint) { display: none !important; }
 .map-wrap:is(:fullscreen, .phone-map-expanded) .map-help { bottom: auto; }
 .map-wrap:is(:fullscreen, .phone-map-expanded) #phoneSummary { display: none; }
+
+.planner-header #headerActions { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+#liveOpen.live-active, #phoneMenuToggle.live-active { background: #395d3b; border-color: #acda9a; }
+.live-dialog { width: min(460px, calc(100% - 24px)); }
+.live-dialog h2 { margin: 0 0 8px; }
+.live-dialog .tools button { min-height: 44px; }
+#liveShareStatus { min-height: 2.6em; }
+.live-viewer main { max-width: 960px; margin: auto; padding: 18px; }
+.live-viewer h1 { margin-top: 0; }
+.live-viewer #viewerMap { height: min(64dvh, 640px); min-height: 240px; margin-top: 12px; border-radius: 10px; }
 @media (max-width: 1020px) {
   .planner-header {
     grid-template-columns: minmax(0, 1fr) auto;

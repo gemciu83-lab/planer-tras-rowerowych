@@ -1,11 +1,11 @@
 {
   "app": "planer-tras-rowerowych",
-  "version": "3.21.0",
-  "indexSHA": "54764b4ba34416e649e7d36416538f666ba1ac4009fb73a14781357f591531b6",
+  "version": "3.22.0",
+  "indexSHA": "ebc2c225d1cf462c39e67088a411c0df9285777c8826a7d40f9ff1e8d1a97f3c",
   "assets": [
     {
       "path": "assets/app.js",
-      "sha256": "e3d6b9e3fbea96009769532722f2ed560cab6e62c66bcfb1c96cba3dd2257b1e"
+      "sha256": "258c4b25ecab3af7501c1693e1f341d9c01b05cb70329a5ab57da67991514f1b"
     },
     {
       "path": "assets/leaflet.css",
@@ -25,7 +25,7 @@
     },
     {
       "path": "assets/planner-compute.js",
-      "sha256": "7a41d28fa860a166a16e36b1dba695b80d9a571671bf56f288bc4463d31f3357"
+      "sha256": "9e842eb76382b83779c40619a19bd4af308ce59c10fbae365b1c412d62a39f02"
     },
     {
       "path": "assets/planner-coordinates.js",
@@ -68,6 +68,18 @@
       "sha256": "6bae1ce36dd7f6baa24f113b28c50ef26e151495bd60a1ce5529910bf0ec2082"
     },
     {
+      "path": "assets/planner-live-config.js",
+      "sha256": "0db041039c048ad3ab4aea6f8115542cf343b746a640f8de287fb4705889cbaa"
+    },
+    {
+      "path": "assets/planner-live-viewer.js",
+      "sha256": "4d3b75c1b92bab8233e8dec949f0348f9dd8a82e3b734ee8dc3ffe2d89c7b2e0"
+    },
+    {
+      "path": "assets/planner-live.js",
+      "sha256": "51eeccea91cb1838014e5da75647e7bd26e54028d01e29fa99eb2c2b64035474"
+    },
+    {
       "path": "assets/planner-manual-path.js",
       "sha256": "5334e33f386a917f72fe3895e95e66cd2383e152cdbca1440371b0beb09d801a"
     },
@@ -85,7 +97,7 @@
     },
     {
       "path": "assets/planner-release.js",
-      "sha256": "a9a73a421568b6728fcc6c62636d99b17c5e1360bb3afeed6964e75729652469"
+      "sha256": "c03e6d0d182eb2740a6cfbe453613024b70a471beb345758e9e4df8350519668"
     },
     {
       "path": "assets/planner-rests.js",
@@ -117,11 +129,11 @@
     },
     {
       "path": "assets/planner-worker.js",
-      "sha256": "1a13f5eeaee0b845d4517a77aac897a21c565b8f0678702865d90f7e279b4b8b"
+      "sha256": "7590a0b391cd377cc458110ccbdcf66b6d03058e5529a292c308300076971f4b"
     },
     {
       "path": "assets/planner.css",
-      "sha256": "56fb0c1376249f6d7de94c26f0eb75cbcc04d51563a05a944540dcd6194d9982"
+      "sha256": "245cc9bc61ce425aa092500e0cd4fdc577a3e29e5cbf428081990ad0c69f44b3"
     }
   ]
 }

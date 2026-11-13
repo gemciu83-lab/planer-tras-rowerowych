@@ -1,0 +1,15 @@
+name = "planer-pozycja"
+main = "worker.mjs"
+compatibility_date = "2026-11-13"
+workers_dev = true
+
+[vars]
+PLANNER_ORIGIN = "https://gemciu83-lab.github.io"
+
+[[durable_objects.bindings]]
+name = "LIVE_SESSIONS"
+class_name = "LiveSession"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LiveSession"]

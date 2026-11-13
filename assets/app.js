@@ -611,3 +611,5 @@ initWalkingControls();
 initMapCoordinates(map, $('showCoordinates'));
 initMapCompass($('mapCompassToggle'), $('mapCompassMessage'));
 initPhoneLayout();
+
+initLiveSharing();
