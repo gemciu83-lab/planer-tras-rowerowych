@@ -61,6 +61,13 @@ export default {
       return cors(response);
     }
     const path = new URL(request.url).pathname;
+    if (path === '/live/health') {
+      if (request.method !== 'GET') return cors(reply(405));
+      if (!tokenPattern.test(env.LIVE_SETUP_KEY ?? '') || !env.LIVE_SESSIONS) return cors(reply(503));
+      const token = bearer(request);
+      if (request.headers.has('Authorization') && !await matches(token, env.LIVE_SETUP_KEY)) return cors(reply(401));
+      return cors(reply(200, { service: 'planner-live', version: 1 }));
+    }
     const id = path.match(/^\/live\/([a-f0-9]{64})$/)?.[1];
     if (!id) return cors(reply(404));
     if (!bearer(request)) return cors(reply(401));

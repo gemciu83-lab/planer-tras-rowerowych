@@ -22,7 +22,7 @@ const PlannerLive = (() => {
     const response = await fetch(service() + '/live/' + id, {
       method, cache: 'no-store', referrerPolicy: 'no-referrer', credentials: 'omit',
       signal: AbortSignal.timeout(12000),
-      headers: { Authorization: 'Bearer ' + secret, ...(data ? { 'Content-Type': 'application/json' } : {}) },
+      headers: { ...(secret ? { Authorization: 'Bearer ' + secret } : {}), ...(data ? { 'Content-Type': 'application/json' } : {}) },
       body: data ? JSON.stringify(data) : undefined
     });
     if (!response.ok) throw Object.assign(Error(
@@ -58,9 +58,12 @@ function initLiveSharing() {
   const node = id => document.getElementById(id);
   const dialog = node('liveDialog'), status = node('liveShareStatus'), link = node('liveLink');
   const start = node('liveStart'), end = node('liveEnd'), setup = node('liveSetupKey');
+  const help = node('liveHelp'), helpToggle = node('liveHelpToggle');
+  const check = node('liveCheck'), report = node('liveCheckReport');
+  const serviceCheck = node('liveServiceCheck'), gpsCheck = node('liveGpsCheck'), deliveryCheck = node('liveDeliveryCheck');
   const storageKey = 'planner-live-owner-v1';
   let session = null, watch = null, expiry = null, sending = false, nextSend = 0;
-  let starting = false, ending = false, paused = false;
+  let starting = false, ending = false, paused = false, checking = false;
   try {
     const saved = JSON.parse(sessionStorage.getItem(storageKey));
     if (saved?.expiresAt > Date.now() && ['id', 'owner', 'reader', 'cipher'].every(name => PlannerLive.tokenPattern.test(saved[name] || ''))) {
@@ -84,8 +87,10 @@ function initLiveSharing() {
     node('liveActions').hidden = !session;
     node('liveResume').hidden = !paused || ending;
     node('liveCopy').disabled = ending;
-    start.disabled = starting;
+    start.disabled = starting || checking;
     end.disabled = ending;
+    check.disabled = starting || ending || checking;
+    check.setAttribute('aria-busy', String(checking));
     if (!session) { link.value = ''; return; }
     const target = new URL('pozycja.html', location.href);
     target.hash = [session.id, session.reader, session.cipher].join('.');
@@ -97,6 +102,7 @@ function initLiveSharing() {
     clearTimeout(expiry);
     session = null;
     paused = false;
+    if (!report.hidden) deliveryCheck.textContent = 'Podgląd: brak otwartego linku.';
     try { sessionStorage.removeItem(storageKey); } catch {}
     show(text);
   }
@@ -118,7 +124,10 @@ function initLiveSharing() {
       const encrypted = await PlannerLive.encrypt(current.cipher, point);
       if (session !== current || paused || ending) return;
       await PlannerLive.request(current.id, current.owner, 'PUT', encrypted);
-      if (session === current && !paused && !ending) show('Ostatnia wysłana pozycja: ' + new Date(point.timestamp).toLocaleTimeString('pl-PL'));
+      if (session === current && !paused && !ending) {
+        show('Ostatnia wysłana pozycja: ' + new Date(point.timestamp).toLocaleTimeString('pl-PL'));
+        if (!report.hidden && !checking) deliveryCheck.textContent = 'Podgląd: usługa przyjęła odczyt GPS.';
+      }
     } catch (error) {
       if (session !== current || paused || ending) return;
       if (error.status === 404) finish(error.message);
@@ -145,7 +154,7 @@ function initLiveSharing() {
   }
 
   start.onclick = async () => {
-    if (session || starting) return;
+    if (session || starting || checking) return;
     if (!navigator.geolocation || !crypto.subtle) { show('Udostępnianie wymaga GPS i bezpiecznego adresu HTTPS.'); return; }
     const access = setup.value.trim();
     if (!PlannerLive.tokenPattern.test(access)) { show('Wpisz klucz uruchomienia z konfiguracji usługi.'); return; }
@@ -160,7 +169,7 @@ function initLiveSharing() {
       expire();
       resume();
     } catch (error) { show(error.message || 'Nie udało się utworzyć linku.'); }
-    finally { starting = false; start.disabled = false; }
+    finally { starting = false; show(status.textContent); }
   };
 
   end.onclick = async () => {
@@ -179,10 +188,77 @@ function initLiveSharing() {
       else show('GPS wstrzymany. Brak połączenia z usługą. Ponów zakończenie, aby zamknąć link od razu.');
     } finally {
       ending = false;
-      end.disabled = false;
-      node('liveCopy').disabled = false;
-      node('liveResume').hidden = !paused;
+      show(status.textContent);
     }
+  };
+  check.onclick = async () => {
+    if (starting || ending || checking) return;
+    checking = true;
+    report.hidden = false;
+    show(status.textContent);
+    const current = session;
+    const access = setup.value.trim();
+    serviceCheck.textContent = 'Usługa: sprawdzam…';
+    gpsCheck.textContent = 'GPS: czekam na próbny odczyt…';
+    deliveryCheck.textContent = current ? 'Podgląd: sprawdzam link…' : 'Podgląd: utwórz link, aby sprawdzić dostarczenie pozycji.';
+
+    async function checkService() {
+      try {
+        if (access && !PlannerLive.tokenPattern.test(access)) {
+          serviceCheck.textContent = 'Usługa: klucz powinien mieć 64 znaki szesnastkowe.';
+          return;
+        }
+        const result = await PlannerLive.request('health', access, 'GET');
+        if (result?.service !== 'planner-live' || result.version !== 1) throw Error('Adres nie wskazuje na usługę planera.');
+        serviceCheck.textContent = access ? 'Usługa: działa, klucz poprawny.' : 'Usługa: działa.';
+      } catch (error) {
+        serviceCheck.textContent = error.status === 404 || error instanceof SyntaxError
+          ? 'Usługa: brak diagnostyki pod tym adresem. Sprawdź adres i wgraj usługę 3.23.'
+          : 'Usługa: ' + (error.status === 503 ? 'sprawdź konfigurację klucza i magazynu.' : error.message);
+      }
+    }
+
+    async function checkGps() {
+      if (!navigator.geolocation || !globalThis.isSecureContext) {
+        gpsCheck.textContent = 'GPS: potrzebna jest lokalizacja w przeglądarce i adres HTTPS.';
+        return;
+      }
+      const result = await new Promise(resolve => {
+        const timeout = setTimeout(() => resolve('przekroczono czas oczekiwania.'), 12000);
+        const finish = text => { clearTimeout(timeout); resolve(text); };
+        try {
+          navigator.geolocation.getCurrentPosition(
+            p => finish('odczyt działa, dokładność około ' + Math.round(p.coords.accuracy) + ' m.'),
+            error => finish(error.code === 1 ? 'brak zgody na lokalizację.' : 'brak odczytu. Sprawdź lokalizację w telefonie.'),
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+          );
+        } catch { finish('przeglądarka nie udostępniła odczytu.'); }
+      });
+      gpsCheck.textContent = 'GPS: ' + result;
+    }
+
+    async function checkDelivery() {
+      if (!current) return;
+      try {
+        const result = await PlannerLive.request(current.id, current.reader, 'GET');
+        const point = result.point ? await PlannerLive.decrypt(current.cipher, result.point) : null;
+        if (session !== current) return;
+        if (!point) {
+          deliveryCheck.textContent = 'Podgląd: link działa, czeka na pierwszy wysłany odczyt.';
+          return;
+        }
+        if (!PlannerLive.validPoint(point)) throw Error();
+        const age = Math.floor(Math.max(0, result.serverTime - result.point.receivedAt + (point.ageAtSend || 0)) / 1000);
+        deliveryCheck.textContent = 'Podgląd: odbiorca może odczytać pozycję. Ostatni odczyt ' +
+          (age < 60 ? age + ' s' : Math.floor(age / 60) + ' min') + ' temu.';
+      } catch (error) {
+        if (session !== current) return;
+        deliveryCheck.textContent = error.status === 404 ? 'Podgląd: link jest zamknięty albo wygasł.' : 'Podgląd: nie udało się odczytać pozycji.';
+      }
+    }
+
+    try { await Promise.all([checkService(), checkGps(), checkDelivery()]); }
+    finally { checking = false; show(status.textContent); }
   };
   node('liveResume').onclick = resume;
   node('liveCopy').onclick = async () => {
@@ -196,6 +272,12 @@ function initLiveSharing() {
     catch (error) { show(error.message); }
   };
   node('liveClose').onclick = () => dialog.close();
+  function setHelp(open) {
+    help.hidden = !open;
+    helpToggle.setAttribute('aria-expanded', String(open));
+  }
+  helpToggle.onclick = () => setHelp(help.hidden);
+  dialog.addEventListener('close', () => setHelp(false));
   show(paused ? 'Wysyłanie pozycji wstrzymano po odświeżeniu.' : '');
   expire();
 }

@@ -389,8 +389,32 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 #liveOpen.live-active, #phoneMenuToggle.live-active { background: #395d3b; border-color: #acda9a; }
 .live-dialog { width: min(460px, calc(100% - 24px)); }
 .live-dialog h2 { margin: 0 0 8px; }
+.live-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.live-dialog-heading h2 { margin: 0; }
+#liveHelpToggle { flex: 0 0 44px; min-height: 44px; padding: 0; border-radius: 50%; font-size: 17px; }
+#liveHelpToggle[aria-expanded="true"] { color: #142c23; background: var(--accent); }
+.live-help { margin-top: 8px; padding: 12px; border: 1px solid #526d5b; border-radius: 10px; background: #142a2c; font-size: 13px; line-height: 1.5; }
+.live-help h3, .live-help p { margin: 0; }
+.live-help ol { padding-left: 20px; margin: 6px 0; }
+.live-help li + li, .live-help details, .live-help details p { margin-top: 6px; }
+.live-help summary { min-height: 32px; padding: 4px 0; }
+.live-help code { overflow-wrap: anywhere; }
 .live-dialog .tools button { min-height: 44px; }
 #liveShareStatus { min-height: 2.6em; }
+.live-check-report { margin: 10px 0 0; padding-left: 20px; font-size: 12px; }
+.live-check-report li + li { margin-top: 5px; }
+.map-top #forestTourismLegend {
+  order: 1;
+  max-width: min(240px, 72vw);
+  padding: 6px 9px;
+  border: 1px solid #536b62;
+  border-radius: 8px;
+  background: #132b2f;
+  font-size: 12px;
+}
+#forestTourismLegend summary { padding: 4px 0; }
+#forestTourismLegend ul { margin: 6px 0; padding-left: 18px; }
+#forestTourismLegend li + li { margin-top: 3px; }
 .live-viewer main { max-width: 960px; margin: auto; padding: 18px; }
 .live-viewer h1 { margin-top: 0; }
 .live-viewer #viewerMap { height: min(64dvh, 640px); min-height: 240px; margin-top: 12px; border-radius: 10px; }

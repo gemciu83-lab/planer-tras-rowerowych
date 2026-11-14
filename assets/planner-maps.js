@@ -65,6 +65,10 @@ const styleDefinitions = (() => {
     topographic: [topographic],
     forest: [osm, forestOverlay('WMS_BDL', '1,3,5')],
     fireAccess: [osm, fireAccess],
+    forestTourism: [osm, {
+      ...forestOverlay('WMS_BDL_Mapa_turystyczna', '2,4,6,8,10,18,19,20,21,22'),
+      maxNativeZoom: 17
+    }],
     terrain: [{
       url: `${esri}World_Topo_Map/MapServer/tile/{z}/{y}/{x}`,
       attribution: `Tiles © Esri, HERE, Garmin, Intermap, USGS, FAO, NPS · ${osmCredit}`

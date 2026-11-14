@@ -31,6 +31,15 @@ const call = (method, secret, body, from = origin) => worker.fetch(new Request(e
   method, headers: { Origin: from, ...(secret ? { Authorization: 'Bearer ' + secret } : {}) },
   body: body === undefined ? undefined : JSON.stringify(body)
 }), env);
+const check = (secret, overrides = {}, from = origin) => worker.fetch(new Request('https://live.example/live/health', {
+  headers: { Origin: from, ...(secret ? { Authorization: 'Bearer ' + secret } : {}) }
+}), { ...env, ...overrides });
+assert.deepEqual(await (await check()).json(), { service: 'planner-live', version: 1 });
+assert.equal((await check(setup)).status, 200);
+assert.equal((await check(owner)).status, 401);
+assert.equal((await check(null, { LIVE_SETUP_KEY: '' })).status, 503);
+assert.equal((await check(null, {}, 'https://elsewhere.example')).status, 403);
+assert.equal(reads, 0);
 
 assert.equal((await call('POST', owner, { owner, reader, hours: 1 })).status, 401);
 assert.equal((await call('GET', reader, undefined, 'https://elsewhere.example')).status, 403);

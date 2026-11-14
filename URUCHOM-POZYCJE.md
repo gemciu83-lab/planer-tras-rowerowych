@@ -1,4 +1,4 @@
-# Udostępnianie pozycji w Planerze 3.22
+# Udostępnianie pozycji w Planerze 3.24
 
 ## Szybka próba na komputerze
 
@@ -20,3 +20,7 @@ Adres 127.0.0.1 służy do próby na jednym komputerze. Do testu między telefon
 Każdy, kto otrzyma pełny link, może otworzyć podgląd do końca sesji. Serwer przyjmuje tylko ostatni zaszyfrowany odczyt, a klucz szyfrowania jest w części linku po znaku `#`. Po otwarciu mapy OpenStreetMap otrzymuje żądania kafelków okolicy widocznej na ekranie.
 
 Gdy ekran się zablokuje, karta trafi w tło lub zabraknie internetu, odczyty mogą przestać się aktualizować. Odbiorca widzi wiek ostatniej pozycji. Po odświeżeniu planera użyj **Wznów wysyłanie GPS**. Przy braku sieci przycisk **Zakończ udostępnianie** zatrzymuje odczyt na telefonie. Zamknięcie linku wymaga ponowienia po odzyskaniu sieci albo nastąpi w chwili wygaśnięcia.
+
+**Sprawdź udostępnianie** sprawdza usługę i lokalizację telefonu. Możesz też wpisać klucz przed sprawdzeniem, aby potwierdzić jego poprawność. Po utworzeniu linku przycisk sprawdza również odczyt ostatniej wysłanej pozycji tak, jak zrobi to odbiorca. Próbny odczyt GPS służy do diagnostyki na urządzeniu.
+
+Jeśli masz już usługę z wersji 3.22, wdrożenie poleceniem `npx wrangler deploy` w tym samym projekcie doda diagnostykę. Użyj dotychczasowego publicznego adresu usługi i zachowanego klucza.

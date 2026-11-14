@@ -156,12 +156,15 @@ function switchMapStyle(style) {
   mapNoticeDismissed = false;
 
   const selected = Object.hasOwn(styleDefinitions, style) ? style : 'normal';
-  const localOSM = location.protocol === 'file:' && ['normal', 'forest', 'fireAccess'].includes(selected);
+  const localOSM = location.protocol === 'file:' && ['normal', 'forest', 'fireAccess', 'forestTourism'].includes(selected);
   $('osmLocalNotice').hidden = !localOSM;
   if (!localOSM) {
     mapLayers = styleDefinitions[selected].map((options, index) => addMapTileLayer(options, index + 1));
   }
   updateFireAccessHint(selected);
+  const tourismLegend = $('forestTourismLegend');
+  tourismLegend.hidden = selected !== 'forestTourism';
+  if (tourismLegend.hidden) tourismLegend.open = false;
   updateMapNotice();
 }
 
