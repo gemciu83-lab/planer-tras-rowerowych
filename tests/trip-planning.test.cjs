@@ -24,6 +24,13 @@ const valid={type:'node',id:5,lon:19.005,lat:51.001,tags:{amenity:'drinking_wate
 assert.equal(P.place({...valid,tags:{shop:'convenience'}},index).kind,'shop');assert.equal(P.place({...valid,tags:{tourism:'picnic_site'}},index).kind,'rest');
 const query=P.placesQuery([[19,51],[19.01,51.01],[19.02,51]]);assert(query.includes('51.000000,19.000000'));assert(query.includes('51.010000,19.010000'));assert(query.includes('out center tags 1000;'));assert(!query.includes('highway=primary'));
 console.log('PASS: places are filtered against route segments within 500 m; private/non-potable water excluded; bounded corridor query preserves bends');
+const sight={type:'node',id:51,lat:51.008,lon:19.005,tags:{'tower:type':'observation',name:'Wieża'}};
+assert.equal(P.place(sight,index,true).kind,'view');
+assert.equal(P.place(sight,index),null);
+assert.equal(P.place({...sight,lat:51.012},index,true),null);
+assert.equal(P.place({...sight,tags:{...sight.tags,access:'private'}},index,true),null);
+assert.match(P.placesQuery(index.cs,true),/nwr\["tower:type"=observation\]\(around:1100,/);
+console.log('PASS: tourist searches use their own corridor and filters without changing service searches');
 // Test real metadata integration independently of rendering and the network.
 const nodes=new Map(),node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='profile'?'trekking':id==='preferredSurface'?'balanced':'',checked:false});return nodes.get(id)};
 Object.assign(env,{$:node,WeakMap,Map,points:ps.map(p=>p.slice()),track:[],document:{},L:{}});

@@ -399,6 +399,10 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .live-help li + li, .live-help details, .live-help details p { margin-top: 6px; }
 .live-help summary { min-height: 32px; padding: 4px 0; }
 .live-help code { overflow-wrap: anywhere; }
+.place-detour { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+.place-detour-result { min-width: 0; overflow-wrap: anywhere; }
+.place-detour-result:empty { display: none; }
+.places-tools #findAttractions { margin-left: 0; }
 .live-dialog .tools button { min-height: 44px; }
 #liveShareStatus { min-height: 2.6em; }
 .live-check-report { margin: 10px 0 0; padding-left: 20px; font-size: 12px; }

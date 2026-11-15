@@ -38,15 +38,32 @@
   while(stack.length){const [a,b]=stack.pop();let max=0,at=-1;const segment=routeIndex([cs[a],cs[b]]);for(let i=a+1;i<b;i++){const d=nearest(segment,cs[i]).offset;if(d>max){max=d;at=i}}if(max>60){keep.add(at);stack.push([a,at],[at,b])}}
   return [...keep].sort((a,b)=>a-b).map(i=>cs[i]);
  }
- function placesQuery(cs){
+ const attractionLabels={view:'Punkt widokowy',heritage:'Zabytek',museum:'Muzeum',nature:'Atrakcja przyrodnicza',sight:'Atrakcja turystyczna'};
+ const attractionFilters=[
+  '[tourism~"^(viewpoint|museum|attraction|gallery|zoo|theme_park)$"]',
+  '[historic~"^(castle|ruins|monument|fort|archaeological_site|manor|city_gate)$"]',
+  '["tower:type"=observation]', '[waterway=waterfall]', '[natural=cave_entrance][name]'
+ ];
+ function placesQuery(cs, attractions=false){
   const line=corridor(cs);if(line.length>1200)throw Error('Trasa jest zbyt rozbudowana do jednego wyszukiwania miejsc. Wyszukaj je dla krótszej części wycieczki.');
-  const around='(around:600,'+line.map(c=>c[1].toFixed(6)+','+c[0].toFixed(6)).join(',')+')';
+  const around='(around:'+(attractions?1100:600)+','+line.map(c=>c[1].toFixed(6)+','+c[0].toFixed(6)).join(',')+')';
+  if(attractions)return '[out:json][timeout:25];('+attractionFilters.map(filter=>'nwr'+filter+around+';').join('')+');out center tags 1000;';
   return '[out:json][timeout:25];(nwr[shop~"^(supermarket|convenience|general|bakery)$"]'+around+';nwr[amenity=drinking_water]'+around+';nwr[drinking_water=yes]'+around+';nwr[tourism~"^(picnic_site|picnic_table)$"]'+around+';nwr[highway=rest_area]'+around+';nwr[amenity=shelter]'+around+';);out center tags 1000;';
  }
- function place(element,index){
+ function place(element,index,attractions=false){
   if(!element||typeof element!=='object')return null;
   const t=element.tags&&typeof element.tags==='object'?element.tags:{},c=[element.lon??element.center?.lon,element.lat??element.center?.lat];
   if(!c.every(Number.isFinite)||Math.abs(c[0])>180||Math.abs(c[1])>90||['private','no'].includes(t.access))return null;
+  if(attractions){
+   const kind=t.tourism==='viewpoint'||t['tower:type']==='observation'?'view':
+    /^(museum|gallery)$/.test(t.tourism||'')?'museum':
+    /^(castle|ruins|monument|fort|archaeological_site|manor|city_gate)$/.test(t.historic||'')?'heritage':
+    t.waterway==='waterfall'||(t.natural==='cave_entrance'&&t.name)?'nature':
+    /^(attraction|zoo|theme_park)$/.test(t.tourism||'')?'sight':null;
+   if(!kind)return null;
+   const hit=nearest(index,c);if(!hit||hit.offset>1000)return null;
+   return {id:element.type+'/'+element.id,kind,c,name:String(t['name:pl']||t.name||attractionLabels[kind]).slice(0,160),hours:String(t.opening_hours||'').slice(0,160),...hit};
+  }
   const kind=(t.amenity==='drinking_water'||t.drinking_water==='yes')&&t.drinking_water!=='no'?'water':/^(supermarket|convenience|general|bakery)$/.test(t.shop||'')?'shop':/^(picnic_site|picnic_table)$/.test(t.tourism||'')||t.highway==='rest_area'||t.amenity==='shelter'?'rest':null;
   if(!kind)return null;const hit=nearest(index,c);if(!hit||hit.offset>500)return null;
   return {id:element.type+'/'+element.id,kind,c,name:String(t.name||t.brand||({water:'Woda pitna',shop:'Sklep',rest:'Miejsce odpoczynku'})[kind]).slice(0,160),hours:String(t.opening_hours||'').slice(0,160),...hit};
@@ -77,6 +94,6 @@
   }
   return out;
  }
- root.PlannerTrip={preferences,routingOptions,stops,haversine,routeIndex,nearest,waypointMeters,pauseBefore,corridor,placesQuery,place,restSettings,routeBreaks,pointAt,suggestedBreaks};
+ root.PlannerTrip={preferences,routingOptions,stops,haversine,routeIndex,nearest,waypointMeters,pauseBefore,corridor,placesQuery,place,attractionLabels,restSettings,routeBreaks,pointAt,suggestedBreaks};
 })(typeof globalThis!=='undefined'?globalThis:this);
 

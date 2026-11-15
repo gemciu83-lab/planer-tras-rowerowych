@@ -3,6 +3,8 @@ const pointStopTimes=new WeakMap();
 let tripPlanIndex=null,tripPlanTrack=null,tripPlanPoints='',tripPlanPositions=[];
 let placesLayer=null,placesTrack=null,placesRequest=null,placesGeneration=0,placesNextRequest=0,placesResults=[];
 const placesCache=new Map(),placeTypes={shop:{label:'Sklep',symbol:'S',color:'#d7a654'},water:{label:'Woda',symbol:'W',color:'#57bde1'},rest:{label:'Odpoczynek',symbol:'O',color:'#9ccf84'}};
+const attractionTypes=Object.fromEntries(Object.entries(PlannerTrip.attractionLabels).map(([kind,label])=>[kind,{label,symbol:{view:'W',heritage:'Z',museum:'M',nature:'P',sight:'A'}[kind],color:'#e4b970'}]));
+let placesMode='services',detourRequest=null;
 try{const until=Number(localStorage.getItem('rowerem-places-next-v1'));if(Number.isFinite(until))placesNextRequest=until}catch{}
 function savePlacesCooldown(){try{localStorage.setItem('rowerem-places-next-v1',String(placesNextRequest))}catch{}}
 function getPointStops(){return PlannerTrip.stops(points,points.map(c=>pointStopTimes.get(c)||0))}
@@ -32,57 +34,127 @@ function updateTripPlan(){
  $('stopSummary').textContent='Zaplanowane postoje: '+planned+' min · dodatkowy zapas: '+extra+' min · razem: '+(planned+extra)+' min. Postój w punkcie zaczyna się po przyjeździe.';
  const host=$('stopItinerary');host.replaceChildren();
  if(tripPlanIndex)renderRestSchedule(host);
- if(placesTrack!==track){placesTrack=track;placesGeneration++;placesRequest?.abort();placesRequest=null;placesResults=[];placesLayer?.clearLayers();$('placesResults').replaceChildren();$('placesStatus').textContent=track.length>1?'Wyszukaj sklepy, wodę pitną i miejsca odpoczynku do 500 m od trasy.':'Najpierw wyznacz trasę.'}
- $('findPlaces').disabled=track.length<2||mapDistancePending||!!previousRoute||!!placesRequest;updateRestMarkers();
+ if(placesTrack!==track){resetPlaceResults();$('placesStatus').textContent=track.length>1?'Wybierz, czego szukasz przy trasie.':'Najpierw wyznacz trasę.'}
+ const disabled=track.length<2||mapDistancePending||!!previousRoute||!!placesRequest;
+ $('findPlaces').disabled=disabled;
+ if($('findAttractions'))$('findAttractions').disabled=disabled;
+ updateRestMarkers();
+}
+function resetPlaceResults(){
+ placesTrack=track;placesGeneration++;placesRequest?.abort();placesRequest=null;
+ detourRequest?.abort();detourRequest=null;placesResults=[];placesLayer?.clearLayers();$('placesResults').replaceChildren();
+}
+function placeInsertionIndex(item){
+ ensureTripPlan();
+ let at=1;while(at<points.length-1&&tripPlanPositions[at]<=item.meters)at++;
+ return at;
+}
+function isManualPlaceSection(at){
+ return typeof captureHybridSections==='function'&&captureHybridSections().some(section=>section.edge===at-1);
 }
 function insertPlaceStop(item){
  if(placesTrack!==track||track.length<2||mapDistancePending||previousRoute)return;
  if(points.some(c=>PlannerTrip.haversine(c,item.c)<.015)){status('Ten przystanek jest już na trasie. Czas postoju ustawisz na liście punktów.');return}
- ensureTripPlan();const positions=tripPlanPositions;let at=1;while(at<points.length-1&&positions[at]<=item.meters)at++;
- if(typeof captureHybridSections==='function'&&captureHybridSections().some(section=>section.edge===at-1)){
+ const at=placeInsertionIndex(item);
+ if(isManualPlaceSection(at)){
   status('To miejsce jest przy ręcznie narysowanym odcinku. Ustaw postój przy jego początku lub końcu w Ustawieniach.',true);
   return;
  }
  if(typeof insertImportedWaypoint==='function'&&insertImportedWaypoint(at,item.c,{name:item.name,stopMinutes:10})){map.closePopup();return}
  checkpoint();const c=item.c.slice();points.splice(at,0,c);pointNames.set(PlannerCore.pointKey(c),item.name);pointStopTimes.set(c,10);invalidate();renderPoints();status('Dodano „'+item.name+'” z postojem 10 min. Czas zmienisz przy punkcie w Ustawieniach.');
 }
+async function estimateAttractionDetour(item, output, button){
+ if(placesTrack!==track||track.length<2||mapDistancePending||previousRoute)return;
+ if(detourRequest){output.textContent='Trwa liczenie innego objazdu.';return}
+ const at=placeInsertionIndex(item);
+ if(isManualPlaceSection(at)){
+  output.textContent='Ten fragment został narysowany ręcznie.';
+  return;
+ }
+ if(points.some(c=>PlannerTrip.haversine(c,item.c)<.015)){
+  output.textContent='To miejsce jest już punktem trasy.';
+  return;
+ }
+ const profile=$('profile').value;
+ const imported=routeType==='import';
+ const originalKm=imported?length(track):(tripPlanPositions[at]-tripPlanPositions[at-1])/1000;
+ const snapshot=track, request=detourRequest=new AbortController();
+ const timeout=setTimeout(()=>request.abort(),20000);
+ button.disabled=true;
+ output.textContent='Liczę objazd…';
+ try{
+  const plan=imported?PlannerGPX.plan(snapshot,points,gpxImportIndices,'insert',at,item.c):null;
+  const segment=plan?.request??[points[at-1],item.c,points[at]];
+  const path=profile==='direct'?segment:(await fetchRoutingFeature(segment,request.signal,profile)).geometry.coordinates;
+  if(snapshot!==track||detourRequest!==request)return;
+  if(request.signal.aborted)throw Error();
+  if(profile!=='direct'&&PlannerTrip.nearest(PlannerTrip.routeIndex(path),item.c).offset>100){
+   output.textContent='Nie znaleziono dojazdu w pobliże atrakcji.';
+   return;
+  }
+  const delta=length(plan?PlannerGPX.merge(plan,path).track:path)-originalKm;
+  const speed=Math.min(profile==='walking'?8:60,Math.max(profile==='walking'?1:3,Number($('speed').value)||(profile==='walking'?5:16)));
+  const km=Math.abs(delta).toLocaleString('pl-PL',{maximumFractionDigits:1});
+  const minutes=Math.round(Math.abs(delta)*60/speed);
+  const measure=profile==='direct'?'Po liniach prostych: ':'Szacunek po drogach: ';
+  output.textContent=Math.abs(delta)<.05?measure+'bez istotnej zmiany dystansu':measure+(delta<0?'−':'+')+km+' km, '+(delta<0?'−':'+')+minutes+' min '+(profile==='walking'?'marszu':'jazdy');
+ }catch(error){
+  if(snapshot===track&&detourRequest===request)output.textContent=request.signal.aborted?'Za długo czekam na objazd. Spróbuj ponownie.':error.routing?error.message:'Nie udało się obliczyć objazdu.';
+ }finally{
+  clearTimeout(timeout);if(detourRequest===request)detourRequest=null;
+  button.disabled=false;
+ }
+}
+function addDetourControls(host,item){
+ const button=document.createElement('button'),output=document.createElement('small');
+ button.type='button';button.textContent='Oblicz objazd';
+ output.className='place-detour-result';output.setAttribute('role','status');
+ button.onclick=()=>estimateAttractionDetour(item,output,button);
+ const details=document.createElement('div');details.className='place-detour';details.append(button,output);host.append(details);
+}
 function renderPlaces(){
- placesLayer?.clearLayers();const host=$('placesResults');host.replaceChildren();const visible=placesResults.filter(p=>$('places'+p.kind).checked);
+ const attractions=placesMode==='attractions',types=attractions?attractionTypes:placeTypes;
+ placesLayer?.clearLayers();const host=$('placesResults');host.replaceChildren();const visible=attractions?placesResults:placesResults.filter(p=>$('places'+p.kind).checked);
  for(const item of visible){
-  const kind=placeTypes[item.kind],content=document.createElement('div');content.className='place-popup';const title=document.createElement('strong'),detail=document.createElement('p'),addStop=document.createElement('button');title.textContent=item.name;detail.textContent=kind.label+' · '+(item.meters/1000).toFixed(1)+' km od startu · '+Math.round(item.offset)+' m od trasy w linii prostej'+(item.hours?' · Godziny wg OSM: '+item.hours:'');addStop.type='button';addStop.textContent='Dodaj przystanek · 10 min';addStop.onclick=()=>insertPlaceStop(item);content.append(title,detail,addStop);
+  const kind=types[item.kind],content=document.createElement('div');content.className='place-popup';const title=document.createElement('strong'),detail=document.createElement('p'),addStop=document.createElement('button');title.textContent=item.name;detail.textContent=kind.label+' · '+(item.meters/1000).toFixed(1)+' km od startu · '+Math.round(item.offset)+' m od trasy w linii prostej'+(item.hours?' · Godziny wg OSM: '+item.hours:'');addStop.type='button';addStop.textContent='Dodaj przystanek · 10 min';addStop.onclick=()=>insertPlaceStop(item);content.append(title,detail,addStop);
+  if(attractions)addDetourControls(content,item);
   const tooltip=document.createElement('span');tooltip.textContent=kind.label+': '+item.name;
   L.marker([item.c[1],item.c[0]],{title:kind.label+': '+item.name,icon:L.divIcon({className:'place-pin',html:'<span style="background:'+kind.color+'">'+kind.symbol+'</span>',iconSize:[28,28],iconAnchor:[14,14]}),zIndexOffset:500}).bindTooltip(tooltip).bindPopup(content).addTo(placesLayer);
  }
- for(const item of visible.slice(0,40)){const row=document.createElement('article'),text=document.createElement('div'),name=document.createElement('strong'),note=document.createElement('small'),preview=document.createElement('button'),addStop=document.createElement('button');row.className='place-result';name.textContent=item.name;note.textContent=placeTypes[item.kind].label+' · '+(item.meters/1000).toFixed(1)+' km trasy · '+Math.round(item.offset)+' m od śladu';text.append(name,note);preview.type=addStop.type='button';preview.textContent='Pokaż';preview.onclick=()=>map.setView([item.c[1],item.c[0]],17);addStop.textContent='+ Postój';addStop.onclick=()=>insertPlaceStop(item);row.append(text,preview,addStop);host.append(row)}
+ for(const item of visible.slice(0,40)){const row=document.createElement('article'),text=document.createElement('div'),name=document.createElement('strong'),note=document.createElement('small'),preview=document.createElement('button'),addStop=document.createElement('button');row.className='place-result';name.textContent=item.name;note.textContent=types[item.kind].label+' · '+(item.meters/1000).toFixed(1)+' km trasy · '+Math.round(item.offset)+' m od śladu';text.append(name,note);preview.type=addStop.type='button';preview.textContent='Pokaż';preview.onclick=()=>{map.setView([item.c[1],item.c[0]],17);if(attractions)$('map').scrollIntoView({block:'nearest'})};addStop.textContent='+ Postój';addStop.onclick=()=>insertPlaceStop(item);row.append(text,preview,addStop);if(attractions)addDetourControls(text,item);host.append(row)}
  const count=visible.length,noun=count===1?'miejsce':count%10>=2&&count%10<=4&&!(count%100>=12&&count%100<=14)?'miejsca':'miejsc';
  $('placesStatus').textContent=placesResults.length?'Znaleziono '+count+' '+noun+' dla wybranych kategorii.'+(count>40?' Lista pokazuje pierwsze 40; pozostałe są na mapie.':''):'Brak miejsc w danych OSM w tym korytarzu. To nie oznacza, że w terenie ich nie ma.';
 }
-async function findRoutePlaces(){
+async function findRoutePlaces(mode='services'){
  if(track.length<2||mapDistancePending||previousRoute||placesRequest)return;
- const fingerprint=track.map(c=>c.slice(0,2).join(',')).join('|'),cached=placesCache.get(fingerprint);
- if(cached&&Date.now()-cached.time<600000){placesResults=cached.items;renderPlaces();return}
+ const attractions=mode==='attractions';
+ const fingerprint=mode+'|'+track.map(c=>c.slice(0,2).join(',')).join('|'),cached=placesCache.get(fingerprint);
+ if(cached&&Date.now()-cached.time<600000){if(mode!==placesMode)resetPlaceResults();placesMode=mode;placesResults=cached.items;renderPlaces();return}
  if(Date.now()<placesNextRequest){$('placesStatus').textContent='Odczekaj '+Math.ceil((placesNextRequest-Date.now())/1000)+' s przed kolejnym wyszukiwaniem.';return}
+ if(mode!==placesMode)resetPlaceResults();placesMode=mode;
  const snapshot=track,generation=++placesGeneration,request=placesRequest=new AbortController();placesNextRequest=Date.now()+30000;savePlacesCooldown();
- const timer=setTimeout(()=>request.abort(),30000);$('findPlaces').disabled=true;$('placesStatus').textContent='Szukam miejsc wzdłuż trasy…';
+ const timer=setTimeout(()=>request.abort(),30000);$('findPlaces').disabled=$('findAttractions').disabled=true;$('placesStatus').textContent=attractions?'Szukam atrakcji wzdłuż trasy…':'Szukam miejsc wzdłuż trasy…';
  try{
-  const query=PlannerTrip.placesQuery(snapshot),response=await fetch('https://overpass.private.coffee/api/interpreter',{method:'POST',body:new URLSearchParams({data:query}),signal:request.signal});
+  const query=PlannerTrip.placesQuery(snapshot,attractions),response=await fetch('https://overpass.private.coffee/api/interpreter',{method:'POST',body:new URLSearchParams({data:query}),signal:request.signal});
   if(!response.ok){const value=response.headers.get('Retry-After'),retry=Number(value),until=value?(Number.isFinite(retry)?Date.now()+retry*1000:Date.parse(value)):0;if(Number.isFinite(until))placesNextRequest=Math.max(placesNextRequest,until);savePlacesCooldown();throw Error('Serwer miejsc jest chwilowo niedostępny (HTTP '+response.status+'). Spróbuj później.')}
   const json=await response.json();if(json.remark||!Array.isArray(json.elements))throw Error('Serwer nie ukończył wyszukiwania miejsc. Spróbuj później lub użyj krótszej trasy.');
   if(generation!==placesGeneration||snapshot!==track)return;
   const index=ensureTripPlan(),items=[],seen=new Set();
   for(let i=0;i<json.elements.length;i++){
-   const item=PlannerTrip.place(json.elements[i],index);if(item&&!seen.has(item.id)){seen.add(item.id);items.push(item)}
+   const item=PlannerTrip.place(json.elements[i],index,attractions);if(item&&!seen.has(item.id)){seen.add(item.id);items.push(item)}
    if(i%40===39){await new Promise(resolve=>setTimeout(resolve,0));if(generation!==placesGeneration||snapshot!==track)return}
   }
   items.sort((a,b)=>a.meters-b.meters);placesResults=items;placesCache.set(fingerprint,{time:Date.now(),items});while(placesCache.size>5)placesCache.delete(placesCache.keys().next().value);renderPlaces();if(json.elements.length>=1000)$('placesStatus').textContent+=' Dużo wyników — serwer zwrócił tylko część miejsc.';
  }catch(error){if(generation===placesGeneration){$('placesStatus').textContent=error.name==='AbortError'?'Wyszukiwanie przerwane lub serwer nie odpowiedział w 30 sekund. Możesz ponowić.':error.message}}
- finally{clearTimeout(timer);if(generation===placesGeneration){placesRequest=null;$('findPlaces').disabled=track.length<2||mapDistancePending||!!previousRoute}}
+ finally{clearTimeout(timer);if(generation===placesGeneration){placesRequest=null;$('findPlaces').disabled=$('findAttractions').disabled=track.length<2||mapDistancePending||!!previousRoute}}
 }
 function initTripPlanning(){
  $('topSettings').insertBefore($('routingPreferences'),$('riderWeight').closest('.section'));placesLayer=L.layerGroup().addTo(map);placesTrack=track;
  for(const id of ['preferredSurface','avoidRegional','preferCycleRoutes','preferLocalRoads'])$(id).addEventListener('change',()=>{checkpoint();invalidate();renderPoints()});
  $('profile').addEventListener('change',updatePreferencesState);updatePreferencesState();
- $('findPlaces').onclick=findRoutePlaces;for(const kind of Object.keys(placeTypes))$('places'+kind).onchange=renderPlaces;
+ $('findPlaces').onclick=()=>findRoutePlaces();
+ $('findAttractions').onclick=()=>findRoutePlaces('attractions');
+ for(const kind of Object.keys(placeTypes))$('places'+kind).onchange=()=>{if(placesMode==='services')renderPlaces()};
  updateTripPlan();
 }
 
