@@ -1,4 +1,4 @@
-# Udostępnianie pozycji w Planerze 3.26.1
+# Udostępnianie pozycji w Planerze 3.26.2
 
 ## Szybka próba na komputerze
 

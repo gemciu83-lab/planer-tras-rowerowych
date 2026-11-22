@@ -7,11 +7,11 @@ function env(){
 }
 async function main(){
  const e=env(),R=e.ctx.PlannerRelease;
- assert.equal(R.compare('3.26.1','3.9.0'),1);assert.equal(R.compare('3.26.1','3.26.1'),0);assert.equal(R.compare('3.x.0','3.26.1'),null);
+ assert.equal(R.compare('3.26.2','3.9.0'),1);assert.equal(R.compare('3.26.2','3.26.2'),0);assert.equal(R.compare('3.x.0','3.26.2'),null);
  const hash=async bytes=>Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex'),page=Buffer.from('<meta name="planner-version" content="3.27.0">'),asset=Buffer.from('future-release');
  const manifest={app:R.app,version:'3.27.0',indexSHA:await hash(page),assets:['app.js','planner-core.js','planner.css','planner-release.js','planner-worker.js'].map(n=>({path:'assets/'+n,sha256:''}))};for(const a of manifest.assets)a.sha256=await hash(asset);
  assert(R.manifest(manifest));assert.equal(R.manifest({...manifest,app:'other'}),null);assert.equal(R.manifest({...manifest,assets:[{path:'https://evil.example/a.js',sha256:'a'.repeat(64)}]}),null);
- const snapshot={points:[[19,51]],settings:{}};assert(R.recovery({version:'3.26.1',token:'a',time:1000,snapshot},'a',2000));assert.equal(R.recovery({version:'3.26.1',token:'a',time:1000,snapshot},'b',2000),null);assert.equal(R.recovery({version:'3.26.1',token:'a',time:1000,snapshot},'a',1000000),null);
+ const snapshot={points:[[19,51]],settings:{}};assert(R.recovery({version:'3.26.2',token:'a',time:1000,snapshot},'a',2000));assert.equal(R.recovery({version:'3.26.2',token:'a',time:1000,snapshot},'b',2000),null);assert.equal(R.recovery({version:'3.26.2',token:'a',time:1000,snapshot},'a',1000000),null);
  let partial=true;e.ctx.fetch=async(url)=>{e.requests.push(String(url));const u=new URL(url);return {ok:true,json:async()=>manifest,arrayBuffer:async()=>Uint8Array.from(u.pathname.endsWith('index.html')?page:partial?Buffer.from('old-release'):asset).buffer}};
  await e.run('checkRelease(true)');assert.equal(e.$('releaseBanner').hidden,false);assert.equal(e.reloads.length,0);
  await e.run('applyRelease()');assert.equal(e.reloads.length,0);assert.equal(e.store.size,0);assert(e.$('releaseMessage').textContent.includes('niespójne'));

@@ -1,5 +1,5 @@
 'use strict';
-importScripts('planner-trip.js?v=3.26.1','planner-core.js?v=3.26.1');
+importScripts('planner-trip.js?v=3.26.2','planner-core.js?v=3.26.2');
 self.onmessage=({data})=>{
  try{
   const {id,track}=data;if(!PlannerCore.coordinatesValid(track))throw Error('Nieprawidłowy ślad');
