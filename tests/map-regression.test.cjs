@@ -5,6 +5,20 @@ const vm = require('node:vm');
 const assets = `${__dirname}/../assets`;
 
 async function tests() {
+  const maps = vm.runInNewContext(fs.readFileSync(`${assets}/planner-maps.js`, 'utf8') + '\nstyleDefinitions;', { URLSearchParams });
+  const tile = { x: 291619, y: 174655, z: 19 };
+  const standard = new URL(maps.orthophoto[1].tileUrl(tile));
+  const highResolution = new URL(maps.orthophotoHigh[2].tileUrl(tile));
+  assert(standard.pathname.endsWith('/WMS/StandardResolution'));
+  assert(highResolution.pathname.endsWith('/WMS/HighResolution'));
+  assert.equal(highResolution.searchParams.get('SRS'), 'EPSG:3857');
+  assert.equal(highResolution.searchParams.get('BBOX'), standard.searchParams.get('BBOX'));
+  assert.equal(highResolution.searchParams.get('TRANSPARENT'), 'TRUE');
+  assert.equal(maps.orthophotoHigh[2].minZoom, 14);
+  for (const layer of maps.orthophotoHigh) assert.equal(layer.maxZoom, 21);
+  assert.equal(maps.orthophotoHigh[2].maxNativeZoom, 21);
+  assert(maps.orthophotoHigh[1].tileUrl(tile).includes('/StandardResolution?'));
+  console.log('PASS: separate HR ortho layer uses Geoportal HighResolution, aligned coordinates, automatic zoom threshold, level 21 and standard imagery fallback');
   const source = fs.readFileSync(`${assets}/app.js`, 'utf8');
   const begin = source.indexOf('const missingTiles=new Map()');
   const end = source.indexOf('function switchMapStyle(', begin);

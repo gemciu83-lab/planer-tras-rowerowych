@@ -1,7 +1,7 @@
 {
   "app": "planer-tras-rowerowych",
-  "version": "3.26.2",
-  "indexSHA": "44a5bb36e772cf3e295ab7269051e97ad215046d77ec3415fa5d56cdfa2ed60d",
+  "version": "3.27.0",
+  "indexSHA": "f14b67e34e3cf8517d6fe8cfa774cebd4c04b54d1ef2700d4fe2fb924992816b",
   "assets": [
     {
       "path": "assets/app.js",
@@ -25,7 +25,7 @@
     },
     {
       "path": "assets/planner-compute.js",
-      "sha256": "a98b7e140a5fa343d10a1fc86b0d56d818167e6bafa0fc0abb4b629fe3185bd9"
+      "sha256": "b289a34f0a0654aa19ec80ed34640a4f08ec04b6e3cbbb8ce09529b9b9b13f57"
     },
     {
       "path": "assets/planner-coordinates.js",
@@ -85,7 +85,7 @@
     },
     {
       "path": "assets/planner-maps.js",
-      "sha256": "a6f1c9a746058fe62c810d41563f414b19cc8c6d599677afa2c3e19cc475d463"
+      "sha256": "dc4f7eaca72d15591ad315070020feb2084cdd69542ec0969f7b0802d9e16575"
     },
     {
       "path": "assets/planner-mobile.js",
@@ -97,7 +97,7 @@
     },
     {
       "path": "assets/planner-release.js",
-      "sha256": "fe0211ba6bef1b2a9b52aaf516d48e5d1b8037a463e4f287128608ccc5d7de6a"
+      "sha256": "72a7f0f0bb2eb342b536439a11cf6c5e79a004520c7233e1f8118658ce3dc7af"
     },
     {
       "path": "assets/planner-rests.js",
@@ -129,7 +129,7 @@
     },
     {
       "path": "assets/planner-worker.js",
-      "sha256": "e8fce142841d5d5ddfae37e22d1c7a3d0ffb169f5db75e6917d396951c04d954"
+      "sha256": "16c3c384956a82b213820045cfb923a9e63c8fadec3b9d23a61fedc6ad096d59"
     },
     {
       "path": "assets/planner.css",

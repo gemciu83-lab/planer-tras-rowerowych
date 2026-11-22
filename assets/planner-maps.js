@@ -43,13 +43,13 @@ const styleDefinitions = (() => {
     noWrap: true,
     minZoom: 10,
     attribution: '© <a href="https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto/">GUGiK · Geoportal</a>',
-    tileUrl(coords) {
+    tileUrl(coords, service = 'StandardResolution') {
       const params = new URLSearchParams({
         SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetMap', LAYERS: 'Raster', STYLES: '',
         FORMAT: 'image/png', TRANSPARENT: 'TRUE', SRS: 'EPSG:3857',
         BBOX: mercatorBounds(coords), WIDTH: '256', HEIGHT: '256'
       });
-      return `https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution?${params}`;
+      return `https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/${service}?${params}`;
     }
   };
 
@@ -74,6 +74,14 @@ const styleDefinitions = (() => {
       attribution: `Tiles © Esri, HERE, Garmin, Intermap, USGS, FAO, NPS · ${osmCredit}`
     }],
     orthophoto: [imagery, orthophoto],
+    orthophotoHigh: [
+      { ...imagery, maxZoom: 21 },
+      { ...orthophoto, maxZoom: 21, maxNativeZoom: 21 },
+      {
+        ...orthophoto, minZoom: 14, maxZoom: 21, maxNativeZoom: 21,
+        tileUrl(coords) { return orthophoto.tileUrl(coords, 'HighResolution'); }
+      }
+    ],
     satellite: [imagery],
     hybrid: [imagery, {
       url: `${esri}Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,

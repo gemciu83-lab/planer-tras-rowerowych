@@ -1,4 +1,4 @@
-# Planer tras rowerowych 3.26.2
+# Planer tras rowerowych 3.27
 
 ## Współrzędne pod kursorem
 
@@ -13,6 +13,7 @@ Wybierz warstwę z listy obok przycisku **Moja lokalizacja**. Planer zapamiętuj
 - **Zagospodarowanie turystyczne (BDL)** pokazuje dane turystyczne BDL na tle OSM. Pod wyborem mapy znajdziesz legendę z odnośnikiem do symboli BDL.
 - **Spacerowa (PL)** pokazuje OpenTopoMap z polskimi szlakami, ścieżkami dydaktycznymi i infrastrukturą turystyczną BDL.
 - **Leśna (PL)** pokazuje OpenStreetMap z nadleśnictwami, oddziałami i wydzieleniami BDL.
+- **Ortofotomapa HR · Geoportal** pokazuje wysokorozdzielcze zdjęcia GUGiK automatycznie od zbliżenia 14, z możliwością powiększenia do poziomu 21. W miejscach bez pokrycia HR pod spodem pozostaje ortofotomapa standardowa, a poza jej zasięgiem zdjęcia Esri. Rozdzielczość i data zdjęć zależą od miejsca; usługa HR priorytetowo wybiera rozdzielczość, następnie datę.
 - **Ortofotomapa PL** dodaje zdjęcia Geoportalu przy zbliżeniu Polski. W mniejszej skali i poza zasięgiem zdjęć Geoportalu widać zdjęcia Esri.
 - **Lotnicza (Esri)** pokazuje zdjęcia terenu. **Lotnicza z nazwami** dodaje podpisy i granice.
 
