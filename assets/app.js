@@ -142,7 +142,7 @@ const ResilientTiles = L.TileLayer.extend({
   }
 });
 
-let mapLayers = [];
+let mapLayers = [], educationLayer = null;
 function addMapTileLayer({ url, ...options }, zIndex) {
   const layer = new ResilientTiles(url || '', {
     maxZoom: 19, maxNativeZoom: 19, keepBuffer: 2, zIndex, ...options
@@ -156,18 +156,24 @@ function switchMapStyle(style) {
   mapNoticeDismissed = false;
 
   const selected = Object.hasOwn(styleDefinitions, style) ? style : 'normal';
-  const localOSM = location.protocol === 'file:' && ['normal', 'forest', 'fireAccess', 'forestTourism'].includes(selected);
+  const localOSM = location.protocol === 'file:' && ['normal', 'forest', 'fireAccess', 'forestTourism', 'education'].includes(selected);
   $('osmLocalNotice').hidden = !localOSM;
   if (!localOSM) {
     mapLayers = styleDefinitions[selected].map((options, index) => addMapTileLayer(options, index + 1));
   }
   updateFireAccessHint(selected);
+  educationLayer?.setActive(selected === 'education');
   const tourismLegend = $('forestTourismLegend');
   tourismLegend.hidden = selected !== 'forestTourism';
   if (tourismLegend.hidden) tourismLegend.open = false;
   updateMapNotice();
 }
 
+educationLayer = initEducationMap(map, {
+  panel: $('educationPanel'), message: $('educationStatus'), button: $('educationLoad'), external: $('educationExternal'),
+  nextQuery: () => placesNextRequest,
+  postponeQueries: until => { placesNextRequest = Math.max(placesNextRequest, until); savePlacesCooldown(); }
+});
 switchMapStyle('normal');
 $('mapStyle').onchange = () => switchMapStyle($('mapStyle').value);
 function updateFireAccessHint(style = $('mapStyle').value) {

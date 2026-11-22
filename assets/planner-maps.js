@@ -57,6 +57,7 @@ const styleDefinitions = (() => {
     attribution: '© <a href="https://bdl.lasy.gov.pl/portal/uslugi-ogc">Bank Danych o Lasach · Dojazdy pożarowe</a>' };
   return {
     normal: [osm],
+    education: [osm],
     walking: [topographic, forestOverlay('WMS_BDL_Mapa_turystyczna', '6,8,18,20,21,22')],
     cycle: [{
       url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',

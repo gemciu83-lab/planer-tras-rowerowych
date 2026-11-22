@@ -1,11 +1,11 @@
 {
   "app": "planer-tras-rowerowych",
-  "version": "3.25.0",
-  "indexSHA": "bdb8cfea08aa8088a77996dedeb9a048a44b7f17784828f2f3c408334bf00154",
+  "version": "3.26.0",
+  "indexSHA": "203ad3648bc970e47b62506836f80c4f1fb33413d874537a650c2aa8f0c77a5e",
   "assets": [
     {
       "path": "assets/app.js",
-      "sha256": "c45f47e49447b75d519b20c89ea541afcb6aad81a2fd1555fc472d1936565200"
+      "sha256": "03f8c822486865b5ca22ccb90161c8c55b08c0dda745631de9f781f5f3ad03fc"
     },
     {
       "path": "assets/leaflet.css",
@@ -25,7 +25,7 @@
     },
     {
       "path": "assets/planner-compute.js",
-      "sha256": "e76140b22adfe58a0b17b5b30568e3f32b7b051d7248c898c78e2ea39639761f"
+      "sha256": "86ff6c5b622f845f4bc32d5d97f9344cbc38ba5383e37866717daf40f6148aa9"
     },
     {
       "path": "assets/planner-coordinates.js",
@@ -38,6 +38,10 @@
     {
       "path": "assets/planner-dock.js",
       "sha256": "f725b65b591a9de3e49648a8774e878a33f3dddb37a3f0164c69bd5414017851"
+    },
+    {
+      "path": "assets/planner-education.js",
+      "sha256": "eb84d5531f1e8d9acb3a3530882174306e5a40bb8fad289b549d86bfe4cdeab4"
     },
     {
       "path": "assets/planner-energy-ui.js",
@@ -85,7 +89,7 @@
     },
     {
       "path": "assets/planner-maps.js",
-      "sha256": "a6f1c9a746058fe62c810d41563f414b19cc8c6d599677afa2c3e19cc475d463"
+      "sha256": "adb22cc013c83bd7cefcd0747323fbdafa3e69663e06498865041b4e477240fe"
     },
     {
       "path": "assets/planner-mobile.js",
@@ -97,7 +101,7 @@
     },
     {
       "path": "assets/planner-release.js",
-      "sha256": "0c720c4ded0a5bb0decc05e1323a29b29be7b1d3893566be2d6c05a028a993fe"
+      "sha256": "bd2ed4d99733e1aeaf90ae39851f9aa4b2a3548ff69c48da92cb9a7f0a1575b3"
     },
     {
       "path": "assets/planner-rests.js",
@@ -129,11 +133,11 @@
     },
     {
       "path": "assets/planner-worker.js",
-      "sha256": "e40003df699a541f4fac535a3ceb49f132b4c852fdc753e15d3c0f806aa8b9ec"
+      "sha256": "111ba9ff67ba67de73b298e422f89aa30d511e837a410bcb6175c8ab23e3928a"
     },
     {
       "path": "assets/planner.css",
-      "sha256": "1925aa6c6b4ed80bc59c6b7e34247031c9e7cb50fd73dc1c116bde65380238b3"
+      "sha256": "8120ed8d7a9bad43540a1b0b661a6035b1942d6c463d369bdc2f0a51ae615e1b"
     }
   ]
 }

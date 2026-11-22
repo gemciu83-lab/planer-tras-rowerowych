@@ -1,4 +1,4 @@
-# Planer tras rowerowych 3.25
+# Planer tras rowerowych 3.26
 
 ## Współrzędne pod kursorem
 
@@ -252,3 +252,11 @@ Na telefonie przycisk **Menu** rozwija narzędzia u góry. Dystans, czas jazdy i
 Pierwsza konfiguracja i próba lokalna są opisane w [URUCHOM-POZYCJE.md](URUCHOM-POZYCJE.md). Po podłączeniu usługi publikuj też plik pozycja.html obok index.html.
 
 Po wyznaczeniu trasy rozwiń **Miejsca przy trasie** i kliknij **Co warto zobaczyć?**. Wyniki pochodzą z OpenStreetMap i obejmują atrakcje do 1 km od śladu. **Oblicz objazd** szacuje zmianę dystansu i czasu przemieszczania się przy bieżącym profilu i tempie. **+ Postój** dopisuje miejsce z domyślnym postojem 10 min, który można zmienić w ustawieniach punktu.
+
+## Tablice dydaktyczne i informacyjne
+
+Obok **Moja lokalizacja** wybierz **Tablice dydaktyczne (OSM)**. Warstwa działa niezależnie od zaplanowanej trasy. Przybliż mapę do poziomu 14 lub większego. Tablice w widocznym obszarze wczytują się po wybraniu warstwy; po przesunięciu mapy można użyć **Wczytaj tablice**. Wyszukiwanie ma wspólną przerwę 30 s z panelem miejsc przy trasie. Przy dużym zbliżeniu nazwy widoczne są nad symbolami, a kliknięcie symbolu otwiera dostępny opis i źródło. Przy ponad 80 tablicach nazwy wyświetlają się po wskazaniu symbolu.
+
+**Mapa Turystyczna ↗** otwiera mapa-turystyczna.pl w nowej karcie z takim samym środkiem i zbliżeniem. Odnośnik w dymku tablicy otwiera jej położenie. Warstwa w planerze korzysta z OpenStreetMap. Dostępność nazw i opisów zależy od wpisów OSM. Nie odtwarza stylu ani własnych danych serwisu Mapa Turystyczna, który według FAQ nie oferuje publicznego API do pobierania swojej mapy.
+
+[Zasady integracji Mapy Turystycznej](https://mapa-turystyczna.pl/faq) · [Dane OpenStreetMap](https://www.openstreetmap.org/copyright)
