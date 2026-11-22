@@ -459,7 +459,6 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .education-panel strong { font-size: 12px; }
 .education-panel p { margin: 5px 0 8px; line-height: 1.4; }
 .education-panel > div, .education-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.education-panel button { min-height: 32px; padding: 5px 8px; font-size: 11px; }
 .education-panel a { color: #c7eda5; }
 .education-pin { background: none; border: none; }
 .education-pin > span {
@@ -474,4 +473,4 @@ header{flex-wrap:wrap}#openLoops{font-size:11px;padding:10px 12px;white-space:no
 .education-popup p { max-height: 180px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; }
 .education-popup small { display: block; margin: 5px 0; }
 .education-links { margin-top: 10px; font-size: 12px; }
-.phone-layout .education-panel button, .phone-layout .education-panel a { min-height: 44px; display: inline-flex; align-items: center; }
+.phone-layout .education-panel a { min-height: 44px; display: inline-flex; align-items: center; }

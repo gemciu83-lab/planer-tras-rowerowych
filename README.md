@@ -1,4 +1,4 @@
-# Planer tras rowerowych 3.26
+# Planer tras rowerowych 3.26.1
 
 ## Współrzędne pod kursorem
 
@@ -255,7 +255,7 @@ Po wyznaczeniu trasy rozwiń **Miejsca przy trasie** i kliknij **Co warto zobacz
 
 ## Tablice dydaktyczne i informacyjne
 
-Obok **Moja lokalizacja** wybierz **Tablice dydaktyczne (OSM)**. Warstwa działa niezależnie od zaplanowanej trasy. Przybliż mapę do poziomu 14 lub większego. Tablice w widocznym obszarze wczytują się po wybraniu warstwy; po przesunięciu mapy można użyć **Wczytaj tablice**. Wyszukiwanie ma wspólną przerwę 30 s z panelem miejsc przy trasie. Przy dużym zbliżeniu nazwy widoczne są nad symbolami, a kliknięcie symbolu otwiera dostępny opis i źródło. Przy ponad 80 tablicach nazwy wyświetlają się po wskazaniu symbolu.
+Obok **Moja lokalizacja** wybierz **Tablice dydaktyczne (OSM)**. Warstwa działa niezależnie od zaplanowanej trasy. Przybliż mapę do poziomu 14 lub większego. Tablice pojawiają się automatycznie po wybraniu warstwy oraz przesunięciu i przybliżeniu mapy. Planer pobiera także niewielki zapas obszaru, aby drobne przesunięcia korzystały z już pobranych danych. Gdy serwer wymaga przerwy albo połączenie się nie powiedzie, planer czeka i ponawia zapytanie samodzielnie. Wyszukiwanie współdzieli przerwę 30 s z panelem miejsc przy trasie. Przy dużym zbliżeniu nazwy widoczne są nad symbolami, a kliknięcie symbolu otwiera dostępny opis i źródło. Przy ponad 80 tablicach nazwy wyświetlają się po wskazaniu symbolu.
 
 **Mapa Turystyczna ↗** otwiera mapa-turystyczna.pl w nowej karcie z takim samym środkiem i zbliżeniem. Odnośnik w dymku tablicy otwiera jej położenie. Warstwa w planerze korzysta z OpenStreetMap. Dostępność nazw i opisów zależy od wpisów OSM. Nie odtwarza stylu ani własnych danych serwisu Mapa Turystyczna, który według FAQ nie oferuje publicznego API do pobierania swojej mapy.
 

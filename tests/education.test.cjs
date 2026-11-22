@@ -15,12 +15,12 @@ function environment() {
   const node = () => ({ children: [], textContent: '', setAttribute(k, v) { this[k] = v; }, append(...children) { this.children.push(...children); } });
   const layer = { clearLayers() { markers.length = 0; }, addTo() { return this; }, remove() { this.removed = true; } };
   const map = { getBounds: bounds, getZoom: () => zoom, getCenter: () => ({ lat: 51.395, lng: 20.239 }), on(name, fn) { events[name] = fn; } };
-  const controls = { panel: node(), message: node(), button: node(), external: node(), nextQuery: () => next, postponeQueries: value => { next = Math.max(next, value); } };
+  const controls = { panel: node(), message: node(), external: node(), nextQuery: () => next, postponeQueries: value => { next = Math.max(next, value); } };
   let timerID = 0;
   const context = vm.createContext({
     URL, URLSearchParams, AbortController, console,
     Date: class extends Date { static now() { return now; } },
-    setTimeout(fn, delay) { timers.set(++timerID, { fn, delay }); return timerID; },
+    setTimeout(fn, delay) { timers.set(++timerID, { fn, delay, due: now + delay }); return timerID; },
     clearTimeout(id) { timers.delete(id); },
     document: { createElement: node },
     fetch(url, options) { calls.push({ url, options }); return response(url, options); },
@@ -38,7 +38,7 @@ function environment() {
     ...context, events, controls, calls, markers, timers, layer, bounds,
     setResponse(fn) { response = fn; }, advance() { now += 31000; }, setZoom(value) { zoom = value; },
     move(value) { events.movestart(); rectangle = value; events.moveend(); },
-    async scheduled() { const job = [...timers].find(([, task]) => task.delay === 700); if (job) { timers.delete(job[0]); await job[1].fn(); } }
+    async scheduled() { const job = [...timers].find(([, task]) => task.delay !== 25000); if (job) { timers.delete(job[0]); now = Math.max(now, job[1].due); await job[1].fn(); } }
   };
 }
 
@@ -74,10 +74,29 @@ async function main() {
   assert.equal(env.calls.length, 1, 'Cached view does not make another request');
   env.move([51.392, 20.234, 51.401, 20.244]);
   await env.scheduled();
-  assert.equal(env.calls.length, 1, 'Shared cooldown applies to a new viewport');
-  env.advance();
-  await env.controls.button.onclick();
-  assert.equal(env.calls.length, 2);
+  assert.equal(env.calls.length, 1, 'Nearby pan uses prefetched boards without another request');
+  env.move([51.41, 20.234, 51.419, 20.244]);
+  await env.scheduled();
+  assert.equal(env.calls.length, 1, 'Shared cooldown applies to an uncached viewport');
+  assert.equal(env.markers.length, 1, 'Existing markers remain while the next view loads');
+  await env.scheduled();
+  assert.equal(env.calls.length, 2, 'The next viewport loads automatically when cooldown ends');
+  assert.equal(env.markers.length, 0, 'Boards outside the new viewport are excluded');
+
+  const moving = environment();
+  let completeMoving;
+  moving.setResponse(() => new Promise(resolve => { completeMoving = resolve; }));
+  moving.ui.setActive(true);
+  const movingTask = moving.scheduled();
+  moving.move([51.41, 20.234, 51.419, 20.244]);
+  assert.equal(moving.calls[0].options.signal.aborted, false, 'A pan does not discard the in-flight query');
+  completeMoving({ ok: true, json: async () => ({ elements: [board] }) });
+  await movingTask;
+  assert.equal(moving.markers.length, 0, 'Old-view response does not overwrite the current view');
+  moving.setResponse(async () => ({ ok: true, json: async () => ({ elements: [] }) }));
+  await moving.scheduled();
+  await moving.scheduled();
+  assert.equal(moving.calls.length, 2, 'Latest view loads after the previous request finishes');
 
   const stale = environment();
   let finish;
@@ -89,6 +108,7 @@ async function main() {
   await pending;
   assert.equal(stale.calls[0].options.signal.aborted, true);
   assert.equal(stale.markers.length, 0, 'Late response cannot restore inactive markers');
+  assert.equal(stale.timers.size, 0, 'Leaving the layer removes automatic retry timers');
 
   const low = environment();
   low.setZoom(12);
@@ -101,11 +121,22 @@ async function main() {
   limited.ui.setActive(true);
   await limited.scheduled();
   assert.match(limited.controls.message.textContent, /HTTP 429/);
-  assert.equal(limited.controls.button.disabled, false);
-  limited.advance();
-  await limited.controls.button.onclick();
+  limited.move([51.41, 20.234, 51.419, 20.244]);
+  await limited.scheduled();
   assert.equal(limited.calls.length, 1, 'Retry-After prevents premature retry');
-  assert.match(limited.controls.message.textContent, /89 s/);
-  console.log('PASS: education boards render literal names/descriptions, validate URLs/coordinates, cache views, share cooldown, honour Retry-After and ignore stale requests');
+  limited.setResponse(async () => ({ ok: true, json: async () => ({ elements: [] }) }));
+  await limited.scheduled();
+  assert.equal(limited.calls.length, 2, 'Rate-limited request retries automatically at the allowed time');
+  assert.match(limited.controls.message.textContent, /Brak tablic/);
+
+  const failed = environment();
+  failed.setResponse(async () => { throw Error('Offline'); });
+  failed.ui.setActive(true);
+  await failed.scheduled();
+  assert.match(failed.controls.message.textContent, /Ponawiam automatycznie/);
+  failed.setResponse(async () => ({ ok: true, json: async () => ({ elements: [board] }) }));
+  await failed.scheduled();
+  assert.equal(failed.markers.length, 1, 'A failed fetch recovers automatically');
+  console.log('PASS: education boards load automatically on activation/pan, reuse prefetched bounds, wait and retry without clicks, retain pending queries, honour Retry-After and ignore stale requests');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -170,7 +170,7 @@ function switchMapStyle(style) {
 }
 
 educationLayer = initEducationMap(map, {
-  panel: $('educationPanel'), message: $('educationStatus'), button: $('educationLoad'), external: $('educationExternal'),
+  panel: $('educationPanel'), message: $('educationStatus'), external: $('educationExternal'),
   nextQuery: () => placesNextRequest,
   postponeQueries: until => { placesNextRequest = Math.max(placesNextRequest, until); savePlacesCooldown(); }
 });
