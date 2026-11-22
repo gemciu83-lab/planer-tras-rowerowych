@@ -206,7 +206,8 @@ async function renderMapCanvas(){
   const rect=$('map').getBoundingClientRect(),scale=Math.min(window.devicePixelRatio||1,2,4096/Math.max(rect.width,rect.height));
   const canvas=document.createElement('canvas');canvas.width=Math.round(rect.width*scale);canvas.height=Math.round((rect.height+32)*scale);
   const ctx=canvas.getContext('2d');ctx.scale(scale,scale);ctx.fillStyle='#e6ebdc';ctx.fillRect(0,0,rect.width,rect.height);
-  const tiles=[...$('map').querySelectorAll('.leaflet-tile-pane img.leaflet-tile')].map(img=>({src:img.currentSrc||img.src,r:img.getBoundingClientRect(),loaded:img.complete&&img.naturalWidth>0})).filter(t=>t.r.right>rect.left&&t.r.left<rect.right&&t.r.bottom>rect.top&&t.r.top<rect.bottom);
+  const comparisonSplit=mapComparison?.split()??null;
+  const tiles=[...$('map').querySelectorAll('img.leaflet-tile')].map(img=>({photo:!!img.closest('.comparison-photo-pane'),src:img.currentSrc||img.src,r:img.getBoundingClientRect(),loaded:img.complete&&img.naturalWidth>0})).filter(t=>t.r.right>rect.left&&t.r.left<rect.right&&t.r.bottom>rect.top&&t.r.top<rect.bottom);
   if(!tiles.length||tiles.some(t=>!t.loaded||t.src.startsWith('data:')))throw Error('Poczekaj, aż wszystkie widoczne fragmenty mapy się wczytają.');
   const project=c=>map.latLngToContainerPoint([c[1],c[0]]);
   const line=track.map(project),pins=points.map((c,i)=>({p:project(c),label:i===0?'S':c[2]==='via'?'':String(points.slice(1,i+1).filter(v=>v[2]!=='via').length),via:c[2]==='via',first:i===0,last:i===points.length-1,closing:i===points.length-1&&points.length>2&&distance(c,points[0])<.001})).filter(pin=>!pin.closing);
@@ -217,8 +218,8 @@ async function renderMapCanvas(){
   ctx.save();ctx.beginPath();ctx.rect(0,0,rect.width,rect.height);ctx.clip();
   // Fetch only visible tiles; six concurrent downloads and a bounded timeout.
   for(let i=0;i<tiles.length;i+=6){
-   const batch=await Promise.allSettled(tiles.slice(i,i+6).map(async t=>{const res=await fetch(t.src,{mode:'cors',signal:AbortSignal.timeout(12000)});if(!res.ok)throw Error('HTTP '+res.status);return {bitmap:await createImageBitmap(await res.blob()),r:t.r}}));
-   let failed=false;for(const result of batch){if(result.status==='rejected'){failed=true;continue}const {bitmap,r}=result.value;ctx.drawImage(bitmap,r.left-rect.left,r.top-rect.top,r.width,r.height);bitmap.close()}
+   const batch=await Promise.allSettled(tiles.slice(i,i+6).map(async t=>{const res=await fetch(t.src,{mode:'cors',signal:AbortSignal.timeout(12000)});if(!res.ok)throw Error('HTTP '+res.status);return {bitmap:await createImageBitmap(await res.blob()),r:t.r,photo:t.photo}}));
+   let failed=false;for(const result of batch){if(result.status==='rejected'){failed=true;continue}const {bitmap,r,photo}=result.value;ctx.save();if(photo&&comparisonSplit!==null){ctx.beginPath();ctx.rect(rect.width*comparisonSplit,0,rect.width*(1-comparisonSplit),rect.height);ctx.clip()}ctx.drawImage(bitmap,r.left-rect.left,r.top-rect.top,r.width,r.height);ctx.restore();bitmap.close()}
    if(failed)throw Error('Nie można zapisać tej warstwy mapy. Wybierz Podstawową i spróbuj ponownie.');
   }
   if(line.length>1){for(const part of pngGradeRuns||[{color:'#247454',line}]){ctx.beginPath();part.line.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=part.color;ctx.lineWidth=5;ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash(direct?[8,8]:[]);ctx.stroke()}ctx.setLineDash([])}

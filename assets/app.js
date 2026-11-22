@@ -1,6 +1,7 @@
 
 'use strict';
 
+let journeyControls=null,mapComparison=null;
 let mapDistancePending=false,previousRoute=null,pngExporting=false;
 let tripReady=false,historyMuted=false,draftTimer=null,lastInputCheckpoint=null;
 let historyCurrent=null,historyPast=[],historyFuture=[];
@@ -169,7 +170,7 @@ function switchMapStyle(style) {
 }
 
 switchMapStyle('normal');
-$('mapStyle').onchange = () => switchMapStyle($('mapStyle').value);
+$('mapStyle').onchange = () => { mapComparison?.stop(false); switchMapStyle($('mapStyle').value); };
 function updateFireAccessHint(style = $('mapStyle').value) {
   $('fireAccessHint').hidden = style !== 'fireAccess' || map.getZoom() >= styleDefinitions.fireAccess[1].minZoom;
 }
@@ -423,7 +424,7 @@ renderPoints();showSaved();initMapInfo();updateClock();setInterval(updateClock,1
 
 // Optional live position: never changes the planned route.
 let followId=null,followGeneration=0;
-function stopFollow(){followGeneration++;if(followId!==null)navigator.geolocation?.clearWatch(followId);followId=null;$('followGPS').setAttribute('aria-pressed','false');$('followGPS').textContent='◎ Śledź pozycję';}
+function stopFollow(){journeyControls?.stopFollowing();followGeneration++;if(followId!==null)navigator.geolocation?.clearWatch(followId);followId=null;$('followGPS').setAttribute('aria-pressed','false');$('followGPS').textContent='◎ Śledź pozycję';}
 $('followGPS').onclick=()=>{
  if(followId!==null){stopFollow();status('Śledzenie pozycji wyłączone.');return}
  if(!window.isSecureContext||!navigator.geolocation){status('Uruchom planer przez URUCHOM.cmd i zezwól na lokalizację.',true);return}
@@ -616,3 +617,5 @@ initMapCompass($('mapCompassToggle'), $('mapCompassMessage'));
 initPhoneLayout();
 
 initLiveSharing();
+journeyControls=initJourney(map);
+mapComparison=initMapComparison(map);

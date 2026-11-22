@@ -30,27 +30,39 @@ function initHybridUI(map){
  const committed=L.polyline([], {...options,color:'#8d35c7',weight:4,dashArray:'8 5'}).addTo(map);
  const draft=L.polyline([], {...options,color:'#992bcb',weight:5,opacity:.95}).addTo(map);
  const pins=L.layerGroup().addTo(map);
- let anchor=null,vertices=[],doubleClick=false;
+ const edgeSelect=$('hybridEdge');
+ let anchor=null,target=null,vertices=[],doubleClick=false,drawingTrack=null;
  const number=()=>points.slice(1).filter(p=>p[2]!=='via').length;
+ function pointLabel(index){return index===0?'S':points[index][2]==='via'?'↪ '+index:String(points.slice(1,index+1).filter(p=>p[2]!=='via').length)}
+ function drawingValid(){return anchor&&(target?points.indexOf(target)===points.indexOf(anchor)+1&&drawingTrack===track:points.at(-1)===anchor)}
  function update(){
-  if(anchor&&points.at(-1)!==anchor){stop();return}
+  if(anchor&&!drawingValid()){stop();return}
+  const selected=edgeSelect.value;
+  if(!anchor){
+   edgeSelect.replaceChildren();
+   const append=document.createElement('option');append.value='append';append.textContent='Dorysuj od końca trasy';edgeSelect.append(append);
+   for(let i=0;i<points.length-1;i++){const option=document.createElement('option');option.value=String(i);option.textContent='Zastąp odcinek '+pointLabel(i)+' → '+pointLabel(i+1);edgeSelect.append(option)}
+   if([...edgeSelect.options].some(o=>o.value===selected))edgeSelect.value=selected;
+   if(routeType==='import'&&edgeSelect.value==='append'&&points.length>1)edgeSelect.value='0';
+  }
+  edgeSelect.disabled=!!anchor||mapDistancePending;
   const sections=captureHybridSections();
   committed.setLatLngs(sections.map(s=>[points[s.edge],...s.via,points[s.edge+1]].map(c=>[c[1],c[0]])));
-  begin.disabled=!!anchor||!points.length||routeType==='import';
-  undo.disabled=finish.disabled=!vertices.length;cancel.disabled=!anchor;
-  if(anchor)info.textContent='Rysujesz od punktu '+(number()||'S')+' · '+vertices.length+' pkt. Ostatnie kliknięcie stanie się punktem '+(number()+1)+'.';
-  else if(routeType==='import')info.textContent='Zacznij od trasy zaplanowanej na mapie. Importowany GPX ma osobny tryb edycji.';
+  begin.disabled=!!anchor||!points.length||mapDistancePending||(edgeSelect.value==='append'&&routeType==='import');
+  undo.disabled=!vertices.length;finish.disabled=!anchor||(!target&&!vertices.length);cancel.disabled=!anchor;
+  begin.textContent=edgeSelect.value==='append'?'Dorysuj od końca':'Rysuj wybrany odcinek';
+  if(anchor)info.textContent=target?'Rysujesz pomiędzy '+pointLabel(points.indexOf(anchor))+' i '+pointLabel(points.indexOf(target))+'. Koniec połączy się z wybranym punktem.':'Rysujesz od punktu '+(number()||'S')+' · '+vertices.length+' pkt. Ostatnie kliknięcie stanie się punktem '+(number()+1)+'.';
   else if(!points.length)info.textContent='Najpierw ustaw punkt startowy S na mapie.';
   else info.textContent='Ostatni punkt: '+(number()||'S')+' · ręczne odcinki: '+sections.length+'.';
  }
  function paint(){
-  draft.setLatLngs(anchor?[anchor,...vertices].map(c=>[c[1],c[0]]):[]);
+  draft.setLatLngs(anchor?[anchor,...vertices,...(target?[target]:[])].map(c=>[c[1],c[0]]):[]);
   pins.clearLayers();for(const c of vertices)L.circleMarker([c[1],c[0]],{...options,radius:4,color:'#fff',weight:2,fillColor:'#992bcb',fillOpacity:1}).addTo(pins);
   update();
  }
  function stop(){
   if(!anchor)return;
-  anchor=null;vertices=[];map.getContainer().classList.remove('is-drawing-manual');
+  anchor=null;target=null;drawingTrack=null;vertices=[];map.getContainer().classList.remove('is-drawing-manual');
   if(doubleClick)map.doubleClickZoom.enable();paint();
  }
  function close(){panel.hidden=true;toggle.setAttribute('aria-expanded','false');stop()}
@@ -60,19 +72,34 @@ function initHybridUI(map){
  };
  begin.onclick=()=>{
   if(begin.disabled)return;
-  anchor=points.at(-1);vertices=[];clearRouteInspection();map.closePopup();
+  const edge=Number(edgeSelect.value);
+  target=edgeSelect.value==='append'?null:points[edge+1];
+  anchor=target?points[edge]:points.at(-1);drawingTrack=track;vertices=[];clearRouteInspection();map.closePopup();
   doubleClick=map.doubleClickZoom.enabled();map.doubleClickZoom.disable();map.getContainer().classList.add('is-drawing-manual');paint();
  };
  undo.onclick=()=>{vertices.pop();paint()};cancel.onclick=stop;
  finish.onclick=()=>{
-  if(!anchor||!vertices.length)return;
-  if(points.at(-1)!==anchor){stop();status('Punkt początkowy się zmienił. Zacznij rysowanie od aktualnego końca trasy.',true);return}
+  if(!anchor||(!target&&!vertices.length))return;
+  if(!drawingValid()){stop();status('Trasa zmieniła się podczas rysowania. Wybierz odcinek ponownie.',true);return}
+  if(target){
+   const edge=points.indexOf(anchor),via=vertices.slice();
+   let result;
+   try{result=PlannerHybrid.replaceSection(track,points,edge,via,distance,routeType==='import'?gpxImportIndices:null)}catch(error){status(error.message,true);return}
+   const sections=captureHybridSections().filter(s=>s.edge!==edge);sections.push({edge,via});
+   stop();checkpoint();revision++;controller?.abort();clearTimeout(autoRouteTimer);cancelLoopSearch();routingRecalcRequested=false;
+   track=result.track;surfaceData=null;previousRoute=null;mapDistancePending=false;restoreHybridSections(sections);
+   if(routeType==='import'){gpxImportIndices=result.indices;if(gpxRecording)gpxRecording={...gpxRecording,modified:true}}
+   renderPoints();status('Zastąpiono wybrany odcinek. Pozostały ślad zachowano. Dane nawierzchni wymagają ponownego wyznaczenia.');
+   if(track.some(c=>!Number.isFinite(c[2])))void fetchGPXHeights(true);
+   return;
+  }
   const from=anchor,to=vertices.at(-1),via=vertices.slice(0,-1);
   if([from,...vertices].every(c=>c[0]===from[0]&&c[1]===from[1]))return;
   stop();checkpoint();points.push(to);hybridSections.push({from,to,via});invalidate();renderPoints();
   if(!$('autoRouting').checked)void $('route').onclick(false);
  };
  document.addEventListener('keydown',e=>{if(e.key==='Escape')stop()});
+ edgeSelect.onchange=update;
  return {close,stop,update,get drawing(){return !!anchor},addFromMap(latlng){
   if(!anchor)return false;
   const {lat,lng}=latlng.wrap(),last=vertices.at(-1)||anchor;

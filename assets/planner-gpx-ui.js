@@ -64,11 +64,33 @@ function reverseImportedGPX(){
  if(routeType!=='import'||track.length<2)return false;
  checkpoint();if(gpxRecording)gpxRecording={...gpxRecording,modified:true};const n=track.length;points.reverse();track=track.slice().reverse();gpxImportIndices=gpxImportIndices.slice().reverse().map(i=>n-1-i);revision++;mapDistancePending=false;renderPoints();status('Odwrócono cały ślad GPX bez ponownego wyznaczania drogi.');return true;
 }
+function chooseGPXSegment(doc){
+ const segments=Array.from(doc.getElementsByTagNameNS('*','trkseg')).filter(s=>s.getElementsByTagNameNS('*','trkpt').length);
+ if(segments.length<2)return Promise.resolve(undefined);
+ const dialog=$('gpxSegmentDialog'),select=$('gpxSegmentSelect');
+ if(dialog.open)return Promise.resolve(null);
+ select.replaceChildren();
+ segments.forEach((segment,i)=>{const option=document.createElement('option'),count=segment.getElementsByTagNameNS('*','trkpt').length;option.value=String(i);option.textContent='Odcinek '+(i+1)+' · '+count+' pkt GPS';option.disabled=count<2;select.append(option)});
+ const first=segments.findIndex(s=>s.getElementsByTagNameNS('*','trkpt').length>=2);
+ if(first<0)throw Error('Żaden odcinek GPX nie zawiera dwóch punktów.');
+ select.value=String(first);
+ return new Promise(resolve=>{
+  const finish=value=>{dialog.removeEventListener('close',cancel);$('gpxSegmentForm').onsubmit=null;$('gpxSegmentCancel').onclick=null;dialog.close();resolve(value)};
+  const cancel=()=>finish(null);
+  dialog.addEventListener('close',cancel,{once:true});
+  $('gpxSegmentCancel').onclick=cancel;
+  $('gpxSegmentForm').onsubmit=event=>{event.preventDefault();finish(Number(select.value))};
+  dialog.showModal();
+ });
+}
 async function importGPXFile(file){
  if(!file)return;const sequence=++gpxImportSequence,startingRevision=revision;
  try{
   if(file.size>10000000)throw Error('GPX jest większy niż 10 MB.');
-  const doc=new DOMParser().parseFromString(await file.text(),'application/xml'),parsed=PlannerGPX.parse(doc);if(sequence!==gpxImportSequence)return;
+  const doc=new DOMParser().parseFromString(await file.text(),'application/xml');
+  if(sequence!==gpxImportSequence)return;
+  const segmentIndex=await chooseGPXSegment(doc);if(segmentIndex===null||sequence!==gpxImportSequence)return;
+  const parsed=PlannerGPX.parse(doc,segmentIndex);
   if(typeof PlannerCompute!=='undefined')await PlannerCompute.prepare(parsed.track);if(sequence!==gpxImportSequence||revision!==startingRevision){status('Import pominięty: trasa została zmieniona podczas wczytywania.');return}
   const model=PlannerGPX.controls(parsed.track);checkpoint();gpxRecording=parsed.recording||null;stopGPS();stopFollow();gpxEditTask?.controller.abort();gpxElevationTask?.controller.abort();
   controller?.abort();clearTimeout(autoRouteTimer);routingRecalcRequested=false;revision++;

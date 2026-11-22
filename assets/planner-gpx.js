@@ -2,11 +2,12 @@
  'use strict';
  const km=(a,b)=>{const r=Math.PI/180,d=(b[1]-a[1])*r,e=(b[0]-a[0])*r,t=Math.sin(d/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(e/2)**2;return 6371*2*Math.atan2(Math.sqrt(t),Math.sqrt(Math.max(0,1-t)))};
  const meters=cs=>{let n=0;return cs.map((c,i)=>{if(i)n+=km(cs[i-1],c)*1000;return n})};
- function parse(doc){
+ function parse(doc,segmentIndex){
   if(doc.getElementsByTagNameNS('*','parsererror').length||doc.getElementsByTagNameNS('*','gpx').length!==1)throw Error('Nieprawidłowy plik GPX.');
   const segments=Array.from(doc.getElementsByTagNameNS('*','trkseg')).filter(s=>s.getElementsByTagNameNS('*','trkpt').length);
-  if(segments.length>1)throw Error('Plik ma kilka oddzielnych śladów. Wczytaj jeden ciągły odcinek GPX.');
-  const tracks=Array.from(doc.getElementsByTagNameNS('*','trkpt')),routes=Array.from(doc.getElementsByTagNameNS('*','rte'));
+  if(segments.length>1&&segmentIndex===undefined)throw Error('Plik ma kilka oddzielnych śladów. Wczytaj jeden ciągły odcinek GPX.');
+  if(segmentIndex!==undefined&&(!Number.isInteger(segmentIndex)||segmentIndex<0||segmentIndex>=segments.length))throw Error('Wybierz prawidłowy odcinek GPX.');
+  const tracks=Array.from((segmentIndex===undefined?doc:segments[segmentIndex]).getElementsByTagNameNS('*','trkpt')),routes=Array.from(doc.getElementsByTagNameNS('*','rte'));
   if(!tracks.length&&routes.length>1)throw Error('Plik ma kilka oddzielnych tras. Wczytaj jedną trasę GPX.');
   const nodes=tracks.length?tracks:Array.from(doc.getElementsByTagNameNS('*','rtept'));
   if(nodes.length<2||nodes.length>150000)throw Error('GPX musi zawierać od 2 do 150 000 punktów śladu lub trasy.');
@@ -17,7 +18,7 @@
    return raw&&Number.isFinite(height)?[lon,lat,height]:[lon,lat];
   });
   const times=nodes.map(n=>{const raw=n.getElementsByTagNameNS('*','time')[0]?.textContent.trim();return raw&&/^\d{4}-\d\d-\d\dT/.test(raw)&&Number.isFinite(Date.parse(raw))?Date.parse(raw):null});
-  const extensions={};for(const name of ['totalDistance','totalTime','cumulativeClimb','cumulativeDecrease']){const raw=doc.getElementsByTagNameNS('*',name)[0]?.textContent.trim();if(raw&&Number.isFinite(Number(raw)))extensions[name]=Number(raw)}
+  const extensions={};if(segmentIndex===undefined)for(const name of ['totalDistance','totalTime','cumulativeClimb','cumulativeDecrease']){const raw=doc.getElementsByTagNameNS('*',name)[0]?.textContent.trim();if(raw&&Number.isFinite(Number(raw)))extensions[name]=Number(raw)}
   return {track,recording:root.PlannerAnalysis?.recording(track,times,extensions)||null,name:doc.getElementsByTagNameNS('*','name')[0]?.textContent.slice(0,100)||''};
  }
  function controls(track){

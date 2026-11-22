@@ -40,7 +40,7 @@ function initPhoneLayout() {
   }
 
   menu.addEventListener('click', () => setMenu(menu.getAttribute('aria-expanded') === 'false'));
-  for (const id of ['manualPathToggle', 'hybridToggle', 'openLoops', 'menuToggle']) {
+  for (const id of ['manualPathToggle', 'hybridToggle', 'openLoops', 'menuToggle', 'journeyToggle', 'compareToggle']) {
     $(id).addEventListener('click', () => {
       if (phoneLayout.matches && header.classList.contains('phone-menu-open')) setMenu(false, true);
     });

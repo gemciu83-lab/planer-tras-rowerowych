@@ -52,5 +52,28 @@
   if(track.length<2)throw error('Dodaj punkt w innym miejscu, aby wyznaczyć odcinek.');
   return {track,surfaceData:surfaces.length?{parts:surfaces}:null};
  }
- root.PlannerHybrid={sanitize,plan,densify,build};
+ function replaceSection(track,points,edge,via,distance,knownIndices){
+  if(!Number.isInteger(edge)||edge<0||edge>=points.length-1||track.length<2||!Array.isArray(via)||!via.every(valid))throw error('Wybierz istniejący odcinek trasy.');
+  let indices;
+  if(Array.isArray(knownIndices)&&knownIndices.length===points.length&&knownIndices.every((n,i)=>Number.isInteger(n)&&n>=0&&n<track.length&&(!i||n>=knownIndices[i-1])))indices=knownIndices.slice();
+  else{
+   let previous=0;
+   indices=points.map((point,i)=>{
+    if(!i)return 0;if(i===points.length-1)return track.length-1;
+    let best=previous,minimum=Infinity;
+    for(let j=previous;j<track.length;j++){const d=distance(point,track[j]);if(d<minimum){minimum=d;best=j}}
+    previous=best;return best;
+   });
+  }
+  const left=indices[edge],right=indices[edge+1];
+  if(right<=left||distance(track[left],points[edge])>.25||distance(track[right],points[edge+1])>.25)throw error('Nie mogę dokładnie powiązać końców odcinka z trasą. Przesuń je bliżej jej przebiegu.');
+  const middle=densify([track[left],points[edge],...via,points[edge+1],track[right]],distance);
+  if(Number.isFinite(track[left][2]))middle[0][2]=track[left][2];
+  if(Number.isFinite(track[right][2]))middle[middle.length-1][2]=track[right][2];
+  const result=[...track.slice(0,left),...middle,...track.slice(right+1)];
+  if(result.length>150000)throw error('Ślad przekroczył 150 000 punktów. Skróć rysowany odcinek.');
+  const delta=middle.length-1-(right-left);
+  return {track:result,indices:indices.map((n,i)=>i<=edge?n:n+delta)};
+ }
+ root.PlannerHybrid={sanitize,plan,densify,build,replaceSection};
 })(typeof globalThis!=='undefined'?globalThis:this);

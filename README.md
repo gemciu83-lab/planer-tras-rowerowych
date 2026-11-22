@@ -1,4 +1,4 @@
-# Planer tras rowerowych 3.27
+# Planer tras rowerowych 3.28
 
 ## Współrzędne pod kursorem
 
@@ -253,3 +253,19 @@ Na telefonie przycisk **Menu** rozwija narzędzia u góry. Dystans, czas jazdy i
 Pierwsza konfiguracja i próba lokalna są opisane w [URUCHOM-POZYCJE.md](URUCHOM-POZYCJE.md). Po podłączeniu usługi publikuj też plik pozycja.html obok index.html.
 
 Po wyznaczeniu trasy rozwiń **Miejsca przy trasie** i kliknij **Co warto zobaczyć?**. Wyniki pochodzą z OpenStreetMap i obejmują atrakcje do 1 km od śladu. **Oblicz objazd** szacuje zmianę dystansu i czasu przemieszczania się przy bieżącym profilu i tempie. **+ Postój** dopisuje miejsce z domyślnym postojem 10 min, który można zmienić w ustawieniach punktu.
+
+## Wyprawa i nagrywanie GPS
+
+Otwórz **Wyprawa** w górnym menu. Po wyznaczeniu trasy kliknij **Rozpocznij wyprawę**. Panel pokazuje faktycznie przebyte kilometry z dobrych pomiarów GPS, pozostałą drogę, odległość do następnego zatwierdzonego postoju oraz ETA według tempa wpisanego w planie i pozostałych postojów. Przesunięcie mapy wyłącza centrowanie, które można ponownie zaznaczyć. Schowanie panelu nie kończy wyprawy.
+
+Alarm zejścia z trasy wymaga trzech dokładnych pomiarów przez co najmniej 5 sekund. Próg zależy od dokładności GPS. Pomiar o dokładności gorszej niż 50 m nie wywołuje alarmu i nie jest dopisywany do nagrania. Dźwięk jest opcjonalny. Przeglądarka może wstrzymać GPS i dźwięk w tle; aplikacja prosi o utrzymanie ekranu, jeśli urządzenie obsługuje tę funkcję. Nie zapewnia nawigacji głosowej zakręt po zakręcie.
+
+W sekcji **Nagrywanie własnego śladu GPS** są przyciski nagrywania, pauzy, zatrzymania i pobrania GPX. Nagrywanie działa również bez planu trasy. Fioletowy ślad jest oddzielny od planu. Kopia zapisuje się w bieżącej przeglądarce co 10 s przy przyjęciu punktu oraz przy pauzie i opuszczeniu strony. Po ponownym otwarciu można wznowić odzyskane nagranie przyciskiem. Problemy z pamięcią są komunikowane przy nagraniu. Pauza i brak pomiarów przez ponad 2 minuty rozpoczynają nowy segment GPX, aby nie doliczać prostej między oddzielnymi odcinkami. Przy imporcie pliku z kilkoma segmentami planer pozwala wybrać ciągły odcinek do dalszego planowania.
+
+## Edycja wybranego fragmentu Hybrydy
+
+Otwórz **Hybryda**, wybierz z listy odcinek, np. **Zastąp odcinek 3 → 4**, i kliknij **Rysuj wybrany odcinek**. Klikaj punkty przebiegu na mapie lub zdjęciu, potem zatwierdź. Końce pozostają połączone z wybranymi punktami, a pozostałe współrzędne śladu pozostają zachowane. Działa też na wczytanym GPX. Zmianę można cofnąć. Dane nawierzchni są usuwane, ponieważ dotyczyły wcześniejszego przebiegu; brakujące wysokości uzupełnia dotychczasowa usługa wysokości.
+
+## Porównywanie mapy i ortofotomapy
+
+Kliknij **Porównaj mapy** i przesuń suwak. Po lewej widoczna jest mapa OSM, po prawej ortofotomapa HR, z dotychczasowym podkładem dla obszarów bez pokrycia HR. Trasa i punkty pozostają nad obiema warstwami. Zamknięcie porównania przywraca poprzednią mapę. Wybór innej mapy kończy porównanie. Eksport PNG uwzględnia podział.
