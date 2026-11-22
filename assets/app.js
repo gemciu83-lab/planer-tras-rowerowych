@@ -151,7 +151,7 @@ function addMapTileLayer({ url, ...options }, zIndex) {
   layer.on('tileunload tileabort', event => event.tile.cancelLoad?.());
   return layer.addTo(map);
 }
-function switchMapStyle(style) {
+function switchMapStyle(style, comparisonMaxZoom) {
   for (const layer of mapLayers) map.removeLayer(layer);
   mapLayers = [];
   mapNoticeDismissed = false;
@@ -160,7 +160,7 @@ function switchMapStyle(style) {
   const localOSM = location.protocol === 'file:' && ['normal', 'forest', 'fireAccess', 'forestTourism'].includes(selected);
   $('osmLocalNotice').hidden = !localOSM;
   if (!localOSM) {
-    mapLayers = styleDefinitions[selected].map((options, index) => addMapTileLayer(options, index + 1));
+    mapLayers = styleDefinitions[selected].map((options, index) => addMapTileLayer(comparisonMaxZoom ? { ...options, maxZoom: comparisonMaxZoom } : options, index + 1));
   }
   updateFireAccessHint(selected);
   const tourismLegend = $('forestTourismLegend');
@@ -179,7 +179,7 @@ map.on('zoomend', () => updateFireAccessHint());
 function retryMap() {
   const failedLayers = new Set(missingTiles.values());
   missingTiles.clear();
-  for (const layer of mapLayers) if (failedLayers.has(layer)) layer.redraw();
+  for (const layer of [...mapLayers,...(mapComparison?.tileLayers||[])]) if (failedLayers.has(layer)) layer.redraw();
   updateMapNotice();
 }
 mapNotice.querySelector('.map-notice-retry').onclick=retryMap;

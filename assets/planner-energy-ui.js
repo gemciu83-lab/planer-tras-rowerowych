@@ -6,10 +6,11 @@ function energyStops(){
  ensureTripPlan();const stops=getPointStops(),events=tripPlanPositions.map((meters,i)=>({meters,minutes:stops[i]||0})).concat(activeRouteBreaks());
  return events.filter(e=>Number.isFinite(e.meters)&&e.minutes>0).sort((a,b)=>a.meters-b.meters);
 }
-function estimateTripEnergy(){
+function estimateTripEnergy(onProgress){
  if(typeof isWalking==='function'&&isWalking()){
   const options={...energySettings(),walkingTerrain:$('walkingTerrain').value},signature='walking:'+JSON.stringify(options);
-  if(energyCached?.track===track&&energyCached.signature===signature)return energyCached.result;
+  if(onProgress)options.onProgress=onProgress;
+  if(!onProgress&&energyCached?.track===track&&energyCached.signature===signature)return energyCached.result;
   const result=PlannerWalking.estimate(track,PlannerCore.rideMetrics(track,distance),routeTerrain().grades,options);energyCached={track,signature,result};return result;
  }
  const options=energySettings(),mode=$('windMode').value,departure=new Date($('departure').value).getTime();
@@ -20,7 +21,8 @@ function estimateTripEnergy(){
   options.windAt=meters=>{while(at<events.length&&events[at].meters<meters){minutes+=events[at++].minutes}return PlannerEnergy.forecastAt(energyForecast.records,meters,departure+meters/(Number(options.speed)/3.6)*1000+minutes*60000)};
  }
  if(mode==='sections')options.windAt=meters=>PlannerAnalysis.windAt(manualWindSections,meters,{speed:Number(options.windSpeed)/3.6,direction:Number(options.windDirection)});
- if(energyCached?.track===track&&energyCached.signature===signature)return energyCached.result;
+ if(onProgress)options.onProgress=onProgress;
+ if(!onProgress&&energyCached?.track===track&&energyCached.signature===signature)return energyCached.result;
  const result=PlannerEnergy.estimate(track,PlannerCore.rideMetrics(track,distance),options);
  energyCached={track,signature,result};return result;
 }

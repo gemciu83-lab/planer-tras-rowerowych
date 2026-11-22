@@ -55,7 +55,7 @@ function uiEnvironment() {
       textContent: '', classList: { toggle() {} }, setAttribute(k,v) { this[k] = v; } });
     return nodes.get(id);
   };
-  const map = { getSize: () => ({x:1000,y:600}), on(name, callback) { mapEvents.set(name, callback); } };
+  const map = { getSize: () => ({x:1000,y:600}), on(name, callback) { const previous=mapEvents.get(name);mapEvents.set(name,(...args)=>{previous?.(...args);callback(...args)}); } };
   const window = Object.assign(new EventTarget(), { isSecureContext: true, confirm: () => true });
   const document = Object.assign(new EventTarget(), { hidden: false });
   const env = vm.createContext({ console, Map, Set, Number, Math, JSON, Event, window, document,
@@ -71,7 +71,7 @@ function uiEnvironment() {
     stopGPS() {}, stopFollow() {}, drawGPSPosition() {}, centerMapAboveDock() {}, restMarkerItems: () => [],
     download(...args) { calls.downloads.push(args); }
   });
-  vm.runInContext(source('planner-trip') + source('planner-journey') + source('planner-journey-ui') + ';this.control=initJourney(map);', env);
+  vm.runInContext(source('planner-trip') + source('planner-journey') + source('planner-simulation') + source('planner-journey-ui') + ';this.control=initJourney(map);', env);
   return { env, node, calls, watches, mapEvents, storage, window,
     send(p) { now = p.time; [...watches.values()].forEach(w => w.ok(position(p))); }, setNow(v) { now = v; } };
 }
@@ -131,6 +131,28 @@ function uiEnvironment() {
 }
 
 {
+  const e=uiEnvironment(),total=T.routeIndex(e.env.track).total;
+  e.env.energySettings=()=>({speed:16,rider:67});e.env.energyStops=()=>[];
+  e.env.manualWindSections=[];e.env.energyForecastSerial=0;
+  e.env.estimateTripEnergy=callback=>{callback({meters:total,active:500});return {valid:true,active:500}};
+  e.env.requestAnimationFrame=()=>1;e.env.cancelAnimationFrame=()=>{};
+  e.env.L.circleMarker=()=>({addTo(){return this},setLatLng(){},remove(){}});
+  e.env.stats=()=>{};
+  for(const id of ['mapTimeTile','mapCaloriesTile'])e.node(id).querySelector=()=>({textContent:''});
+  e.node('simulationSpeed').value='100';
+  e.node('simulationStart').onclick();
+  assert.match(e.node('journeyGPS').textContent,/SYMULACJA/);
+  assert.equal(e.calls.watches,0,'Starting simulation never subscribes to real GPS');
+  assert.equal(e.storage.size,0,'Simulation never writes to the real recording');
+  assert.equal(e.node('journeyRecordStart').disabled,true);
+  assert.equal(e.node('followGPS').disabled,true);
+  e.node('simulationStop').onclick();
+  assert.equal(e.node('journeyRecordStart').disabled,false);
+  assert.equal(e.node('journeySimulationMetrics').hidden,true);
+  console.log('PASS: Journey entry point runs simulation without GPS or recording writes and restores live controls on stop');
+}
+
+{
   vm.runInContext(source('planner-gpx'),core);
   const node = (lon,lat) => ({getAttribute:k=>String(k==='lat'?lat:lon),getElementsByTagNameNS:()=>[]});
   const groups = [[node(19,51),node(19.01,51)],[node(20,52),node(20.01,52)]];
@@ -144,23 +166,35 @@ function uiEnvironment() {
 }
 
 {
-  const nodes = new Map(), events = new Map(), pane = {style:{},classList:{add(){}}}, layers = [];
-  const $ = id => { if (!nodes.has(id)) nodes.set(id, {value:id==='mapStyle'?'forest':id==='compareSlider'?'50':'',style:{},setAttribute(k,v){this[k]=v;}}); return nodes.get(id); };
-  const map = {createPane:()=>pane,getSize:()=>({x:1000,y:600}),containerPointToLayerPoint:()=>({x:30,y:40}),on(names,fn){names.split(' ').forEach(n=>events.set(n,fn));}};
-  const ctx = vm.createContext({map,$,styleDefinitions:{orthophotoHigh:[{},{},{}]},switchMapStyle:()=>{},addMapTileLayer(){const layer={remove(){this.removed=true}};layers.push(layer);return layer;},L:{DomEvent:{disableClickPropagation(){},disableScrollPropagation(){}}}});
+  const nodes = new Map(), events = new Map(), pane = {style:{},classList:{add(){}}}, layers = [], selected = [];
+  let dragging=true;
+  const node=()=>({value:'',options:[],style:{},events:new Map(),setAttribute(k,v){this[k]=v;},append(option){this.options.push(option);if(this.options.length===1)this.value=option.value;},addEventListener(name,fn){this.events.set(name,fn);},setPointerCapture(){}});
+  const $ = id => { if (!nodes.has(id)) nodes.set(id,node());return nodes.get(id); };
+  $('mapStyle').value='forest';$('mapStyle').options=['normal','forest','cycle','orthophotoHigh'].map(value=>({value,textContent:value}));
+  const map = {createPane:()=>pane,getSize:()=>({x:1000,y:600}),containerPointToLayerPoint:()=>({x:30,y:40}),getContainer:()=>({getBoundingClientRect:()=>({left:100,width:1000})}),dragging:{enabled:()=>dragging,disable(){dragging=false},enable(){dragging=true}},on(names,fn){names.split(' ').forEach(n=>events.set(n,fn));}};
+  const ctx = vm.createContext({map,$,document:{createElement:node},styleDefinitions:{normal:[{}],forest:[{},{}],cycle:[{}],orthophotoHigh:[{},{},{}]},switchMapStyle:(style,max)=>selected.push([style,max]),addMapTileLayer(){const layer={remove(){this.removed=true}};layers.push(layer);return layer;},L:{DomEvent:{disableClickPropagation(){},disableScrollPropagation(){}}}});
   vm.runInContext(source('planner-compare')+';this.comparison=initMapComparison(map);',ctx);
+  $('compareRight').value='orthophotoHigh';
   $('compareToggle').onclick();
-  assert.equal($('mapStyle').value,'normal');
+  assert.equal($('mapStyle').value,'forest');
   assert.equal(layers.length,3);
   assert.equal(pane.style.clip,'rect(40px, 1030px, 640px, 530px)');
-  $('compareSlider').value='70';$('compareSlider').oninput();
+  const event={pointerId:1,button:0,clientX:800,preventDefault(){},stopPropagation(){}};
+  $('compareHandle').events.get('pointerdown')(event);
+  assert.equal(dragging,false);
   assert.equal(ctx.comparison.split(),.7);
   assert.equal(pane.style.clip,'rect(40px, 1030px, 640px, 730px)');
+  $('compareHandle').events.get('pointercancel')(event);
+  assert.equal(dragging,true);
+  $('compareLeft').value='cycle';$('compareLeft').onchange();assert.equal($('mapStyle').value,'cycle');
+  $('compareRight').value='normal';$('compareRight').onchange();assert.equal(layers.length,4);
+  $('compareHandle').events.get('keydown')({...event,key:'Home'});assert.equal(ctx.comparison.split(),0);
+  $('compareHandle').events.get('keydown')({...event,key:'End'});assert.equal(ctx.comparison.split(),1);
   $('compareClose').onclick();
   assert.equal($('mapStyle').value,'forest');
   assert(layers.every(l=>l.removed));
   assert.equal(ctx.comparison.split(),null);
-  console.log('PASS: comparison slider accounts for panned coordinates, clips imagery and restores the selected map');
+  console.log('PASS: independent map selectors, central drag handle, cancellation, keyboard clipping and restoring the previous map');
 }
 
 {

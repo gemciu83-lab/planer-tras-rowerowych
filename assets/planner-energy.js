@@ -26,6 +26,7 @@
    work+=Math.max(0,(mass*9.81*bike.crr+air)*d+mass*9.81*(Number.isFinite(metrics.rise[i])?metrics.rise[i]:0));
    if(wind.speed>=.5){windMeters+=d;if(along>Math.abs(side)*.5)upwind+=d;else if(along < -Math.abs(side)*.5)downwind+=d;else crosswind+=d}
    meters+=d;
+   if(options.onProgress)options.onProgress({meters,active:work/(.97*.24*4184)});
   }
   // 24% is an assumed NET efficiency. Add the resting component exactly once.
   const rideHours=meters/1000/s.speed,active=work/(.97*.24*4184),restRide=s.rider*rideHours,restStops=s.rider*s.stopMinutes/60;

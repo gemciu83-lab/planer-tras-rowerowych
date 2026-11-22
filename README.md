@@ -1,4 +1,4 @@
-# Planer tras rowerowych 3.28
+# Planer tras rowerowych 3.29
 
 ## Współrzędne pod kursorem
 
@@ -268,4 +268,10 @@ Otwórz **Hybryda**, wybierz z listy odcinek, np. **Zastąp odcinek 3 → 4**, i
 
 ## Porównywanie mapy i ortofotomapy
 
-Kliknij **Porównaj mapy** i przesuń suwak. Po lewej widoczna jest mapa OSM, po prawej ortofotomapa HR, z dotychczasowym podkładem dla obszarów bez pokrycia HR. Trasa i punkty pozostają nad obiema warstwami. Zamknięcie porównania przywraca poprzednią mapę. Wybór innej mapy kończy porównanie. Eksport PNG uwzględnia podział.
+Kliknij **Porównaj mapy**. Dwie listy pozwalają niezależnie wybrać mapę po lewej i po prawej, w tym OSM, rowerową, topograficzną, ortofotomapę HR i warstwy BDL. Przeciągaj uchwyt ↔ na środku linii podziału myszą lub palcem. Strzałki na klawiaturze przesuwają aktywny uchwyt, Home i End odsłaniają jedną stronę. Trasa i punkty pozostają nad obiema warstwami. Zamknięcie porównania przywraca poprzednią mapę. Wybór innej mapy kończy porównanie. Eksport PNG uwzględnia podział.
+
+## Symulacja trasy
+
+Otwórz **Wyprawa → Symulacja trasy** i kliknij **Symuluj trasę**. Żółty punkt porusza się po wyznaczonym śladzie, a liczniki w panelu i kafelkach mapy pokazują symulowany dystans, czas i kalorie aktywne. Dostępne są pauza/wznowienie, przewijanie, przyspieszenie ×10–×500 i podążanie mapy za punktem. Zatwierdzone postoje zatrzymują punkt i zwiększają czas. Dodatkowy ogólny zapas postojów nie ma przypisanej lokalizacji, więc symulacja go pomija.
+
+Przyrost energii pochodzi z dotychczasowego modelu jazdy lub spaceru na poszczególnych odcinkach; między próbkami jest interpolowany. Jeśli brakuje wymaganej prognozy wiatru, kalorie pozostają niedostępne. Zmiana trasy lub parametrów kończy symulację. Po zakończeniu przywracane są zwykłe liczniki planu. Symulacja wymaga zakończenia rzeczywistej wyprawy, nagrywania i centrowania GPS. Działa bez odczytu GPS, a nagranie GPS pozostaje oddzielnym śladem. Przejście karty w tło wstrzymuje animację.

@@ -16,6 +16,7 @@
    // MET includes resting metabolism. Remove 1 MET for active kcal, add rest once below.
    // Load correction is a transparent approximation: carried mass increases active cost only.
    active+=(met-1)*(rider+luggage)*hours;if(up)uphillMeters+=d;
+   if(options.onProgress)options.onProgress({meters,active});
   }
   const rideHours=meters/1000/v,stopMinutes=Math.max(0,Number(options.stopMinutes)||0),restRide=rider*rideHours,restStops=rider*stopMinutes/60;
   return {valid:true,walking:true,active,total:active+restRide+restStops,rest:restRide+restStops,restRide,restStops,rideHours,meters,heightMeters,missingHeightMeters:Math.max(0,meters-heightMeters),mass:rider+luggage,baseMET:base,terrain,uphillMeters,windMeters:0};

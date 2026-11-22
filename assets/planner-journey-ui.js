@@ -7,6 +7,7 @@ function initJourney(map) {
   let navigating = false, following = false, watch = null, generation = 0, lastFix = null;
   let route = null, routeIndex = null, lastProgress = null, detector = PlannerJourney.deviation(), offRoute = false;
   let saveAt = 0, audio = null, wake = null, statusMessage = '', storageFailed = false;
+  let simulation = null;
   const trail = L.polyline([], { color: '#a139d2', weight: 4, opacity: .85, interactive: false }).addTo(map);
   const panel = $('journeyPanel'), toggle = $('journeyToggle');
   const km = meters => (meters / 1000).toLocaleString('pl-PL', { maximumFractionDigits: 2 }) + ' km';
@@ -90,6 +91,12 @@ function initJourney(map) {
     $('followGPS').textContent = following ? '◎ Zatrzymaj centrowanie' : '◎ Śledź pozycję';
     toggle.classList.toggle('journey-active', navigating || recording.state === 'recording');
     toggle.textContent = recording.state === 'recording' ? '● Wyprawa · nagrywanie' : navigating ? '● Wyprawa' : 'Wyprawa';
+    $('journeySimulationMetrics').hidden=!simulation?.active;
+    if(simulation?.active){
+      $('journeyStart').disabled=$('journeyRecordStart').disabled=$('journeyRecordNew').disabled=true;
+      $('journeyFollow').disabled=$('followGPS').disabled=true;
+    }else $('journeyFollow').disabled=$('followGPS').disabled=false;
+    simulation?.render();
   }
 
   function receive(position) {
@@ -183,6 +190,11 @@ function initJourney(map) {
     if (document.hidden) save(); else { void keepAwake(); display(); }
   });
   window.addEventListener('pagehide', () => { recording.pause(); save(); navigating = following = false; syncWatch(); });
+  simulation=initJourneySimulation(map,{
+    canStart:()=>!navigating&&!following&&recording.state!=='recording',
+    onStart:()=>{show(true);stopGPS();display()},
+    onStop:()=>{stats();display()}
+  });
   setInterval(display, 1000);
   display();
   return { stopFollowing() { following = false; syncWatch(); display(); }, update: display };
